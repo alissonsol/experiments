@@ -14,6 +14,16 @@ void add(int n, float *x, float *y)
       y[i] = x[i] + y[i];
 }
 
+#define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess) 
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
+
 int main(int argc, char *argv[])
 {
   int p = 6;
@@ -21,14 +31,15 @@ int main(int argc, char *argv[])
   {
       p = atoi(argv[1]);
   }
-  int N = pow(10, p);
+  long N = pow(10, p);
+  long size = N*sizeof(float);
   std::cout << "N: " << N << std::endl;
 
   float *x, *y;
 
   // Allocate Unified Memory – accessible from CPU or GPU
-  cudaMallocManaged(&x, N*sizeof(float));
-  cudaMallocManaged(&y, N*sizeof(float));
+  gpuErrchk(cudaMallocManaged(&x, size));
+  gpuErrchk(cudaMallocManaged(&y, size));
 
   // initialize x and y arrays on the host
   for (int i = 0; i < N; i++) {
@@ -40,7 +51,7 @@ int main(int argc, char *argv[])
   add<<<1, 256>>>(N, x, y);
 
   // Wait for GPU to finish before accessing on host
-  cudaDeviceSynchronize();
+  gpuAssert(cudaDeviceSynchronize());
 
   // Check for errors (all values should be 3.0f)
   float maxError = 0.0f;
@@ -49,8 +60,8 @@ int main(int argc, char *argv[])
   std::cout << "Max error: " << maxError << std::endl;
 
   // Free memory
-  cudaFree(x);
-  cudaFree(y);
+  gpuAssert(cudaFree(x));
+  gpuAssert(cudaFree(y));
   
   return 0;
 }
