@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
   add<<<1, 256>>>(N, x, y);
 
   // Wait for GPU to finish before accessing on host
-  gpuAssert(cudaDeviceSynchronize());
+  gpuErrchk(cudaDeviceSynchronize());
 
   // Check for errors (all values should be 3.0f)
   float maxError = 0.0f;
@@ -60,8 +60,8 @@ int main(int argc, char *argv[])
   std::cout << "Max error: " << maxError << std::endl;
 
   // Free memory
-  gpuAssert(cudaFree(x));
-  gpuAssert(cudaFree(y));
+  gpuErrchk(cudaFree(x));
+  gpuErrchk(cudaFree(y));
   
   return 0;
 }
