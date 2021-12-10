@@ -1,0 +1,41 @@
+# Resources information - azure
+---
+globalVariables:
+  commonPrefix:          "asol"
+  namespace:             "${env:commonPrefix}-ns"
+  clusterDnsPrefix:      "${env:commonPrefix}-dns"
+  resourceGroup:         "${env:commonPrefix}-dev"
+  # regions: az account list-locations -o table
+  resourceRegion:        "northcentralus"
+  resourceTags:          "${env:commonPrefix}-tags"
+  registryName:          "${env:commonPrefix}Registry2021"
+  clusterVersion:        "1.20.2"
+  # ref: https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-gpu
+  # Get-AzComputeResourceSku | where {$_.Name -icontains "Standard_NC24rs_v3"}
+  # nodeType:              "Standard_NC24rs_v3"
+  nodeType:              "Standard_NC6"
+  nodeCount:             3
+
+resources:
+# Careful: if the template needs a variable (variables.tf) and it is not defined globally or locally below then the script will be stuck waiting input
+- name:                  "${env:resourceGroup}"
+  template:              "azure/resource-group"
+  variables:
+
+- name:                  "${env:registryName}"
+  template:              "azure/registry"
+  variables:
+    # TO-SET: registry name must be globally unique
+    uniqueName:          "${env:registryName}"
+
+# VM
+- name:                  "vm-linux"
+  template:              "azure/vm-linux"
+  variables:
+    machineName:         "vm-${env:commonPrefix}"
+    adminUsername:       "usr-${env:commonPrefix}"
+    sshPubFile:          "~/.ssh/id_rsa.pub"
+    imagePublisher:      "Canonical"
+    imageOffer:          "UbuntuServer"
+    imageSku:            "18.04-LTS"
+    imageVersion:        "latest"
