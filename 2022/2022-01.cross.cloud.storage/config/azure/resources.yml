@@ -1,0 +1,30 @@
+# Resources information - azure
+---
+globalVariables:
+  commonPrefix:          "yrn42"
+  namespace:             "${env:commonPrefix}-ns"
+  clusterDnsPrefix:      "${env:commonPrefix}-dns"
+  resourceGroup:         "${env:commonPrefix}-dev"
+  # regions: az account list-locations -o table
+  resourceRegion:        "northcentralus"
+  resourceTags:          "${env:commonPrefix}-tags"
+  registryName:          "${env:commonPrefix}Registry2021"
+  clusterVersion:        "1.20.2"
+  # ref: https://docs.microsoft.com/en-us/azure/virtual-machines/sizes-gpu
+  # Get-AzComputeResourceSku | where {$_.Name -icontains "Standard_NC24rs_v3"}
+  # nodeType:              "Standard_NC24rs_v3"
+  nodeType:              "Standard_NC6"
+  nodeCount:             3
+
+resources:
+# Careful: if the template needs a variable (variables.tf) and it is not defined globally or locally below then the script will be stuck waiting input
+- name:                  "${env:resourceGroup}"
+  template:              "azure/resource-group"
+  variables:
+
+- name:                  "${env:commonPrefix}-share"
+  template:              "azure/storage-share"
+  variables:
+    storageAccountName:  "${env:commonPrefix}-account"
+    storageShareName:    "${env:commonPrefix}-share"
+    storageQuota:        1024

@@ -1,0 +1,7 @@
+apt-get udpate;
+apt-get upgrade -y;
+apt-get dist-upgrade -y;
+apt-get autoclean -y;
+apt-get autoremove -y;
+deborphan | xargs apt-get -y remove --purge;
+deborphan --guess-data | xargs apt-get -y remove --purge;
