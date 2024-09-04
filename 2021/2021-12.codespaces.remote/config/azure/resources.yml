@@ -1,7 +1,7 @@
 # Resources information - azure
 ---
 globalVariables:
-  commonPrefix:          "asol"
+  commonPrefix:          "experiment"
   namespace:             "${env:commonPrefix}-ns"
   clusterDnsPrefix:      "${env:commonPrefix}-dns"
   resourceGroup:         "${env:commonPrefix}-dev"
