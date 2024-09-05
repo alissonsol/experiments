@@ -8,6 +8,19 @@ DEFAULT_PORT = 80
 PACKET_SIZE = 1024
 TOTAL_PACKETS = 100
 
+def get_local_ip():
+    try:
+        # Use a dummy connection to an external address to get the local IP address
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            # We connect to an external IP address without sending data (no actual connection is made)
+            s.connect(('8.8.8.8', 80))
+            local_ip = s.getsockname()[0]
+        return local_ip
+    except Exception as e:
+        # If any error occurs, fall back to localhost
+        print(f"Error obtaining local IP: {e}")
+        return '127.0.0.1'
+
 def ping_latency(server_address, port):
     try:
         start_time = time.time()
@@ -53,7 +66,7 @@ def main():
     
     try:
         # Get client and server IP addresses
-        client_ip = socket.gethostbyname(socket.gethostname())
+        client_ip = get_local_ip()
         server_ip = socket.gethostbyname(server_address)
         print(f"Connecting to server {server_ip}:{port} from client {client_ip}...")
         
