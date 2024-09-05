@@ -6,7 +6,7 @@ from datetime import datetime
 # Configuration
 DEFAULT_PORT = 80
 PACKET_SIZE = 1024
-TOTAL_PACKETS = 100
+TOTAL_PACKETS = 1024
 
 def get_local_ip():
     try:
@@ -62,20 +62,21 @@ def main():
         sys.exit(1)
     
     server_address = sys.argv[1]
-    port = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_PORT
+    server_port = int(sys.argv[2]) if len(sys.argv) > 2 else DEFAULT_PORT
     
     try:
         # Get client and server IP addresses
         client_ip = get_local_ip()
         server_ip = socket.gethostbyname(server_address)
-        print(f"Connecting to server {server_ip}:{port} from client {client_ip}...")
         
         # Measure ping latency
-        latency = ping_latency(server_address, port)
+        latency = ping_latency(server_address, server_port)
         print(f"Ping latency: {latency:.2f} ms")
         
         # Measure upload and download speeds
-        client_socket, upload_duration, download_duration = measure_speed(server_address, port)
+        client_socket, upload_duration, download_duration = measure_speed(server_address, server_port)
+        client_ip, client_port = client_socket.getsockname()
+        print(f"Connecting to server {server_ip}:{server_port} from client {client_ip}:{client_port}...")
         
         # Calculate speeds in Mbps
         upload_speed = (TOTAL_PACKETS * PACKET_SIZE * 8) / (upload_duration * 1e6)  # Mbps
@@ -88,7 +89,7 @@ def main():
         # result = (f"{current_time}, Client IP: {client_ip}, Server IP: {server_ip}, "
         #           f"Ping: {latency:.2f} ms, Upload: {upload_speed:.2f} Mbps, "
         #           f"Download: {download_speed:.2f} Mbps")
-        result = (f"{current_time}, {client_ip}, {server_ip}, "
+        result = (f"{current_time}, {client_ip}:{client_port}, {server_ip}:{server_port}, "
                   f"{latency:.2f}, {upload_speed:.2f}, "
                   f"{download_speed:.2f}")
         

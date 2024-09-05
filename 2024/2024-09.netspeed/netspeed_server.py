@@ -5,6 +5,8 @@ from datetime import datetime
 # Configuration
 SERVER_HOST = '0.0.0.0'  # Listen on all interfaces
 SERVER_PORT = 80          # Default port
+PACKET_SIZE = 1024
+TOTAL_PACKETS = 1024
 
 def get_local_ip():
     try:
@@ -23,15 +25,11 @@ def handle_client_connection(client_socket, client_address):
     try:
         # print(f"Connection established with {client_address}")
         
-        # Receive and send 100 packets to measure network speed
-        packet_size = 1024
-        total_packets = 100
-        
         # Start measuring download speed
         start_time = time.time()
-        for _ in range(total_packets):
+        for _ in range(TOTAL_PACKETS):
             try:
-                data = client_socket.recv(packet_size)
+                data = client_socket.recv(PACKET_SIZE)
                 if not data:
                     # Client disconnected, no need to raise an error.
                     return  # Exit silently if client disconnects
@@ -41,11 +39,11 @@ def handle_client_connection(client_socket, client_address):
         
         download_duration = time.time() - start_time
 
-        # Send 100 packets to measure upload speed
+        # Send packets to measure upload speed
         start_time = time.time()
-        for _ in range(total_packets):
+        for _ in range(TOTAL_PACKETS):
             try:
-                client_socket.sendall(b'x' * packet_size)
+                client_socket.sendall(b'x' * PACKET_SIZE)
             except BrokenPipeError:
                 # Silently exit if client disconnects during upload
                 return  
