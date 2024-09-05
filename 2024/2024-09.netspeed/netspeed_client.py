@@ -72,9 +72,12 @@ def main():
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         # Prepare the result string
-        result = (f"{current_time}, Client IP: {client_ip}, Server IP: {server_ip}, "
-                  f"Ping: {latency:.2f} ms, Upload: {upload_speed:.2f} Mbps, "
-                  f"Download: {download_speed:.2f} Mbps")
+        # result = (f"{current_time}, Client IP: {client_ip}, Server IP: {server_ip}, "
+        #           f"Ping: {latency:.2f} ms, Upload: {upload_speed:.2f} Mbps, "
+        #           f"Download: {download_speed:.2f} Mbps")
+        result = (f"{current_time}, {client_ip}, {server_ip}, "
+                  f"{latency:.2f}, {upload_speed:.2f}, "
+                  f"{download_speed:.2f}")
         
         # Print the results on client side
         print(result)
