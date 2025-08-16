@@ -1,4 +1,4 @@
-# by Alisson Sol (c) 2020 - No guaranties
+# by Alisson Sol (c) 2020-2025 - No guaranties
 $HomeDrive = [System.Environment]::GetEnvironmentVariable("HOMEDRIVE")
 $EmailFolder = Resolve-Path -Path (Join-Path -Path $HomeDrive -ChildPath "email")
 if ([string]::IsNullOrEmpty($EmailFolder)) { Write-Information "Email folder not found: $EmailFolder"; return $false; }
@@ -38,6 +38,8 @@ Copy-Item "$OutlookAppData/*" -Destination $OutlookBackup -Recurse -Container -E
 # Now for the backup...
 Add-Type -assembly "system.io.compression.filesystem"
 $backupFolder = [System.Environment]::CurrentDirectory
-$emailHomeFile = Join-Path -Path $backupFolder -ChildPath "email.Home.zip"
-Remove-Item $emailHomeFile -Force -ErrorAction SilentlyContinue
-[io.compression.zipfile]::CreateFromDirectory($EmailFolder, $emailHomeFile)
+$dtTime = '{0}' -f ([system.string]::format('{0:yyyy-MM-dd-HH-mm-ss}',(Get-Date)))
+$backupFilename = "email.Home.$dtTime.zip"
+$localBackupPath = Join-Path -Path $backupFolder -ChildPath $backupFilename
+Remove-Item $localBackupPath -Force -ErrorAction SilentlyContinue
+[io.compression.zipfile]::CreateFromDirectory($EmailFolder, $localBackupPath)
