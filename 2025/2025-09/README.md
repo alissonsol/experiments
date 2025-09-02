@@ -43,17 +43,15 @@ $ export JAVA_HOME=/etc/alternatives/java_sdk
 
 You may also benefit from adding JAVA_HOME to /etc/bashrc
 
-## TODO
-
 ## 03) Install .NET Core
 
 For those who want to work on .NET, following instructions to [Install .NET Core SDK on Linux CentOS / Oracle x6](https://dotnet.microsoft.com/download/linux-package-manager/centos/sdk-current)
 
 Basic commands are:
 ```
-$ sudo rpm -Uvh https://packages.microsoft.com/config/rhel/7/packages-microsoft-prod.rpm
+$ sudo rpm -Uvh https://packages.microsoft.com/config/centos/8/packages-microsoft-prod.rpm
 $ sudo yum -y update
-$ sudo yum -y install dotnet-sdk-2.2
+$ sudo yum -y install dotnet-sdk-8.0
 $ dotnet --version
 ```
 
@@ -65,13 +63,9 @@ For version control, I use git. It was there already in the cloud desktop. Just 
 $ sudo yum -y install git
 $ git --version
 ```
+## TODO
 
-## 05) Install Postman
-
-Postman really helps when developing APIs, sites, testing authentication, etc. Download [Postman](https://www.getpostman.com/downloads/). Then uncompress, add to a folder and optionally add that folder to the PATH. In order to check the installation, start Postman and create or sign-up to your account (picture below).
-![](images/002.install.postman.PNG)
-
-## 06) Install Docker
+## 05) Install Docker
   
 Allow work with containers.
 
@@ -101,7 +95,7 @@ If that last command fails, remember to logout (menu System->Log Out) and connec
 
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
 
-## 07) Install Docker Compose
+## 06) Install Docker Compose
   
 Follow the instructions to [Install Docker Compose](https://docs.docker.com/compose/install/).
 
@@ -112,6 +106,12 @@ $ sudo chmod +x /usr/local/bin/docker-compose
 $ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
 $ docker-compose --version
 ```
+
+## 07) Install Postman
+
+Postman really helps when developing APIs, sites, testing authentication, etc. Download [Postman](https://www.getpostman.com/downloads/). Then uncompress, add to a folder and optionally add that folder to the PATH. In order to check the installation, start Postman and create or sign-up to your account (picture below).
+![](images/002.install.postman.PNG)
+
 
 ## 08) Install Traefik
 
