@@ -107,8 +107,6 @@ If that last command fails, remember to logout (menu System->Log Out) and connec
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
 
 
-## TODO
-
 # 06) Install Visual Studio Code
 
 Basic commands are:
@@ -118,9 +116,7 @@ sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.m
 sudo dnf -y install code
 ```
 
-Follow instructions for [Managing Extensions in Visual Studio Code](https://code.visualstudio.com/docs/editor/extension-gallery) and install useful extensions, like:
-- Maven for Java
-- Docker (picture below)
+Follow instructions for [Managing Extensions in Visual Studio Code](https://code.visualstudio.com/docs/editor/extension-gallery) and install useful extensions.
 
 # Test if everything works...
 
@@ -138,9 +134,7 @@ javac -version
 dotnet --version
 git --version
 docker --version
-docker-compose --version
 code --version
-code
 ```
 
-You should now have a Visual Studio Code window open. Ready for coding and adding other tools and extensions.
+You should now be able to start Visual Studio Code (`code`).
