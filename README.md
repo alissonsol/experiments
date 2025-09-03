@@ -4,6 +4,7 @@ The random experiments by Alisson Sol
 
 ## 2025
 
+- 2025-09 - Setup an Amazon Linux Developer VM on premises [instructions](2025/2025-09/README.md)
 - 2025-02 - Outlook backup - PowerShell [script](2025/2025-02/outlook-backup.ps1)
 - 2025-02 - Status dashboard folder structure [.zip](2025/2025-02/status.zip)
 

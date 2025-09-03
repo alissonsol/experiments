@@ -36,12 +36,13 @@ If something is not working, check if the machine got an IP address with the `if
 Update the system, install the GNOME Desktop environment, and shutdown.
 
 ```
-sudo yum update -y
-sudo yum upgrade -y
-sudo yum groupinstall "Desktop" -y
+sudo dnf update -y
+sudo dnf upgrade -y
+sudo dnf groupinstall "Desktop" -y
 sudo shutdown now
-
 ```
+
+![](images/002.Amazon.Linux.GUI.PNG)
 
 This is a great time to create a checkpoint `GUI Installed`. Your system should reboot to a GUI, and you should be able to start a terminal and a browser.
 
@@ -50,9 +51,7 @@ This is a great time to create a checkpoint `GUI Installed`. Your system should 
 The Java toolk to be used in the [Amazon Corretto](https://docs.aws.amazon.com/corretto/)
 
 ```
-sudo rpm --import https://yum.corretto.aws/corretto.key
-sudo curl -L -o /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
-sudo yum install -y java-21-amazon-corretto-devel
+sudo dnf install -y java-21-amazon-corretto-devel
 java -version
 javac -version
 export JAVA_HOME=/etc/alternatives/java_sdk
@@ -66,9 +65,9 @@ For those who want to work on .NET, following instructions to [Install .NET Core
 
 Basic commands are:
 ```
-sudo rpm -Uvh https://packages.microsoft.com/config/centos/8/packages-microsoft-prod.rpm
-sudo yum -y update
-sudo yum -y install dotnet-sdk-8.0
+sudo rpm -Uvh https://packages.microsoft.com/config/centos/9/packages-microsoft-prod.rpm
+sudo dnf -y update
+sudo dnf -y install dotnet-sdk-8.0
 dotnet --version
 ```
 
@@ -77,7 +76,7 @@ dotnet --version
 For version control, I use git. It was there already in the cloud desktop. Just in case, here are the install instructions:
 
 ```
-sudo yum -y install git
+sudo dnf -y install git
 git --version
 ```
 
@@ -87,7 +86,7 @@ Allow work with containers.
 
 Basic commands are:
 ```
-sudo yum -y install docker
+sudo dnf -y install docker
 sudo docker --version
 ```
 
@@ -108,8 +107,6 @@ docker run hello-world
 
 If that last command fails, remember to logout (menu System->Log Out) and connect again.
 
-![](images/003.install.logout.PNG)
-
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
 
 ## TODO
@@ -120,10 +117,11 @@ Follow the instructions to [Install Docker Compose](https://docs.docker.com/comp
 
 Basic commands are:
 ```
-sudo curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-docker-compose --version
+sudo dnf -y install dnf-plugins-core
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+sudo dnf -y update
+sudo dnf -y install docker-compose-plugin
 ```
 
 ## 07) Install Postman
@@ -143,7 +141,7 @@ Follow article [How To Use Traefik as a Reverse Proxy for Docker Containers on C
 The build package to be used to build the projects. Install commands are:
 
 ```
-sudo yum -y install maven
+sudo dnf -y install maven
 mvn -version
 ```
 
@@ -153,14 +151,12 @@ Basic commands are:
 ```
 sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
 sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
-sudo yum -y install code
+sudo dnf -y install code
 ```
 
 Follow instructions for [Managing Extensions in Visual Studio Code](https://code.visualstudio.com/docs/editor/extension-gallery) and install useful extensions, like:
 - Maven for Java
 - Docker (picture below)
-
-![](images/004.install.code.externsions.docker.PNG)
 
 # Test if everything works...
 
