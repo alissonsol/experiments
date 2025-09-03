@@ -16,29 +16,46 @@ Luckily, this repository has examples for the `-data` files, and a sample `seed.
 
 Next, I go to the `Hyper-V Manager` and selecting the local server, righ-click and select the menu `New` -> `Virtual Machine...`:
 - Under `Specify Name and Location`, enter whatever name you prefer (suggested: `AmazonLinux`), and leave the default location.
-- Under `Specify Generation`, select `Generation 1`
-- Under `Assign Memory`, select the `Startup Memory` (at least 4096, with 8192 or more recommended). Unselect `Use Dynamic Memory for this virtual machine.`
+- Under `Specify Generation`, select `Generation 2`
+- Under `Assign Memory`, select the `Startup Memory` (at least 8192, with 16384 or more recommended). Unselect `Use Dynamic Memory for this virtual machine.`
 - Under `Configure Networking`, select the `Connection` as `External`.
 - Under `Connect Virtual Hard Disk`, select `Use an existing virtual hard disk`. Browse to the file you previously unzipped, and click `Finish`.
-- Right-click the new VM and choose `Settings`. In the `Settings` window, under `IDE Controller 1`, choose `DVD Drive`.
-- For the DVD drive, choose Image file and then browse to and select the `seed.iso` file.
+- Right-click the new VM and choose `Settings`. In the `Settings` window, under `SCSI Controller`, choose `DVD Drive`, then `Add`.
+- For the DVD drive, choose `Image file` and then browse to and select the `seed.iso` file.
+- Under the `Security` section, unselect the `Enable Secure Boot` option.
 - Apply the changes and start the VM.
 
 You can now start the VM, as per the instructions to [Run AL2 as a virtual machine on premises](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html).
 
-Before proceeding, check network connectivity. A simple command like `ping 8.8.8.8` should check if the network is connected. Then `ping google.com` would check if the DNS service client stack is working. If something is not working, check if the machine got an IP address with the `ifconfig` command. If that is not working, you may try to shutdown the machine (`sudo shutdown now`) and change the settings for the `Network Adapter` virtual switch (more [here](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines), but going deeper is beyond the scope of this document).
+Before proceeding, check network connectivity. A simple command like `ping 8.8.8.8` should check if the network is connected. Then `ping google.com` would check if the DNS service client stack is working.
+
+If something is not working, check if the machine got an IP address with the `ifconfig` command. If that is not working, you may try to shutdown the machine (`sudo shutdown now`) and change the settings for the `Network Adapter` virtual switch (more [here](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines), but going deeper is beyond the scope of this document).
+
+## Get the GUI
+
+Update the system, install the GNOME Desktop environment, and shutdown.
+
+```
+sudo yum update -y
+sudo yum upgrade -y
+sudo yum groupinstall "Desktop" -y
+sudo shutdown now
+
+```
+
+This is a great time to create a checkpoint `GUI Installed`. Your system should reboot to a GUI, and you should be able to start a terminal and a browser.
 
 ## 02) Install the JDK
 
 The Java toolk to be used in the [Amazon Corretto](https://docs.aws.amazon.com/corretto/)
 
 ```
-$ sudo rpm --import https://yum.corretto.aws/corretto.key
-$ sudo curl -L -o /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
-$ sudo yum install -y java-21-amazon-corretto-devel
-$ java -version
-$ javac -version
-$ export JAVA_HOME=/etc/alternatives/java_sdk
+sudo rpm --import https://yum.corretto.aws/corretto.key
+sudo curl -L -o /etc/yum.repos.d/corretto.repo https://yum.corretto.aws/corretto.repo
+sudo yum install -y java-21-amazon-corretto-devel
+java -version
+javac -version
+export JAVA_HOME=/etc/alternatives/java_sdk
 ```
 
 You may also benefit from adding JAVA_HOME to /etc/bashrc
@@ -49,10 +66,10 @@ For those who want to work on .NET, following instructions to [Install .NET Core
 
 Basic commands are:
 ```
-$ sudo rpm -Uvh https://packages.microsoft.com/config/centos/8/packages-microsoft-prod.rpm
-$ sudo yum -y update
-$ sudo yum -y install dotnet-sdk-8.0
-$ dotnet --version
+sudo rpm -Uvh https://packages.microsoft.com/config/centos/8/packages-microsoft-prod.rpm
+sudo yum -y update
+sudo yum -y install dotnet-sdk-8.0
+dotnet --version
 ```
 
 ## 04) Install Git
@@ -60,10 +77,9 @@ $ dotnet --version
 For version control, I use git. It was there already in the cloud desktop. Just in case, here are the install instructions:
 
 ```
-$ sudo yum -y install git
-$ git --version
+sudo yum -y install git
+git --version
 ```
-## TODO
 
 ## 05) Install Docker
   
@@ -71,22 +87,23 @@ Allow work with containers.
 
 Basic commands are:
 ```
-$ sudo yum -y install docker
-$ sudo docker --version
+sudo yum -y install docker
+sudo docker --version
 ```
 
 And in order to avoid having to run docker with `sudo` all the time:
 ```
-$ sudo groupadd docker
-$ sudo usermod -aG docker $USER
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
 ```
 
 It is recommended that you follow the [Post-installation steps for Linux])(https://docs.docker.com/install/linux/linux-postinstall/). Mainly, that you logout and login again, and then set docker to start after reboots and test it starting a Hello World instance.
 
 ```
-$ sudo systemctl enable docker 
-$ sudo systemctl start docker
-$ docker run hello-world
+sudo systemctl enable docker 
+sudo systemctl start docker
+docker run hello-world
 ```
 
 If that last command fails, remember to logout (menu System->Log Out) and connect again.
@@ -95,16 +112,18 @@ If that last command fails, remember to logout (menu System->Log Out) and connec
 
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
 
+## TODO
+
 ## 06) Install Docker Compose
   
 Follow the instructions to [Install Docker Compose](https://docs.docker.com/compose/install/).
 
 Basic commands are:
 ```
-$ sudo curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-$ sudo chmod +x /usr/local/bin/docker-compose
-$ sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-$ docker-compose --version
+sudo curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+docker-compose --version
 ```
 
 ## 07) Install Postman
@@ -124,17 +143,17 @@ Follow article [How To Use Traefik as a Reverse Proxy for Docker Containers on C
 The build package to be used to build the projects. Install commands are:
 
 ```
-$ sudo yum -y install maven
-$ mvn -version
+sudo yum -y install maven
+mvn -version
 ```
 
 # 10) Install Visual Studio Code
 
 Basic commands are:
 ```
-$ sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
-$ sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
-$ sudo yum -y install code
+sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+sudo sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+sudo yum -y install code
 ```
 
 Follow instructions for [Managing Extensions in Visual Studio Code](https://code.visualstudio.com/docs/editor/extension-gallery) and install useful extensions, like:
@@ -149,19 +168,19 @@ At the end of the process, it is required to at least logout and login again, so
 
 Would recommend also a reboot, in order to make sure configuration is persisted.
 ```
-$ sudo shutdown -r now
+sudo shutdown -r now
 ```
 
 After the reboot and reconnection, open a terminal and check every package installed is still accessible.
 
 ```
-$ javac -version
-$ dotnet --version
-$ git --version
-$ docker --version
-$ docker-compose --version
-$ mvn -version
-$ code
+javac -version
+dotnet --version
+git --version
+docker --version
+docker-compose --version
+mvn -version
+code
 ```
 
 You should now have a Visual Studio Code window open. The cloud desktop is ready for coding.
