@@ -20,12 +20,11 @@ Next, I go to the `Hyper-V Manager` and selecting the local server, righ-click a
 - Under `Assign Memory`, select the `Startup Memory` (at least 8192, with 16384 or more recommended). Unselect `Use Dynamic Memory for this virtual machine.`
 - Under `Configure Networking`, select the `Connection` as `External`.
 - Under `Connect Virtual Hard Disk`, select `Use an existing virtual hard disk`. Browse to the file you previously unzipped, and click `Finish`.
-- Right-click the new VM and choose `Settings`. In the `Settings` window, under `SCSI Controller`, choose `DVD Drive`, then `Add`.
-- For the DVD drive, choose `Image file` and then browse to and select the `seed.iso` file.
-- Under the `Security` section, unselect the `Enable Secure Boot` option.
-- Apply the changes and start the VM.
+- Right-click the new VM and choose `Settings`, to adjust configuration.
+  - In the `Settings` window, under `SCSI Controller`, choose `DVD Drive`, then `Add`. Choose `Image file` and then browse to the `seed.iso` file and select it.
+  - Under the `Security` section, unselect the `Enable Secure Boot` option.
 
-You can now start the VM, as per the instructions to [Run AL2 as a virtual machine on premises](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html).
+Apply the changes. You can now start the VM, as per the instructions to [Run AL2 as a virtual machine on premises](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html). Unless you changed the defaults in the file `user-data`, you will login with the `ec2-user` account and the password defined there, and be promptly asked to change the password.
 
 Before proceeding, check network connectivity. A simple command like `ping 8.8.8.8` should check if the network is connected. Then `ping google.com` would check if the DNS service client stack is working.
 
@@ -42,9 +41,9 @@ sudo dnf groupinstall "Desktop" -y
 sudo shutdown now
 ```
 
-![](images/002.Amazon.Linux.GUI.PNG)
-
 This is a great time to create a checkpoint `GUI Installed`. Your system should reboot to a GUI, and you should be able to start a terminal and a browser.
+
+![](images/002.Amazon.Linux.GUI.PNG)
 
 ## 02) Install the JDK
 
@@ -82,26 +81,24 @@ git --version
 
 ## 05) Install Docker
   
-Allow work with containers.
+Allow work with containers. Hacking the instructions for the [CentOS](https://docs.docker.com/engine/install/centos/#set-up-the-repository). It works around the `$releasever` for the Amazon Linux being different. Also need to pre-install the depenencies (`iptables` and `container-selinux`).
 
 Basic commands are:
 ```
-sudo dnf -y install docker
+sudo dnf -y install dnf-plugins-core iptables container-selinux
+sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo dnf --releasever=9 -y update
+sudo dnf --releasever=9 -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo systemctl enable --now docker
 sudo docker --version
 ```
 
-And in order to avoid having to run docker with `sudo` all the time:
+In order to avoid having to run docker with `sudo` all the time, add the current user to the `docker` group. Run the Hello World.
+
 ```
 sudo groupadd docker
 sudo usermod -aG docker $USER
 newgrp docker
-```
-
-It is recommended that you follow the [Post-installation steps for Linux])(https://docs.docker.com/install/linux/linux-postinstall/). Mainly, that you logout and login again, and then set docker to start after reboots and test it starting a Hello World instance.
-
-```
-sudo systemctl enable docker 
-sudo systemctl start docker
 docker run hello-world
 ```
 
@@ -109,43 +106,10 @@ If that last command fails, remember to logout (menu System->Log Out) and connec
 
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
 
+
 ## TODO
 
-## 06) Install Docker Compose
-  
-Follow the instructions to [Install Docker Compose](https://docs.docker.com/compose/install/).
-
-Basic commands are:
-```
-sudo dnf -y install dnf-plugins-core
-sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-sudo dnf -y update
-sudo dnf -y install docker-compose-plugin
-```
-
-## 07) Install Postman
-
-Postman really helps when developing APIs, sites, testing authentication, etc. Download [Postman](https://www.getpostman.com/downloads/). Then uncompress, add to a folder and optionally add that folder to the PATH. In order to check the installation, start Postman and create or sign-up to your account (picture below).
-![](images/002.install.postman.PNG)
-
-
-## 08) Install Traefik
-
-The software NLB used for experiments, and configuration.
-
-Follow article [How To Use Traefik as a Reverse Proxy for Docker Containers on CentOS 7](https://www.digitalocean.com/community/tutorials/how-to-use-traefik-as-a-reverse-proxy-for-docker-containers-on-centos-7)
-
-# 09) Install Maven
-
-The build package to be used to build the projects. Install commands are:
-
-```
-sudo dnf -y install maven
-mvn -version
-```
-
-# 10) Install Visual Studio Code
+# 06) Install Visual Studio Code
 
 Basic commands are:
 ```
@@ -175,8 +139,8 @@ dotnet --version
 git --version
 docker --version
 docker-compose --version
-mvn -version
+code --version
 code
 ```
 
-You should now have a Visual Studio Code window open. The cloud desktop is ready for coding.
+You should now have a Visual Studio Code window open. Ready for coding and adding other tools and extensions.
