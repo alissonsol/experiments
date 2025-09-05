@@ -93,9 +93,11 @@ sudo systemctl enable --now docker
 sudo docker --version
 ```
 
-In order to avoid having to run docker with `sudo` all the time, add the current user to the `docker` group. Run the Hello World.
+Some cleanup now. First, will remote that docker repo. Otherwise, due to the release version number difference between Amazon Linux and CentOS, you get warning messages when running `dnf` about a not found docker repository (even when not needed). In order to avoid having to run docker with `sudo` all the time, add the current user to the `docker` group. Then, to test, run the `Hello World` application.
 
 ```
+sudo rm /etc/yum.repos.d/docker-ce.repo
+sudo dnf makecache
 sudo groupadd docker
 sudo usermod -aG docker $USER
 newgrp docker
