@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <!-- TODO: Solve tailwindcss production issue -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .menu-item-link {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .menu-item-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <!-- Top Navigation Menu -->
+    <nav class="bg-white shadow-lg py-4 px-6 md:px-12 rounded-b-xl">
+        <div class="flex items-center justify-end space-x-4 text-gray-600">
+            <a href="./?menu=language" class="hover:text-blue-600 transition-colors duration-200">&#x1F310;</a>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow container mx-auto p-4 sm:p-6 md:p-8 flex flex-col items-center">
+        <!-- Page Header -->
+        <header class="text-center mt-8 mb-6">
+            <h1 id="menu-header" class="text-3xl sm:text-4xl font-bold text-gray-800"></h1>
+            <p id="menu-subheader" class="text-lg text-gray-500 mt-2"></p>
+        </header>
+
+        <!-- Menu Items Container -->
+        <section id="menu-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl"></section>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="flex flex-col items-center justify-center text-gray-500 mt-12">
+            <svg class="animate-spin h-10 w-10 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="mt-4">Loading menu...</span>
+        </div>
+    </main>
+
+    <footer class="text-center py-4 text-gray-400 text-sm">
+        &copy; 2025 Alisson Sol. All rights reserved.
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const params = new URLSearchParams(window.location.search);
+            const menu = params.get('menu') || 'default';
+            const lang = params.get('lang') || 'en'; // TODO: Preserve language selection across pages
+            const menuFileName = "./menu." + lang + "/" + menu + ".txt";
+
+            try {
+                // Fetch the data file
+                const response = await fetch(menuFileName);
+                let data;
+                if (response.ok) {
+                    data = await response.text();
+                } else {
+                    // Default to 'menu.en/default.txt' in case of error
+                    const defaultMenu = await fetch("./menu.en/default.txt");
+                    if (!defaultMenu.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    data = await defaultMenu.text();
+                }
+                const lines = data.split('\n').filter(line => line.trim() !== '');
+
+                // Hide loading indicator
+                document.getElementById('loading-indicator').style.display = 'none';
+
+                if (lines.length < 4) {
+                    // We check for at least 4 lines to ensure basic structure is present.
+                    throw new Error("Data file has an invalid structure. At least 4 lines are required.");
+                }
+
+                // Parse the data and update the page
+                const pageTitle = decodeURIComponent(lines[0].trim());
+                const menuHeader = decodeURIComponent(lines[1].trim());
+                const menuSubheader = decodeURIComponent(lines[2].trim());
+                const menuItems = lines.slice(3);
+
+                document.title = pageTitle;
+                document.getElementById('menu-header').innerText = menuHeader;
+                document.getElementById('menu-subheader').innerText = menuSubheader;
+
+                const menuContainer = document.getElementById('menu-container');
+
+                menuItems.forEach(itemLine => {
+                    const [iconSource, menuText, destinationUrl] = itemLine.split(',').map(s => s.trim());
+                    if (iconSource && menuText && destinationUrl) {
+                        const link = document.createElement('a');
+                        link.href = destinationUrl;
+                        // The following class change makes the icon and text appear on a single line
+                        link.className = "flex items-center space-x-4 bg-white p-4 rounded-2xl shadow-md hover:shadow-lg menu-item-link";
+
+                        const icon = document.createElement('img');
+                        icon.src = iconSource;
+                        icon.alt = menuText;
+                        // The icon size is reduced for a more compact look
+                        icon.className = "w-12 h-12 rounded-full border-2 border-gray-200 object-cover";
+                        icon.onerror = () => icon.src = `https://placehold.co/100x100/CCCCCC/000000?text=${menuText.substring(0, 1)}`;
+
+                        const text = document.createElement('span');
+                        text.innerText = menuText;
+                        // The text size is reduced for a more compact look
+                        text.className = "text-base font-semibold text-gray-700";
+
+                        link.appendChild(icon);
+                        link.appendChild(text);
+                        menuContainer.appendChild(link);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Failed to load or parse data file:", error);
+                document.getElementById('loading-indicator').innerHTML = `<p class='text-red-500'>Error: Failed to load menu data from '${menuFileName}'. Check the file name and structure.</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
