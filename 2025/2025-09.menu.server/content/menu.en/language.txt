@@ -1,64 +1,64 @@
 %F0%9F%8C%90
-%F0%9F%8C%90
+<span class="material-symbols-outlined">language</span>
 %20
-https://placehold.co/32x32/004879/FFFFFF?text=-,Afrikaans,./?lang=af
-https://placehold.co/32x32/004879/FFFFFF?text=-,العربية,./?lang=ar
-https://placehold.co/32x32/004879/FFFFFF?text=-,Беларуская,./?lang=be
-https://placehold.co/32x32/004879/FFFFFF?text=-,Български,./?lang=bg
-https://placehold.co/32x32/004879/FFFFFF?text=-,বাংলা,./?lang=bn
-https://placehold.co/32x32/004879/FFFFFF?text=-,Bosanski,./?lang=bs
-https://placehold.co/32x32/004879/FFFFFF?text=-,Català,./?lang=ca
-https://placehold.co/32x32/004879/FFFFFF?text=-,Čeština,./?lang=cs
-https://placehold.co/32x32/004879/FFFFFF?text=-,Cymraeg,./?lang=cy
-https://placehold.co/32x32/004879/FFFFFF?text=-,Dansk,./?lang=da
-https://placehold.co/32x32/004879/FFFFFF?text=-,Deutsch,./?lang=de
-https://placehold.co/32x32/004879/FFFFFF?text=-,Ελληνικά,./?lang=el
-https://placehold.co/32x32/004879/FFFFFF?text=-,English,./?lang=en
-https://placehold.co/32x32/004879/FFFFFF?text=-,Español,./?lang=es
-https://placehold.co/32x32/004879/FFFFFF?text=-,Eesti,./?lang=et
-https://placehold.co/32x32/004879/FFFFFF?text=-,Euskara,./?lang=eu
-https://placehold.co/32x32/004879/FFFFFF?text=-,فارسی,./?lang=fa
-https://placehold.co/32x32/004879/FFFFFF?text=-,Suomi,./?lang=fi
-https://placehold.co/32x32/004879/FFFFFF?text=-,Français,./?lang=fr
-https://placehold.co/32x32/004879/FFFFFF?text=-,Gaeilge,./?lang=ga
-https://placehold.co/32x32/004879/FFFFFF?text=-,Galego,./?lang=gl
-https://placehold.co/32x32/004879/FFFFFF?text=-,עברית,./?lang=he
-https://placehold.co/32x32/004879/FFFFFF?text=-,हिन्दी,./?lang=hi
-https://placehold.co/32x32/004879/FFFFFF?text=-,Hrvatski,./?lang=hr
-https://placehold.co/32x32/004879/FFFFFF?text=-,Magyar,./?lang=hu
-https://placehold.co/32x32/004879/FFFFFF?text=-,Հայերեն,./?lang=hy
-https://placehold.co/32x32/004879/FFFFFF?text=-,Bahasa Indonesia,./?lang=id
-https://placehold.co/32x32/004879/FFFFFF?text=-,Íslenska,./?lang=is
-https://placehold.co/32x32/004879/FFFFFF?text=-,Italiano,./?lang=it
-https://placehold.co/32x32/004879/FFFFFF?text=-,日本語,./?lang=ja
-https://placehold.co/32x32/004879/FFFFFF?text=-,ქართული,./?lang=ka
-https://placehold.co/32x32/004879/FFFFFF?text=-,한국어,./?lang=ko
-https://placehold.co/32x32/004879/FFFFFF?text=-,Latina,./?lang=la
-https://placehold.co/32x32/004879/FFFFFF?text=-,Lietuvių,./?lang=lt
-https://placehold.co/32x32/004879/FFFFFF?text=-,Latviešu,./?lang=lv
-https://placehold.co/32x32/004879/FFFFFF?text=-,Македонски,./?lang=mk
-https://placehold.co/32x32/004879/FFFFFF?text=-,Melayu,./?lang=ms
-https://placehold.co/32x32/004879/FFFFFF?text=-,Malti,./?lang=mt
-https://placehold.co/32x32/004879/FFFFFF?text=-,Norsk,./?lang=no
-https://placehold.co/32x32/004879/FFFFFF?text=-,Nederlands,./?lang=nl
-https://placehold.co/32x32/004879/FFFFFF?text=-,Polski,./?lang=pl
-https://placehold.co/32x32/004879/FFFFFF?text=-,Português,./?lang=pt
-https://placehold.co/32x32/004879/FFFFFF?text=-,Română,./?lang=ro
-https://placehold.co/32x32/004879/FFFFFF?text=-,Русский,./?lang=ru
-https://placehold.co/32x32/004879/FFFFFF?text=-,Slovenčina,./?lang=sk
-https://placehold.co/32x32/004879/FFFFFF?text=-,Slovenščina,./?lang=sl
-https://placehold.co/32x32/004879/FFFFFF?text=-,Shqip,./?lang=sq
-https://placehold.co/32x32/004879/FFFFFF?text=-,Српски,./?lang=sr
-https://placehold.co/32x32/004879/FFFFFF?text=-,Svenska,./?lang=sv
-https://placehold.co/32x32/004879/FFFFFF?text=-,Kiswahili,./?lang=sw
-https://placehold.co/32x32/004879/FFFFFF?text=-,தமிழ்,./?lang=ta
-https://placehold.co/32x32/004879/FFFFFF?text=-,ไทย,./?lang=th
-https://placehold.co/32x32/004879/FFFFFF?text=-,Tagalog,./?lang=tl
-https://placehold.co/32x32/004879/FFFFFF?text=-,Türkçe,./?lang=tr
-https://placehold.co/32x32/004879/FFFFFF?text=-,Українська,./?lang=uk
-https://placehold.co/32x32/004879/FFFFFF?text=-,اردو,./?lang=ur
-https://placehold.co/32x32/004879/FFFFFF?text=-,Tiếng Việt,./?lang=vi
-https://placehold.co/32x32/004879/FFFFFF?text=-,ייִדיש,./?lang=yi
-https://placehold.co/32x32/004879/FFFFFF?text=-,中文 (简体),./?lang=zh
-https://placehold.co/32x32/004879/FFFFFF?text=-,中文 (繁體),./?lang=zh
-https://placehold.co/32x32/004879/FFFFFF?text=-,Zulu,./?lang=zu
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Afrikaans,./?lang=af
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,العربية,./?lang=ar
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Беларуская,./?lang=be
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Български,./?lang=bg
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,বাংলা,./?lang=bn
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Bosanski,./?lang=bs
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Català,./?lang=ca
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Čeština,./?lang=cs
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Cymraeg,./?lang=cy
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Dansk,./?lang=da
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Deutsch,./?lang=de
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Ελληνικά,./?lang=el
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,English,./?lang=en
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Español,./?lang=es
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Eesti,./?lang=et
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Euskara,./?lang=eu
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,فارسی,./?lang=fa
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Suomi,./?lang=fi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Français,./?lang=fr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Gaeilge,./?lang=ga
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Galego,./?lang=gl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,עברית,./?lang=he
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,हिन्दी,./?lang=hi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Hrvatski,./?lang=hr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Magyar,./?lang=hu
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Հայերեն,./?lang=hy
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Bahasa Indonesia,./?lang=id
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Íslenska,./?lang=is
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Italiano,./?lang=it
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,日本語,./?lang=ja
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ქართული,./?lang=ka
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,한국어,./?lang=ko
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Latina,./?lang=la
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Lietuvių,./?lang=lt
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Latviešu,./?lang=lv
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Македонски,./?lang=mk
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Melayu,./?lang=ms
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Malti,./?lang=mt
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Norsk,./?lang=no
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Nederlands,./?lang=nl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Polski,./?lang=pl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Português,./?lang=pt
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Română,./?lang=ro
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Русский,./?lang=ru
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Slovenčina,./?lang=sk
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Slovenščina,./?lang=sl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Shqip,./?lang=sq
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Српски,./?lang=sr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Svenska,./?lang=sv
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Kiswahili,./?lang=sw
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,தமிழ்,./?lang=ta
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ไทย,./?lang=th
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Tagalog,./?lang=tl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Türkçe,./?lang=tr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Українська,./?lang=uk
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,اردو,./?lang=ur
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Tiếng Việt,./?lang=vi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ייִדיש,./?lang=yi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,中文 (简体),./?lang=zh
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,中文 (繁體),./?lang=zh
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Zulu,./?lang=zu

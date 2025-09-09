@@ -1,7 +1,7 @@
 Charlie
 Charlie
 Click an option below
-https://placehold.co/32x32/004879/FFFFFF?text=A,Alpha,./?menu=alpha
-https://placehold.co/32x32/004879/FFFFFF?text=B,Bravo,./?menu=bravo
-https://placehold.co/32x32/004879/FFFFFF?text=C,Charlie,./?menu=charlie
-https://placehold.co/32x32/D22E1E/FFFFFF?text=H,Help,./?menu=help
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">A</span>,Alpha,./?menu=alpha
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">B</span>,Bravo,./?menu=bravo
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">C</span>,Charlie,./?menu=charlie
+<span class="c-lt" style="--bg: #D22E1E; --fg: #FFFFFF;">H</span>,Help,./?menu=help

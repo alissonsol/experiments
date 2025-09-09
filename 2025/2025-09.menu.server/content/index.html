@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading...</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
     <!-- Top Navigation Menu -->
     <nav class="nav">
     <div class="flex-end">
-            <a href="./?menu=language" class="nav-link">&#x1F310;</a>
+            <a href="./?menu=default" class="nav-link"><span class="material-symbols-outlined">home</span></a>
+            <a href="./?menu=language" class="nav-link"><span class="material-symbols-outlined">language</span></a>
         </div>
     </nav>
 
@@ -79,8 +80,8 @@
                 const menuItems = lines.slice(3);
 
                 document.title = pageTitle;
-                document.getElementById('menu-header').innerText = menuHeader;
-                document.getElementById('menu-subheader').innerText = menuSubheader;
+                document.getElementById('menu-header').innerHTML = menuHeader;
+                document.getElementById('menu-subheader').innerHTML = menuSubheader;
 
                 const menuContainer = document.getElementById('menu-container');
 
@@ -92,12 +93,8 @@
                         // The following class change makes the icon and text appear on a single line
                         link.className = "menu-item-link";
 
-                        const icon = document.createElement('img');
-                        icon.src = iconSource;
-                        icon.alt = menuText;
-                        // The icon size is reduced for a more compact look
-                        icon.className = "menu-icon";
-                        icon.onerror = () => icon.src = `https://placehold.co/100x100/CCCCCC/000000?text=${menuText.substring(0, 1)}`;
+                        const icon = document.createElement('span');
+                        icon.innerHTML = iconSource;
 
                         const text = document.createElement('span');
                         text.innerText = menuText;

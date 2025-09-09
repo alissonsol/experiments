@@ -7,6 +7,7 @@ body {
     display: flex;
     flex-direction: column;
 }
+
 .menu-item-link {
     transition: transform 0.2s, box-shadow 0.2s;
     display: flex;
@@ -15,16 +16,18 @@ body {
     background: #fff;
     padding: 1rem;
     border-radius: 1rem;
-    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     margin-bottom: 1rem;
     text-decoration: none;
     color: #374151;
 }
+
 .menu-item-link:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     color: #2563eb;
 }
+
 .menu-header {
     font-size: 2rem;
     font-weight: bold;
@@ -33,12 +36,14 @@ body {
     margin-bottom: 1.5rem;
     text-align: center;
 }
+
 .menu-subheader {
     font-size: 1.125rem;
     color: #6b7280;
     margin-top: 0.5rem;
     text-align: center;
 }
+
 .menu-container {
     display: grid;
     grid-template-columns: 1fr;
@@ -47,16 +52,19 @@ body {
     max-width: 64rem;
     margin: 0 auto;
 }
+
 @media (min-width: 640px) {
     .menu-container {
         grid-template-columns: repeat(2, 1fr);
     }
 }
+
 @media (min-width: 1024px) {
     .menu-container {
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
 .menu-icon {
     width: 3rem;
     height: 3rem;
@@ -64,27 +72,32 @@ body {
     border: 2px solid #e5e7eb;
     object-fit: cover;
 }
+
 .menu-text {
     font-size: 1rem;
     font-weight: 600;
     color: #374151;
 }
+
 .nav {
     background: #fff;
-    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     padding: 1rem 1.5rem;
     border-bottom-left-radius: 1rem;
     border-bottom-right-radius: 1rem;
 }
+
 .nav-link {
     color: #4b5563;
     margin-left: 1rem;
     transition: color 0.2s;
     text-decoration: none;
 }
+
 .nav-link:hover {
     color: #2563eb;
 }
+
 .loading-indicator {
     display: flex;
     flex-direction: column;
@@ -93,17 +106,20 @@ body {
     color: #6b7280;
     margin-top: 3rem;
 }
+
 .footer {
     text-align: center;
     padding: 1rem 0;
     color: #9ca3af;
     font-size: 0.875rem;
 }
+
 .flex-end {
     display: flex;
     justify-content: flex-end;
     align-items: center;
 }
+
 .main-container {
     flex-grow: 1;
     width: 100%;
@@ -111,4 +127,27 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 1rem;
+}
+
+.c-lt {
+    /* Define CSS variables with default values */
+    --fg: #fff;
+    --bg: #111;
+    --br: #ccc;
+
+    /* Apply the properties using the variables */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9px;
+    border-width: 4px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+
+    color: var(--fg);
+    background-color: var(--bg);
+    border-color: var(--br);
 }
