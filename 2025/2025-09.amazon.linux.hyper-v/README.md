@@ -8,6 +8,8 @@ This is an update of a previous effort that used [Amazon WorkSpaces](https://git
 
 ### 1.a) Downloading the latest files
 
+<mark>SHORTCUT: The steps below (1.a) have been automated in the PowerShell script [`amazon.linux.hyper-v.download.ps1`](./amazon.linux.hyper-v.download.ps1).</mark>
+
 Ready? Proceed to the download [site](https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2-download.html). Click the link to the [cnd.amazonlinux.com](https://cdn.amazonlinux.com/al2023/os-images/latest/), and get to the `hyperv` subfolder. There will be large `vhdx.zip` file, which is the one to download. A hint here: you can see by the long file name that this image is being constantly updated. I usually keep the ZIP file copied nearby. Then, I unzip the content, while copying to `$env:ProgramData\Microsoft\Windows\Virtual Hard Disks`. Used to be `$env:Public\Documents\Hyper-V\Virtual hard disks`, but why would Microsoft keep locations stable when those updating Markdown files need a job?!
 
 Before proceeding, you need to create a file `seed.iso`, with the volume label `cidata`. This file defines the default password for the user during the first login, as per instructions [here](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html). Which would be reasonable instructions, if someone using Windows Hyper-V had the Linux and macOS tools! A possible solution is to [Download and install the Windows ADK](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install), using the command line tool `oscdimg`, which has clear command line [parameters](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options). Instead, I used AnyBurn, which you can download for free from [AnyBurn.com](https://anyburn.com/). You then just add the files `meta-data` and `user-data` with the configurations of your choice, and don't forget the volume label (see picture).
@@ -16,9 +18,9 @@ Before proceeding, you need to create a file `seed.iso`, with the volume label `
 
 The folder [`seedconfig`](./seedconfig/) in this repository has examples for the `-data` files. The repository also has a ready to use binary [`seed.iso`](./seed.iso) file. See the default password for the default user `ec2-user` in the [`user-data`](./seedconfig/user-data) file. You will be asked to change the default password for the default user after the first login. This is likely not the big security risk you will face today!
 
-The steps above have been automated in the PowerShell script [`amazon.linux.hyper-v.download.ps1`](./amazon.linux.hyper-v.download.ps1).
-
 ### 1.b) Creating the VM
+
+<marK>SHORTCUT: The steps below (1.b) have been automated in the PowerShell script [`amazon.linux.hyper-v.create.ps1`](./amazon.linux.hyper-v.create.ps1).</mark>
 
 Next, I go to the `Hyper-V Manager` and selecting the local server, righ-click and select the menu `New` -> `Virtual Machine...`:
 - Under `Specify Name and Location`, enter whatever name you prefer (suggested: `AmazonLinux`), and leave the default location.
@@ -32,8 +34,6 @@ Next, I go to the `Hyper-V Manager` and selecting the local server, righ-click a
 
 Apply the changes. You can now start the VM, as per the instructions to [Run AL2 as a virtual machine on premises](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html). Unless you changed the defaults in the file `user-data`, you will login with the `ec2-user` account and the password defined there, and be promptly asked to change the password.
 
-The steps above have been automated in the PowerShell script [`amazon.linux.hyper-v.create.ps1`](./amazon.linux.hyper-v.create.ps1).
-
 ### 1.c) Network checks!
 
 Before proceeding, check network connectivity. A simple command like `ping 8.8.8.8` should check if the network is connected. Then `ping google.com` would check if the DNS service client stack is working.
@@ -44,7 +44,15 @@ CHECKPOINT: This is a great time to create a checkpoint `OS Installed`. Your sys
 
 ## 2) Install Tools
 
-You may benefit from reading through the instructions and then going to step `2.f` for the hint on using a Bash script to automate the install steps.
+<mark>SHORTCUT: The steps below (2.a, 2.b, 2.c, and 2.d) have been automated in the Bash script [`amazon.linux.config.bash`](./amazon.linux.config.bash).</mark>
+
+After the first login after the OS is installed, execute the commands below and jump to 2.f.
+
+```
+curl -o amazon.linux.config.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.config.bash
+chmod a+x amazon.linux.config.bash
+sudo bash amazon.linux.config.bash
+```
 
 ### 2.a) Install the GUI
 
@@ -111,16 +119,7 @@ code --version
 
 Follow instructions for [Managing Extensions in Visual Studio Code](https://code.visualstudio.com/docs/editor/extension-gallery) and install useful extensions.
 
-The steps above have been automated in the Back script [`amazon.linux.config.bash`](./amazon.linux.config.bash).
-
 ### 2.f) Test if everything works...
-
-The steps above have been automated in the Bash script [`amazon.linux.config.bash`](./amazon.linux.config.bash). After the first login after the OS is installed, the commands below should automate all the "Install" step so far.
-
-```
-curl -o amazon.linux.config.bash https://github.com/alissonsol/experiments/blob/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.config.bash
-sudo amazon.linux.config.bash
-```
 
 At the end of the process, it is required to at least logout and login again, so the membership credentials are refreshed.
 
@@ -132,10 +131,10 @@ sudo shutdown -r now
 After the reboot and reconnection, open a terminal and check every package installed is still accessible.
 
 ```
-javac -version
-dotnet --version
-git --version
-code --version
+echo "Java: `javac -version`"
+echo "DotNet: `dotnet --version`"
+echo "Git: `git --version`"
+echo "Visual Studio Code: `code --version`"
 ```
 
 CHECKPOINT: This is a great time to create a checkpoint `Tools Installed`. You should now be able to start Visual Studio Code (`code`).
