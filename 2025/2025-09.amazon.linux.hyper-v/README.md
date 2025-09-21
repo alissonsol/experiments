@@ -44,14 +44,14 @@ If something is not working, check if the machine got an IP address with the `if
 
 ## 2) Install Tools
 
-<mark>SHORTCUT: The steps below (2.a, 2.b, 2.c, and 2.d) have been automated in the Bash script [`amazon.linux.config.bash`](./amazon.linux.config.bash).</mark>
+<mark>SHORTCUT: The steps below (2.a, 2.b, 2.c, and 2.d) have been automated in the Bash script [`amazon.linux.tools.bash`](./amazon.linux.tools.bash).</mark>
 
 After the first login after the OS is installed, execute the commands below and jump to 2.f.
 
 ```
-curl -o amazon.linux.config.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.config.bash
-chmod a+x amazon.linux.config.bash
-sudo bash amazon.linux.config.bash
+curl -o amazon.linux.tools.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.tools.bash
+chmod a+x amazon.linux.tools.bash
+sudo bash amazon.linux.tools.bash
 ```
 
 ### 2.a) Install the GUI
