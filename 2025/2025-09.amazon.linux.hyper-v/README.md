@@ -40,7 +40,7 @@ Before proceeding, check network connectivity. A simple command like `ping 8.8.8
 
 If something is not working, check if the machine got an IP address with the `ifconfig` command. If that is not working, you may try to shutdown the machine (`sudo shutdown now`) and change the settings for the `Network Adapter` virtual switch (more [here](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines), but going deeper is beyond the scope of this document).
 
-CHECKPOINT: This is a great time to create a checkpoint `OS Installed`. Your system should reboot to a command line. Yet, it may save time.
+<mark>CHECKPOINT: This is a great time to create a checkpoint `OS Installed`. Your system should reboot to a command line. Yet, it may save time.</mark>
 
 ## 2) Install Tools
 
@@ -65,7 +65,7 @@ sudo dnf groupinstall "Desktop" -y
 sudo shutdown now
 ```
 
-CHECKPOINT: This is a great time to create a checkpoint `GUI Installed`. Your system should reboot to a GUI, and you should be able to start a terminal and a browser. Or you may wait until all tools are installed.
+<mark>CHECKPOINT: This is a great time to create a checkpoint `GUI Installed`. Your system should reboot to a GUI, and you should be able to start a terminal and a browser. Or you may wait until all tools are installed.</mark>
 
 ![](images/002.Amazon.Linux.GUI.PNG)
 
@@ -137,7 +137,9 @@ echo "Git: `git --version`"
 echo "Visual Studio Code: `code --version`"
 ```
 
-CHECKPOINT: This is a great time to create a checkpoint `Tools Installed`. You should now be able to start Visual Studio Code (`code`).
+You should now be able to start Visual Studio Code (`code`).
+
+<mark>CHECKPOINT: This is a great time to create a checkpoint `Tools Installed`.</mark>
 
 ## 3) Extras
 

@@ -10,7 +10,7 @@ dnf install -y java-21-amazon-corretto-devel
 java -version
 javac -version
 export JAVA_HOME=/etc/alternatives/java_sdk
-echo 'export JAVA_HOME=/etc/alternatives/java_sdk' | sudo tee -a /etc/bashrc
+echo 'export JAVA_HOME=/etc/alternatives/java_sdk' | tee -a /etc/bashrc
 
 # Install .NET Core
 rpm -Uvh https://packages.microsoft.com/config/centos/8/packages-microsoft-prod.rpm
@@ -31,4 +31,4 @@ dnf -y install code
 echo "Java: `javac -version`"
 echo "DotNet: `dotnet --version`"
 echo "Git: `git --version`"
-echo "Visual Studio Code: `code --version`"
+echo "Visual Studio Code: `code --version --no-sandbox --user-data-dir $TMPDIR`"
