@@ -38,7 +38,16 @@ Apply the changes. You can now start the VM, as per the instructions to [Run AL2
 
 Before proceeding, check network connectivity. A simple command like `ping 8.8.8.8` should check if the network is connected. Then `ping google.com` would check if the DNS service client stack is working.
 
-If something is not working, check if the machine got an IP address with the `ifconfig` command. If that is not working, you may try to shutdown the machine (`sudo shutdown now`) and change the settings for the `Network Adapter` virtual switch (more [here](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines), but going deeper is beyond the scope of this document).
+If something is not working, check if the machine got an IP address with the `ifconfig` command. If that is not working, you may try to change the settings for the `Network Adapter` virtual switch (more [here](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines).
+
+After each change you can bring network connection down and up again and check connectivity. Example below for `eth0`.
+
+```
+sudo ip link set dev eth0 down
+sudo ip link set dev eth0 up
+ifconfig
+ping 8.8.8.8
+```
 
 <mark>CHECKPOINT: This is a great time to create a checkpoint `OS Installed`. Your system should reboot to a command line. Yet, it may save time.</mark>
 
@@ -171,3 +180,10 @@ docker run hello-world
 If that last command fails, remember to logout (menu System->Log Out) and connect again.
 
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
+
+### 3.b) RDP Server and Client
+
+Status: TODO
+
+- Instructions for server from the [Tutorial: Configure TigerVNC server on AL2023](https://docs.aws.amazon.com/linux/al2023/ug/vnc-configuration-al2023.html).
+- Client tested from: [Download TightVNC](https://www.tightvnc.com/download.php).

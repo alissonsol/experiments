@@ -31,4 +31,9 @@ dnf -y install code
 echo "Java: `javac -version`"
 echo "DotNet: `dotnet --version`"
 echo "Git: `git --version`"
+if [ -z "$TMPDIR" ]; then
+	TMPDIR=$(mktemp -d)
+    export TMPDIR
+	echo "TMPDIR not set. Created and set TMPDIR to $TMPDIR"
+fi
 echo "Visual Studio Code: `code --version --no-sandbox --user-data-dir $TMPDIR`"
