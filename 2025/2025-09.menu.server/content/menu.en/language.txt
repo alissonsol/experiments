@@ -1,4 +1,4 @@
-%F0%9F%8C%90
+Language
 <span class="material-symbols-outlined">language</span>
 %20
 <span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Afrikaans,Item Explanation,./?lang=af
