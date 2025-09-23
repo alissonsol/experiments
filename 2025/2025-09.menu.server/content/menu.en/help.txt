@@ -1,7 +1,4 @@
 Help
-Help
+<span class="material-symbols-outlined">help</span>
 Click an option below
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">A</span>,Alpha,Item Explanation,./?menu=alpha
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">B</span>,Bravo,Item Explanation,./?menu=bravo
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">C</span>,Charlie,Item Explanation,./?menu=charlie
 <span class="c-lt" style="--bg: #D22E1E; --fg: #FFFFFF;">H</span>,Help,Item Explanation,./?menu=help

@@ -1,0 +1,4 @@
+Settings
+<span class="material-symbols-outlined">settings</span>
+%20
+<span class="material-symbols-outlined">language</span>,Language,Item Explanation,./?menu=language
