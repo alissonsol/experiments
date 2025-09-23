@@ -1,64 +1,64 @@
 %F0%9F%8C%90
 <span class="material-symbols-outlined">language</span>
 %20
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Afrikaans,./?lang=af
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,العربية,./?lang=ar
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Беларуская,./?lang=be
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Български,./?lang=bg
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,বাংলা,./?lang=bn
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Bosanski,./?lang=bs
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Català,./?lang=ca
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Čeština,./?lang=cs
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Cymraeg,./?lang=cy
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Dansk,./?lang=da
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Deutsch,./?lang=de
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Ελληνικά,./?lang=el
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,English,./?lang=en
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Español,./?lang=es
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Eesti,./?lang=et
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Euskara,./?lang=eu
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,فارسی,./?lang=fa
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Suomi,./?lang=fi
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Français,./?lang=fr
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Gaeilge,./?lang=ga
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Galego,./?lang=gl
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,עברית,./?lang=he
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,हिन्दी,./?lang=hi
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Hrvatski,./?lang=hr
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Magyar,./?lang=hu
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Հայերեն,./?lang=hy
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Bahasa Indonesia,./?lang=id
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Íslenska,./?lang=is
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Italiano,./?lang=it
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,日本語,./?lang=ja
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ქართული,./?lang=ka
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,한국어,./?lang=ko
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Latina,./?lang=la
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Lietuvių,./?lang=lt
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Latviešu,./?lang=lv
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Македонски,./?lang=mk
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Melayu,./?lang=ms
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Malti,./?lang=mt
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Norsk,./?lang=no
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Nederlands,./?lang=nl
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Polski,./?lang=pl
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Português,./?lang=pt
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Română,./?lang=ro
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Русский,./?lang=ru
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Slovenčina,./?lang=sk
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Slovenščina,./?lang=sl
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Shqip,./?lang=sq
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Српски,./?lang=sr
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Svenska,./?lang=sv
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Kiswahili,./?lang=sw
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,தமிழ்,./?lang=ta
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ไทย,./?lang=th
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Tagalog,./?lang=tl
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Türkçe,./?lang=tr
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Українська,./?lang=uk
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,اردو,./?lang=ur
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Tiếng Việt,./?lang=vi
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ייִדיש,./?lang=yi
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,中文 (简体),./?lang=zh
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,中文 (繁體),./?lang=zh
-<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Zulu,./?lang=zu
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Afrikaans,Item Explanation,./?lang=af
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,العربية,Item Explanation,./?lang=ar
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Беларуская,Item Explanation,./?lang=be
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Български,Item Explanation,./?lang=bg
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,বাংলা,Item Explanation,./?lang=bn
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Bosanski,Item Explanation,./?lang=bs
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Català,Item Explanation,./?lang=ca
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Čeština,Item Explanation,./?lang=cs
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Cymraeg,Item Explanation,./?lang=cy
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Dansk,Item Explanation,./?lang=da
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Deutsch,Item Explanation,./?lang=de
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Ελληνικά,Item Explanation,./?lang=el
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,English,Item Explanation,./?lang=en
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Español,Item Explanation,./?lang=es
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Eesti,Item Explanation,./?lang=et
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Euskara,Item Explanation,./?lang=eu
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,فارسی,Item Explanation,./?lang=fa
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Suomi,Item Explanation,./?lang=fi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Français,Item Explanation,./?lang=fr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Gaeilge,Item Explanation,./?lang=ga
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Galego,Item Explanation,./?lang=gl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,עברית,Item Explanation,./?lang=he
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,हिन्दी,Item Explanation,./?lang=hi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Hrvatski,Item Explanation,./?lang=hr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Magyar,Item Explanation,./?lang=hu
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Հայերեն,Item Explanation,./?lang=hy
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Bahasa Indonesia,Item Explanation,./?lang=id
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Íslenska,Item Explanation,./?lang=is
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Italiano,Item Explanation,./?lang=it
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,日本語,Item Explanation,./?lang=ja
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ქართული,Item Explanation,./?lang=ka
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,한국어,Item Explanation,./?lang=ko
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Latina,Item Explanation,./?lang=la
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Lietuvių,Item Explanation,./?lang=lt
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Latviešu,Item Explanation,./?lang=lv
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Македонски,Item Explanation,./?lang=mk
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Melayu,Item Explanation,./?lang=ms
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Malti,Item Explanation,./?lang=mt
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Norsk,Item Explanation,./?lang=no
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Nederlands,Item Explanation,./?lang=nl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Polski,Item Explanation,./?lang=pl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Português,Item Explanation,./?lang=pt
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Română,Item Explanation,./?lang=ro
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Русский,Item Explanation,./?lang=ru
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Slovenčina,Item Explanation,./?lang=sk
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Slovenščina,Item Explanation,./?lang=sl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Shqip,Item Explanation,./?lang=sq
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Српски,Item Explanation,./?lang=sr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Svenska,Item Explanation,./?lang=sv
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Kiswahili,Item Explanation,./?lang=sw
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,தமிழ்,Item Explanation,./?lang=ta
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ไทย,Item Explanation,./?lang=th
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Tagalog,Item Explanation,./?lang=tl
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Türkçe,Item Explanation,./?lang=tr
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Українська,Item Explanation,./?lang=uk
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,اردو,Item Explanation,./?lang=ur
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Tiếng Việt,Item Explanation,./?lang=vi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,ייִדיש,Item Explanation,./?lang=yi
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,中文 (简体),Item Explanation,./?lang=zh
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,中文 (繁體),Item Explanation,./?lang=zh
+<span class="c-lt" style="--bg: #004879; --fg: #FFFFFF;">-</span>,Zulu,Item Explanation,./?lang=zu

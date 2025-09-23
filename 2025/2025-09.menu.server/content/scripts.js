@@ -41,10 +41,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         const menuContainer = document.getElementById('menu-container');
 
         menuItems.forEach(itemLine => {
-            const [iconSource, menuText, destinationUrl] = itemLine.split(',').map(s => s.trim());
+            // Expect: iconSource, menuText, menuExplanation, destinationUrl
+            const parts = itemLine.split(',').map(s => s.trim());
+            const [iconSource, menuText, menuExplanation, destinationUrl] = parts;
             if (iconSource && menuText && destinationUrl) {
                 const link = document.createElement('a');
                 link.href = destinationUrl;
+                // Use the explanation as a tooltip/title on the link (if provided)
+                if (menuExplanation && menuExplanation.length) {
+                    link.title = menuExplanation;
+                }
                 // The following class change makes the icon and text appear on a single line
                 link.className = "menu-item-link";
 
