@@ -68,16 +68,21 @@ if (!(Test-Path -Path $localVhdxPath)) {
 	exit 1
 }
 $defaultVmName = "amazonlinux"
-$defaultVhdxName = "$defaultVmName.vhdx"
-$vhdxName = "$vmName.vhdx"
-$vhdxFile = Join-Path $localVhdxPath $vhdxName
-$defaultVhdxFile = Join-Path $localVhdxPath $defaultVhdxName
+$defaultVhdxName = "$defaultVmName"
+$vhdxName = "$vmName"
+$vhdxFile = Join-Path $localVhdxPath "$vhdxName/$vhdxName.vhdx"
+$defaultVhdxFile = Join-Path $localVhdxPath "$defaultVhdxName.vhdx"
 
 # If the vmName parameter was provided and differs from the default, ensure the VHDX is a copy
 if ($PSBoundParameters.ContainsKey('vmName') -and $vmName -ne $defaultVmName) {
 	if (Test-Path -Path $defaultVhdxFile) {
 		if (!(Test-Path -Path $vhdxFile)) {
 			Write-Output "Creating VHDX for '$vmName' by copying default VHDX..."
+			# Ensure destination folder exists
+			$destDir = Split-Path -Path $vhdxFile -Parent
+			if ($destDir -and -not (Test-Path -Path $destDir)) {
+				New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+			}
 			Copy-Item -Path $defaultVhdxFile -Destination $vhdxFile -Force
 			Write-Output "Copied '$defaultVhdxFile' -> '$vhdxFile'."
 		}

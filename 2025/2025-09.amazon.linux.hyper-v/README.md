@@ -20,6 +20,12 @@ The folder [`seedconfig`](./seedconfig/) in this repository has examples for the
 
 ### 1.b) Creating the VM
 
+<mark>SHORTCUT: If you are considering creating multiple VMs, jump to section 3.a now.</mark>
+
+It may be a good ideal to browse through the remaining of section 1 and through section 2 to see how many steps the script to create multiple VMs will save. Yet, do not create a single VM and later execute the scripts to create multiple VMs: the baseline Virtual Hard Disk may be changed already at that point. If changing approaches, consider downloading it again, using the script from step 1.a.
+
+A possible reason not to go and use the script to create multiple VMs, even if creating a single one: it will creata a copy of the large baseline baseline Virtual Hard Disk file, what doesn't happen if following the manual or automated steps in the path to section 3.
+
 <marK>SHORTCUT: The steps below (1.b) have been automated in the PowerShell script [`amazon.linux.hyper-v.create.ps1`](./amazon.linux.hyper-v.create.ps1).</mark>
 
 Next, I go to the `Hyper-V Manager` and selecting the local server, righ-click and select the menu `New` -> `Virtual Machine...`:
@@ -38,7 +44,7 @@ Apply the changes. You can now start the VM, as per the instructions to [Run AL2
 
 Before proceeding, check network connectivity. A simple command like `ping 8.8.8.8` should check if the network is connected. Then `ping google.com` would check if the DNS service client stack is working.
 
-If something is not working, check if the machine got an IP address with the `ifconfig` command. If that is not working, you may try to change the settings for the `Network Adapter` virtual switch (more [here](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines).
+If something is not working, check if the machine got an IP address with the `ifconfig` command. If that is not working, you may try to change the settings for the `Network Adapter` virtual switch (more [here](https://learn.microsoft.com/en-us/windows-server/virtualization/hyper-v/get-started/create-a-virtual-switch-for-hyper-v-virtual-machines)).
 
 After each change you can bring network connection down and up again and check connectivity. Example below for `eth0`.
 
@@ -156,16 +162,25 @@ You should now be able to start Visual Studio Code (`code`).
 
 One VM is good. Many VMs: far better.
 
-This is how to quickly create VMs with specific configuration. First, a one-time step.
-- In order to automate the process of creating the `seed.iso` files, download an install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install). The goal here is to have the executable `oscdimg.exe` in the path that is defined at the top of the `vmcreate-common.psm1` PowerShell module.
+This is how to quickly create VMs with specific configuration. First, the steps that needed to be executed just one time per host machine.
+- In order to automate the process of creating the `seed.iso` files, download an install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install).
+- Confirm that the path to the executable `oscdimg.exe` is correct at the top of the `vmcreate-common.psm1` PowerShell module.
+- The PowerShell script `amazon.linux.hyper-v.download.ps1` needs to be executed at least once per host machine.
 
 Now, for each VM to be created.
-- Configure the files in the `vmconfig` folder. A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
-- Execute the PowerShell script `vmcreate.ps1 <vmname>`. For example, `vmcreate.ps1 server01` will create a VM named `server01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This file is in a folder with `<vmname>` under the `$localVhdxPath` (because all such files need the hardcoded name `seed.iso`).
-- Now for even more convenience: notice that the section `runcmd` in the `user-data` file already downloaded a file `amazon.linux.tools.bash` to the root of the target VM. As soon as you login and change the password, all you need is to go there and execute `sudo bash amazon.linux.tools.bash`. The Graphical User Interface and the tools from section 2 are installed. You execute `sudo reboot now` and are already in the GUI with the tools.
-  - If lost track, all you did so far was to configure the data files, execute two PowerShell scripts, change a password, execute a Bash script, and reboot. You are now in a GUI and can start a browser or VS Code.
+- Configure the files in the `vmconfig` folder.
+  - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
+- Execute the PowerShell script `vmcreate.ps1 <vmname>`.
+  - For example, `vmcreate.ps1 server01` will create a VM named `server01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
+- Login and change the password.
+- Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.tools.bash`.
+  - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.tools.bash` to the root of the target VM. After execution the Bash script, the Graphical User Interface and the tools from section 2 are installed.
+- Execute `sudo reboot now` and the VM reboots already in the GUI mode with the tools.
 
 <mark>CHECKPOINT: This is a great time to create a checkpoint `VM Configured` for each VM.</mark>
+
+- If lost track, all you did so far was to configure the data files, execute two PowerShell scripts, change a password, execute a Bash script, and reboot. You are now in a GUI and can start a browser or VS Code.
+  - Technically, you can add the line to run `bash amazon.linux.tools.bash` to the `user-data` file. That usually ends-up creating a confusing first login that is still under the command line interface, instead of the GUI, when the password needs to be changed. It is a personal preference to do that, which technically removes one step in the process (execute a Bash script).
 
 Test VM connectivity.
 - Open a terminal and get the IP for each VM: `ifconfig` or `ifconfig eth0`.
