@@ -53,7 +53,7 @@ ping 8.8.8.8
 
 ## 2) Install Tools
 
-<mark>SHORTCUT: The steps below (2.a, 2.b, 2.c, and 2.d) have been automated in the Bash script [`amazon.linux.tools.bash`](./amazon.linux.tools.bash).</mark>
+<mark>SHORTCUT: The steps below (2.a, 2.b, 2.c, 2.d, and 2.e) have been automated in the Bash script [`amazon.linux.tools.bash`](./amazon.linux.tools.bash).</mark>
 
 After the first login after the OS is installed, execute the commands below and jump to 2.f.
 
@@ -152,7 +152,28 @@ You should now be able to start Visual Studio Code (`code`).
 
 ## 3) Extras
 
-### 3.a) Install Docker
+### 3.a) Multiple VMs.
+
+One VM is good. Many VMs: far better.
+
+This is how to quickly create VMs with specific configuration. First, a one-time step.
+- In order to automate the process of creating the `seed.iso` files, download an install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install). The goal here is to have the executable `oscdimg.exe` in the path that is defined at the top of the `vmcreate-common.psm1` PowerShell module.
+
+Now, for each VM to be created.
+- Configure the files in the `vmconfig` folder. A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
+- Execute the PowerShell script `vmcreate.ps1 <vmname>`. For example, `vmcreate.ps1 server01` will create a VM named `server01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This file is in a folder with `<vmname>` under the `$localVhdxPath` (because all such files need the hardcoded name `seed.iso`).
+- Now for even more convenience: notice that the section `runcmd` in the `user-data` file already downloaded a file `amazon.linux.tools.bash` to the root of the target VM. As soon as you login and change the password, all you need is to go there and execute `sudo bash amazon.linux.tools.bash`. The Graphical User Interface and the tools from section 2 are installed. You execute `sudo reboot now` and are already in the GUI with the tools.
+  - If lost track, all you did so far was to configure the data files, execute two PowerShell scripts, change a password, execute a Bash script, and reboot. You are now in a GUI and can start a browser or VS Code.
+
+<mark>CHECKPOINT: This is a great time to create a checkpoint `VM Configured` for each VM.</mark>
+
+Test VM connectivity.
+- Open a terminal and get the IP for each VM: `ifconfig` or `ifconfig eth0`.
+- Ping to another IP address. Try DNS resolution: `ping www.google.com`.
+- For convenience, you can find the IP addresses for the running guests from the Hyper-V host with this PowerShell command:
+  - `Get-VM | Where-Object {$_.State -eq "Running"} | Get-VMNetworkAdapter | Select-Object VMName, IPAddresses`
+
+### 3.b) Install Docker
   
 Allow work with containers. Thi is a hack of the instructions for the [CentOS](https://docs.docker.com/engine/install/centos/#set-up-the-repository). It works around the `$releasever` for the Amazon Linux being different. Also need to pre-install the depenencies (`iptables` and `container-selinux`).
 
@@ -181,9 +202,10 @@ If that last command fails, remember to logout (menu System->Log Out) and connec
 
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
 
-### 3.b) RDP Server and Client
+### 3.c) GUI resolution improvement
 
-Status: TODO
-
+This is a good contribution opportunity, since it is still a "TODO". The following path was tested, but instructions didn't work.
 - Instructions for server from the [Tutorial: Configure TigerVNC server on AL2023](https://docs.aws.amazon.com/linux/al2023/ug/vnc-configuration-al2023.html).
 - Client tested from: [Download TightVNC](https://www.tightvnc.com/download.php).
+
+Tried changing the resolution to 1920x1080, and still got 1024x768. For now, since working with multiple VMs, not a roadblock, and just an inconvenience.

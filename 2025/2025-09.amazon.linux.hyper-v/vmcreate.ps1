@@ -17,9 +17,16 @@
 
 # Script parameters
 param(
-	[Parameter(Position=0)]
+	[Parameter(Position = 0)]
 	[string]$vmName = "amazonlinux"
 )
+
+$global:InformationPreference = "Continue"
+$global:DebugPreference = "SilentlyContinue"
+$global:VerbosePreference = "SilentlyContinue"
+
+$commonModulePath = Join-Path -Path $PSScriptRoot -ChildPath "vmcreate-common"
+Import-Module -Name $commonModulePath -Force
 
 # Inform and check for elevation
 Write-Output "This script requires elevation (Run as Administrator)."
@@ -57,8 +64,8 @@ if ($existingVM) {
 $localVhdxPath = (Get-VMHost).VirtualHardDiskPath
 Write-Output "Hyper-V default VHDX folder: $localVhdxPath"
 if (!(Test-Path -Path $localVhdxPath)) {
-    Write-Output "The Hyper-V default VHDX folder does not exist: $localVhdxPath"
-    exit 1
+	Write-Output "The Hyper-V default VHDX folder does not exist: $localVhdxPath"
+	exit 1
 }
 $defaultVmName = "amazonlinux"
 $defaultVhdxName = "$defaultVmName.vhdx"
@@ -73,10 +80,12 @@ if ($PSBoundParameters.ContainsKey('vmName') -and $vmName -ne $defaultVmName) {
 			Write-Output "Creating VHDX for '$vmName' by copying default VHDX..."
 			Copy-Item -Path $defaultVhdxFile -Destination $vhdxFile -Force
 			Write-Output "Copied '$defaultVhdxFile' -> '$vhdxFile'."
-		} else {
+		}
+		else {
 			Write-Output "Target VHDX already exists: $vhdxFile -- leaving as is."
 		}
-	} else {
+	}
+ else {
 		Write-Output "Default VHDX not found: $defaultVhdxFile. Cannot create '$vhdxFile'. Please ensure default VHDX exists."
 		exit 1
 	}
@@ -88,12 +97,10 @@ if (!(Test-Path -Path $vhdxFile)) {
 	exit 1
 }
 
-$seedIsoFile = Join-Path $localVhdxPath "seed.iso"
-if (!(Test-Path -Path $seedIsoFile)) {
-	Write-Output "The seed ISO file does not exist: $seedIsoFile"
-	Write-Output "Please run the download script first."
-	exit 1
-}
+$vmConfig = Join-Path $PSScriptRoot "vmconfig"
+$seedIsoFile = Join-Path $localVhdxPath "$vmName/seed.iso"
+$VolumeId = "cidata"
+CreateIso -SourceDir $vmConfig -OutputFile $seedIsoFile -VolumeId $VolumeId
 
 # Create new Generation 2 Hyper-V VM
 Write-Output "Creating new VM '$vmName'..."
