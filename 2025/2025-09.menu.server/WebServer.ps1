@@ -132,8 +132,31 @@ function Start-SimpleWebServer {
 }
 
 function Test-Admin {
-    $currentUser = New-Object Security.Principal.WindowsPrincipal $([Security.Principal.WindowsIdentity]::GetCurrent())
-    $currentUser.IsInRole([Security.Principal.WindowsBuiltinRole]::Administrator)
+    try {
+        if ($IsWindows) {
+            try {
+                $wi = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+                $wp = New-Object System.Security.Principal.WindowsPrincipal($wi)
+                return $wp.IsInRole([System.Security.Principal.WindowsBuiltinRole]::Administrator)
+            } catch {
+                return $false
+            }
+        } else {
+            # Non-Windows: check for UID 0 (root) via the `id` command; fall back to environment variables
+            try {
+                if (Get-Command id -ErrorAction SilentlyContinue) {
+                    $uid = (& id -u) 2>$null
+                    return ($uid -eq '0' -or $uid -eq 0)
+                } else {
+                    return ($env:USER -eq 'root') -or ($env:USERNAME -eq 'root')
+                }
+            } catch {
+                return $false
+            }
+        }
+    } catch {
+        return $false
+    }
 }
 
 # Get the script's directory.

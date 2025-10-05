@@ -173,6 +173,7 @@ Now, for each VM to be created.
 - Execute the PowerShell script `vmcreate.ps1 <vmname>`.
   - For example, `vmcreate.ps1 server01` will create a VM named `server01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
 - Login and change the password.
+  - At this point, if there is any update since the Amazon Linux image was last downloaded, you will be asked to execute the command `/usr/bin/dnf check-release-update`. Proceed as per the instructions to upgrade the operating system binaries before proceeding.
 - Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.tools.bash`.
   - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.tools.bash` to the root of the target VM. After execution the Bash script, the Graphical User Interface and the tools from section 2 are installed.
 - Execute `sudo reboot now` and the VM reboots already in the GUI mode with the tools.
@@ -188,7 +189,25 @@ Test VM connectivity.
 - For convenience, you can find the IP addresses for the running guests from the Hyper-V host with this PowerShell command:
   - `Get-VM | Where-Object {$_.State -eq "Running"} | Get-VMNetworkAdapter | Select-Object VMName, IPAddresses`
 
-### 3.b) Install Docker
+### 3.b) Optional Command Line Tools
+
+This assumes that the user has already executed the "tools" installation, and so Visual Studio Code is available to edit any files, the Firefox Browser is available to visit sites, etc. These are all optional. The commands below are "hacks" for x86_x64 architectures and locked to versions of the keys and packages. Update as needed.
+
+- Install PowerShell
+  - `sudo dnf install powershell -y`
+- Install AWS CLI
+  - `sudo dnf install awscli -y`
+  - Check with `aws --version`
+- Install Azure CLI
+  - `sudo sh -c 'echo -e "[azure-cli]\nname=azure-cli\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft-2025.asc" > /etc/yum.repos.d/azure-cli.repo`
+  - `sudo dnf install azure-cli -y`
+  - Check with `az version`
+- Install Google Cloud CLI
+  - `sudo sh -c 'echo -e "[google-cloud-cli]\nname=google-cloud-cli\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=0\ngpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-cli.repo`
+  - `sudo dnf install google-cloud-cli -y`
+  - Check with `gcloud -v -q`
+
+### 3.c) Install Docker
   
 Allow work with containers. Thi is a hack of the instructions for the [CentOS](https://docs.docker.com/engine/install/centos/#set-up-the-repository). It works around the `$releasever` for the Amazon Linux being different. Also need to pre-install the depenencies (`iptables` and `container-selinux`).
 
@@ -217,7 +236,7 @@ If that last command fails, remember to logout (menu System->Log Out) and connec
 
 Depending on images you will use during development, you may need to sign-up for an account in the [Docker Hub registry](https://hub.docker.com/signup). It is recommended to proactively do that.
 
-### 3.c) GUI resolution improvement
+### 3.d) GUI resolution improvement
 
 This is a good contribution opportunity, since it is still a "TODO". The following path was tested, but instructions didn't work.
 - Instructions for server from the [Tutorial: Configure TigerVNC server on AL2023](https://docs.aws.amazon.com/linux/al2023/ug/vnc-configuration-al2023.html).
