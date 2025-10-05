@@ -199,11 +199,11 @@ This assumes that the user has already executed the "tools" installation, and so
   - `sudo dnf install awscli -y`
   - Check with `aws --version`
 - Install Azure CLI
-  - `sudo sh -c 'echo -e "[azure-cli]\nname=azure-cli\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft-2025.asc" > /etc/yum.repos.d/azure-cli.repo`
+  - `sudo sh -c 'echo -e "[azure-cli]\nname=azure-cli\nbaseurl=https://packages.microsoft.com/yumrepos/azure-cli\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft-2025.asc" > /etc/yum.repos.d/azure-cli.repo'`
   - `sudo dnf install azure-cli -y`
   - Check with `az version`
 - Install Google Cloud CLI
-  - `sudo sh -c 'echo -e "[google-cloud-cli]\nname=google-cloud-cli\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=0\ngpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-cli.repo`
+  - `sudo sh -c 'echo -e "[google-cloud-cli]\nname=google-cloud-cli\nbaseurl=https://packages.cloud.google.com/yum/repos/cloud-sdk-el9-x86_64\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=0\ngpgkey=https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" > /etc/yum.repos.d/google-cloud-cli.repo'`
   - `sudo dnf install google-cloud-cli -y`
   - Check with `gcloud -v -q`
 
