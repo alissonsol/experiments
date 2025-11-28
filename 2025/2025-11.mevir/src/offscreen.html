@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>MEVIR Offscreen Document</title>
+  <!--
+    This offscreen document is used to run Transformers.js for ML inference.
+    
+    Chrome extension service workers don't have DOM access, which is required
+    by ONNX Runtime (used by Transformers.js). This offscreen document provides
+    a DOM context where the model can run.
+    
+    The service worker communicates with this document via chrome.runtime messaging.
+    
+    See: https://developer.chrome.com/docs/extensions/reference/api/offscreen
+  -->
+</head>
+<body>
+  <!-- The offscreen script handles all model operations -->
+  <script src="offscreen.js"></script>
+</body>
+</html>
+

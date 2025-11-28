@@ -19,49 +19,45 @@
 
 // Re-export types for consumers
 export {
-  ExecutePromptParams,
-  ExecutePromptResult,
-  ModelState,
-  ModelProgress,
-  PlatformCapabilities,
-  PlatformType
+    ExecutePromptParams,
+    ExecutePromptResult, ModelProgress, ModelState, PlatformCapabilities,
+    PlatformType
 } from './types';
 
 // Re-export manager functions
 export {
-  initializeModel,
-  getModelState,
-  isModelReady,
-  getPlatformCapabilities,
-  unloadModel
+    executePromptViaOffscreen, getModelState, getPlatformCapabilities, initializeModel, isModelReady, unloadModel
 } from './model-manager';
 
-import { 
-  getActiveProvider, 
-  isModelReady, 
-  initializeModel 
+import {
+    executePromptViaOffscreen,
+    initializeModel,
+    isModelReady
 } from './model-manager';
-import { 
-  ExecutePromptParams, 
-  ExecutePromptResult 
+import {
+    ExecutePromptParams,
+    ExecutePromptResult
 } from './types';
 
 /**
  * Execute a prompt using the configured language model.
- * 
+ *
  * This is the main API for interacting with the model. It handles:
  * - Checking if the model is ready
  * - Auto-initializing if needed (optional)
- * - Executing the prompt
+ * - Executing the prompt via the offscreen document
  * - Returning structured results
- * 
+ *
+ * The model runs in an offscreen document to work around Chrome extension
+ * service worker limitations (no DOM access required by ONNX Runtime).
+ *
  * The model must be initialized before calling this function.
  * Call initializeModel() during extension installation.
- * 
+ *
  * @param params - The prompt parameters
  * @param autoInit - If true, automatically initialize the model if not ready (default: false)
  * @returns Promise with the execution result
- * 
+ *
  * @example
  * ```typescript
  * // Basic usage
@@ -69,7 +65,7 @@ import {
  * if (result.success) {
  *   console.log(result.response);
  * }
- * 
+ *
  * // With options
  * const result = await ExecutePrompt({
  *   prompt: 'Generate response',
@@ -101,17 +97,8 @@ export async function ExecutePrompt(
     }
   }
 
-  const provider = getActiveProvider();
-  
-  if (!provider) {
-    return {
-      success: false,
-      error: 'No model provider available. The platform may not support local model execution.'
-    };
-  }
-
-  // Execute the prompt through the provider
-  return provider.executePrompt(params);
+  // Execute the prompt via the offscreen document
+  return executePromptViaOffscreen(params.prompt);
 }
 
 /**

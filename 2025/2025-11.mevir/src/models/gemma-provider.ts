@@ -19,13 +19,13 @@
  */
 
 import {
-    ExecutePromptParams,
-    ExecutePromptResult,
-    ModelConfig,
-    ModelProgress,
-    ModelProvider,
-    ModelState,
-    PlatformCapabilities
+  ExecutePromptParams,
+  ExecutePromptResult,
+  ModelConfig,
+  ModelProgress,
+  ModelProvider,
+  ModelState,
+  PlatformCapabilities
 } from './types';
 
 // ============================================================================
@@ -75,7 +75,26 @@ export class GemmaProvider implements ModelProvider {
 
   async checkPlatformSupport(): Promise<PlatformCapabilities> {
     const platform = this.detectPlatform();
-    
+
+    // Check if we're in a service worker context
+    // Service workers don't have access to 'document', and ONNX Runtime
+    // currently requires DOM access for dynamic imports
+    // We use 'self' check since ServiceWorkerGlobalScope may not be typed
+    const isServiceWorker = typeof document === 'undefined' &&
+                            typeof self !== 'undefined' &&
+                            'ServiceWorkerGlobalScope' in self;
+
+    if (isServiceWorker) {
+      return {
+        platform,
+        hasWebGPU: false,
+        hasWasm: typeof WebAssembly !== 'undefined',
+        canRunModel: false,
+        unsupportedReason: 'Transformers.js/ONNX Runtime does not yet support Chrome extension service workers. ' +
+          'See: https://github.com/microsoft/onnxruntime/issues/20876'
+      };
+    }
+
     let hasWebGPU = false;
     try {
       if ('gpu' in navigator) {
@@ -87,10 +106,10 @@ export class GemmaProvider implements ModelProvider {
     }
 
     const hasWasm = typeof WebAssembly !== 'undefined';
-    
+
     // This model can run with WASM, WebGPU is optional (faster)
-    const canRunModel = hasWasm && 
-      (platform === 'windows' || platform === 'macos' || 
+    const canRunModel = hasWasm &&
+      (platform === 'windows' || platform === 'macos' ||
        platform === 'linux' || platform === 'chromeos' || platform === 'unknown');
 
     return {
@@ -98,7 +117,7 @@ export class GemmaProvider implements ModelProvider {
       hasWebGPU,
       hasWasm,
       canRunModel,
-      unsupportedReason: canRunModel ? undefined : 
+      unsupportedReason: canRunModel ? undefined :
         'This platform does not support local model execution'
     };
   }
@@ -125,25 +144,43 @@ export class GemmaProvider implements ModelProvider {
 
     try {
       this.state = 'downloading';
-      onProgress?.({ 
-        state: 'downloading', 
+      onProgress?.({
+        state: 'downloading',
         downloadProgress: 0,
         currentFile: 'Loading Transformers.js...'
       });
 
       // Dynamically import Transformers.js
       // This allows the model to be loaded only when needed
-      const { pipeline, env } = await import('@xenova/transformers');
+      const transformersModule = await import('@xenova/transformers');
+      const { pipeline, env } = transformersModule;
       this.transformers = { pipeline, env };
 
-      // Configure Transformers.js for Chrome extension environment
-      // Models are cached in the Cache API, persisting across extension updates
+      // Configure Transformers.js for Chrome extension service worker environment
+      // Service workers don't have access to DOM (document), so we need to:
+      // 1. Disable local models (no file system access)
+      // 2. Use browser cache for model persistence
+      // 3. Set backends to avoid DOM-dependent code paths
       env.allowLocalModels = false;
       env.useBrowserCache = true;
 
+      // Configure for service worker environment (no DOM access)
+      // This prevents Transformers.js from trying to access 'document'
+      if (typeof document === 'undefined') {
+        // We're in a service worker - configure accordingly
+        env.useCustomCache = true;
+        env.customCache = caches; // Use the Cache API directly
+
+        // Disable features that require DOM
+        if (env.backends) {
+          env.backends.onnx = env.backends.onnx || {};
+          env.backends.onnx.wasm = env.backends.onnx.wasm || {};
+        }
+      }
+
       this.state = 'loading';
-      onProgress?.({ 
-        state: 'loading', 
+      onProgress?.({
+        state: 'loading',
         downloadProgress: 10,
         currentFile: `Loading ${MODEL_ID}...`
       });

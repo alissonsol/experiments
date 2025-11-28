@@ -5,8 +5,12 @@
   "description": "Page content analysis and risk scoring extension",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "offscreen"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "MEVIR - Page Analysis"
@@ -26,6 +30,12 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["*.wasm"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
 
