@@ -6,7 +6,8 @@
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch",
     "clean": "rimraf dist",
-    "pack": "npm run build && node ./scripts/package-extension.js"
+    "pack": "npm run build && node ./scripts/package-extension.js",
+    "build:readable": "webpack --mode development"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.260",

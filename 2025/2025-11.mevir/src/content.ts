@@ -1,4 +1,4 @@
-import { PageContent, LinkInfo } from './types';
+import { LinkInfo, PageContent } from './types';
 
 const MAX_TEXT_SIZE = 1024 * 1024; // 1 megabyte
 
@@ -25,9 +25,20 @@ function extractPageText(): { text: string; isTextCut: boolean } {
   const extractText = (doc: Document): string => {
     const body = doc.body;
     if (!body) return '';
-    
-    // Get text content from the body
-    return body.innerText || body.textContent || '';
+
+    // Clone the body so we don't modify the live DOM
+    const clone = body.cloneNode(true) as HTMLElement;
+
+    // Remove elements that may contain code or non-user-visible text
+    // such as scripts, styles, code blocks, preformatted code, templates, and noscript
+    const selectors = 'script, style, code, pre, template, noscript';
+    clone.querySelectorAll(selectors).forEach((el) => el.remove());
+
+    // Also remove any elements with type attributes that commonly contain code
+    clone.querySelectorAll('[type="application/javascript"],[type="text/javascript"]').forEach((el) => el.remove());
+
+    // Get rendered text from the cleaned clone. `innerText` prefers visible text.
+    return clone.innerText || clone.textContent || '';
   };
 
   // Main document text

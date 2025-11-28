@@ -1,5 +1,6 @@
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -34,6 +35,23 @@ module.exports = {
       ]
     })
   ],
+  // Emit full source maps. Use Terser configured to "beautify" output
+  // so bundles are formatted across multiple lines for easier debugging.
+  optimization: {
+    minimize: true,
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          compress: false,
+          mangle: false,
+          format: {
+            beautify: true,
+            comments: false
+          }
+        }
+      })
+    ]
+  },
   devtool: 'source-map'
 };
 
