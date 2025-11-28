@@ -23,6 +23,20 @@ export interface PageContent {
 }
 
 /**
+ * A single moral dimension with name, prompt, reply, and score
+ */
+export interface MoralDimension {
+  /** Name of the moral dimension (e.g., Care, Fairness, Liberty) */
+  Name: string;
+  /** Prompt or description for this dimension */
+  Prompt: string;
+  /** Reply or response for this dimension */
+  Reply: string;
+  /** Score value for this dimension */
+  Score: number;
+}
+
+/**
  * Analysis result for a page
  */
 export interface PageAnalysis {
@@ -31,7 +45,7 @@ export interface PageAnalysis {
   /** Summary of the page content */
   Summary: string;
   /** Moral dimensions analysis: Care, Fairness, Liberty, Loyalty, Authority, Purity, Other */
-  Morals: string[];
+  Morals: MoralDimension[];
   /** Risk score from 0 to 100 */
   RiskScore: number;
   /** Information about the page risk */

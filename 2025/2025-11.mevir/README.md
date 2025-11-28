@@ -148,6 +148,7 @@ After making changes:
 |---------|-------------|
 | `npm install` | Install dependencies |
 | `npm run build` | Production build |
+| `npm run build:readable` | Debug build |
 | `npm run watch` | Development build with file watching |
 | `npm run clean` | Clean the dist folder |
 | `npm run pack`  | Create a developer package (.zip) |

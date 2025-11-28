@@ -1,4 +1,4 @@
-import { PageAnalysis, DEFAULT_RISK_CONFIG } from './types';
+import { DEFAULT_RISK_CONFIG, PageAnalysis } from './types';
 
 /**
  * Gets risk level text and color based on score
@@ -48,7 +48,7 @@ function renderAnalysis(analysis: PageAnalysis): void {
     <div class="section">
       <h3>Moral Dimensions</h3>
       <ul class="morals-list">
-        ${analysis.Morals.map(moral => `<li>${escapeHtml(moral)}</li>`).join('')}
+        ${analysis.Morals.map(moral => `<li><strong>${escapeHtml(moral.Name)}:</strong> ${moral.Score} ${moral.Reply ? ` - ${escapeHtml(moral.Reply)}` : ''}</li>`).join('')}
       </ul>
     </div>
   `;
