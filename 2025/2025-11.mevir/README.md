@@ -19,7 +19,7 @@ A Chrome extension written in TypeScript that analyzes web page content and prov
 
 ## Project Structure
 
-```
+```bash
 mevir/
 ├── src/
 │   ├── types.ts          # TypeScript interfaces
@@ -48,6 +48,7 @@ mevir/
 ### Using VS Code Tasks (Recommended)
 
 1. **Open the project in VS Code**:
+
    ```bash
    code mevir
    ```
@@ -60,40 +61,28 @@ mevir/
 ### Using Command Line
 
 1. **Navigate to project directory**:
+
    ```bash
    cd mevir
    ```
 
 2. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 3. **Build the project**:
+
    ```bash
    npm run build
    ```
 
 4. **For development (watch mode)**:
+
    ```bash
    npm run watch
    ```
-
-## Creating Extension Icons
-
-Before loading the extension, you need to create PNG icons:
-
-1. **Run the icon generator script**:
-   ```bash
-   node scripts/generate-icons.js
-   ```
-
-2. **Convert SVG to PNG** using one of these methods:
-   - Use an online converter (svgtopng.com)
-   - Use ImageMagick: `convert -background none icons/icon128.svg icons/icon128.png`
-   - Use Inkscape: `inkscape -w 128 -h 128 icons/icon128.svg -o icons/icon128.png`
-
-3. **Create icons for all sizes**: 16x16, 48x48, 128x128 pixels
 
 ## Installing in Chrome
 
@@ -147,6 +136,7 @@ npm run watch
 ```
 
 After making changes:
+
 1. The build will update automatically
 2. Go to `chrome://extensions/`
 3. Click the refresh icon on the MEVIR extension card
@@ -160,6 +150,7 @@ After making changes:
 | `npm run build` | Production build |
 | `npm run watch` | Development build with file watching |
 | `npm run clean` | Clean the dist folder |
+| `npm run pack`  | Create a developer package (.zip) |
 
 ## API Extension
 
@@ -170,6 +161,7 @@ The `DoAnalysis` function in `src/api.ts` currently returns default values. To c
 3. Update the return type if needed
 
 Example:
+
 ```typescript
 export async function DoAnalysis(pageContent: PageContent): Promise<PageAnalysis> {
   const response = await fetch('https://your-api.com/analyze', {
@@ -204,7 +196,8 @@ export const DEFAULT_RISK_CONFIG: RiskConfig = {
 | Popup blank | Check if background service worker is running |
 | Build errors | Run `npm install` to ensure dependencies are installed |
 
+Chrome [Debug Extensions](https://developer.chrome.com/docs/extensions/get-started/tutorial/debug) guide.
+
 ## License
 
 MIT License
-
