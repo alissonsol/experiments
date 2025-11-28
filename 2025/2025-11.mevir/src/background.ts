@@ -1,8 +1,54 @@
-import { PageContent, PageAnalysis, DEFAULT_RISK_CONFIG, MessageType } from './types';
 import { DoAnalysis } from './api';
+import {
+  getModelState,
+  getPlatformCapabilities,
+  initializeModel,
+  ModelProgress
+} from './models';
+import { DEFAULT_RISK_CONFIG, MessageType, PageAnalysis, PageContent } from './types';
 
 // Store analysis results per tab
 const tabAnalysis = new Map<number, PageAnalysis>();
+
+// Track model initialization state
+let modelInitialized = false;
+let modelInitError: string | null = null;
+
+/**
+ * Initialize the language model on extension install/startup.
+ * The model is downloaded once and cached for future use.
+ */
+async function initializeLanguageModel(): Promise<void> {
+  console.log('[Background] Checking platform capabilities...');
+
+  const capabilities = await getPlatformCapabilities();
+  console.log('[Background] Platform capabilities:', capabilities);
+
+  if (!capabilities.canRunModel) {
+    console.warn('[Background] Model not supported on this platform:', capabilities.unsupportedReason);
+    modelInitError = capabilities.unsupportedReason || 'Platform not supported';
+    return;
+  }
+
+  console.log('[Background] Initializing language model...');
+
+  try {
+    await initializeModel((progress: ModelProgress) => {
+      console.log('[Background] Model progress:', progress);
+
+      if (progress.state === 'error') {
+        modelInitError = progress.errorMessage || 'Unknown error';
+      }
+    });
+
+    modelInitialized = true;
+    console.log('[Background] Model initialized successfully. State:', getModelState());
+  } catch (error) {
+    modelInitError = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[Background] Failed to initialize model:', error);
+    // Fail safely - the extension will continue to work without the model
+  }
+}
 
 /**
  * Gets the appropriate color based on risk score
@@ -75,6 +121,17 @@ chrome.runtime.onMessage.addListener((message: MessageType, sender, sendResponse
       }
     });
     return true; // Keep channel open for async response
+  } else if (message.type === 'GET_MODEL_STATUS') {
+    // Return model initialization status
+    sendResponse({
+      type: 'MODEL_STATUS',
+      data: {
+        initialized: modelInitialized,
+        state: getModelState(),
+        error: modelInitError
+      }
+    });
+    return false;
   }
 });
 
@@ -91,3 +148,46 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   }
 });
 
+// ============================================================================
+// EXTENSION LIFECYCLE
+// ============================================================================
+
+/**
+ * Initialize model when extension is installed or updated.
+ * The model is cached and will persist across extension updates.
+ */
+chrome.runtime.onInstalled.addListener((details) => {
+  console.log('[Background] Extension installed/updated:', details.reason);
+
+  // Initialize the language model
+  // This downloads the model if not already cached
+  initializeLanguageModel().catch((error) => {
+    console.error('[Background] Model initialization failed:', error);
+  });
+});
+
+/**
+ * Initialize model when browser starts with extension already installed.
+ * This ensures the model is ready when the user starts browsing.
+ */
+chrome.runtime.onStartup.addListener(() => {
+  console.log('[Background] Browser startup detected');
+
+  initializeLanguageModel().catch((error) => {
+    console.error('[Background] Model initialization failed on browser startup:', error);
+  });
+});
+
+/**
+ * Initialize on service worker load.
+ * This handles:
+ * - Extension reload during development
+ * - Service worker restart after being terminated
+ * - First load after extension is enabled
+ *
+ * The initializeModel function is idempotent - safe to call multiple times.
+ */
+console.log('[Background] Service worker loaded, initializing model...');
+initializeLanguageModel().catch((error) => {
+  console.error('[Background] Model initialization failed on service worker load:', error);
+});

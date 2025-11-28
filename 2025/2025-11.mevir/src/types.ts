@@ -80,11 +80,24 @@ export const DEFAULT_RISK_CONFIG: RiskConfig = {
 };
 
 /**
+ * Model status information
+ */
+export interface ModelStatus {
+  /** Whether the model has been initialized */
+  initialized: boolean;
+  /** Current state of the model */
+  state: string;
+  /** Error message if initialization failed */
+  error: string | null;
+}
+
+/**
  * Message types for communication between extension components
  */
-export type MessageType = 
+export type MessageType =
   | { type: 'PAGE_CONTENT'; data: PageContent }
   | { type: 'PAGE_ANALYSIS'; data: PageAnalysis }
   | { type: 'GET_ANALYSIS' }
-  | { type: 'ANALYSIS_RESULT'; data: PageAnalysis | null };
-
+  | { type: 'ANALYSIS_RESULT'; data: PageAnalysis | null }
+  | { type: 'GET_MODEL_STATUS' }
+  | { type: 'MODEL_STATUS'; data: ModelStatus };
