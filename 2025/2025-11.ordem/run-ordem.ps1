@@ -1,0 +1,144 @@
+#!/usr/bin/env pwsh
+$ErrorActionPreference = 'Stop'
+
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Ordem - Service Ordering Tool" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Check if running on Windows
+if ($PSVersionTable.Platform -and $PSVersionTable.Platform -ne 'Win32NT') {
+    Write-Error "This application only runs on Windows."
+    exit 1
+}
+
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$backendDir = Join-Path $scriptDir "dist\backend"
+$uiDir = Join-Path $scriptDir "ui"
+$distUiDir = Join-Path $scriptDir "dist\ui"
+
+# ============================================================================
+# Check for development environment and dependencies
+# ============================================================================
+$isDevEnvironment = Test-Path (Join-Path $scriptDir "ui\package.json")
+
+if ($isDevEnvironment) {
+    Write-Host "Development environment detected." -ForegroundColor Cyan
+    Write-Host ""
+
+    # Check for npm (required for building UI)
+    $hasNpm = Get-Command npm -ErrorAction SilentlyContinue
+    if (-not $hasNpm) {
+        Write-Host "npm is not installed or not in PATH." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "To install Node.js (includes npm):" -ForegroundColor White
+        Write-Host "  1. Visit: https://nodejs.org/" -ForegroundColor White
+        Write-Host "  2. Download and install the LTS version" -ForegroundColor White
+        Write-Host "  3. Restart your terminal" -ForegroundColor White
+        Write-Host ""
+        Write-Error "Cannot build UI without npm. Please install Node.js and try again."
+        exit 1
+    }
+
+    # Check for Rust/Cargo (required for building backend)
+    $hasCargo = Get-Command cargo -ErrorAction SilentlyContinue
+    if (-not $hasCargo) {
+        Write-Host "cargo is not installed or not in PATH." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "To install Rust (includes cargo):" -ForegroundColor White
+        Write-Host "  1. Visit: https://rustup.rs/" -ForegroundColor White
+        Write-Host "  2. Download and run rustup-init.exe" -ForegroundColor White
+        Write-Host "  3. Restart your terminal" -ForegroundColor White
+        Write-Host ""
+        Write-Error "Cannot build backend without cargo. Please install Rust and try again."
+        exit 1
+    }
+
+    Write-Host "✓ npm found: $(npm --version)" -ForegroundColor Green
+    Write-Host "✓ cargo found: $(cargo --version)" -ForegroundColor Green
+    Write-Host ""
+
+    # Check if UI dependencies are installed
+    $nodeModulesPath = Join-Path $uiDir "node_modules"
+    if (-not (Test-Path $nodeModulesPath)) {
+        Write-Host "Installing UI dependencies..." -ForegroundColor Yellow
+        Push-Location $uiDir
+        try {
+            npm install --omit=dev
+            Write-Host "✓ UI dependencies installed" -ForegroundColor Green
+        } finally {
+            Pop-Location
+        }
+        Write-Host ""
+    }
+
+    # Check if build is needed
+    $needsBuild = $false
+    $backendExe = Get-ChildItem -Path $backendDir -Filter "*.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+
+    if (-not $backendExe) {
+        Write-Host "Backend executable not found - build required" -ForegroundColor Yellow
+        $needsBuild = $true
+    }
+
+    if (-not (Test-Path (Join-Path $distUiDir "bundle.js"))) {
+        Write-Host "UI bundle not found - build required" -ForegroundColor Yellow
+        $needsBuild = $true
+    }
+
+    if ($needsBuild) {
+        Write-Host ""
+        Write-Host "Building application..." -ForegroundColor Yellow
+        $buildScript = Join-Path $scriptDir "scripts\build-all.ps1"
+        if (Test-Path $buildScript) {
+            & $buildScript
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Build failed. Cannot start application."
+                exit 1
+            }
+        } else {
+            Write-Error "Build script not found at: $buildScript"
+            exit 1
+        }
+        Write-Host ""
+    }
+}
+
+# ============================================================================
+# Find and validate backend executable
+# ============================================================================
+$backendExe = Get-ChildItem -Path $backendDir -Filter "*.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
+
+if (-not $backendExe) {
+    Write-Error "Backend executable not found in: $backendDir"
+    Write-Host ""
+    if ($isDevEnvironment) {
+        Write-Host "Please run the build script: .\scripts\build-all.ps1" -ForegroundColor Yellow
+    } else {
+        Write-Host "This distribution package appears to be incomplete." -ForegroundColor Yellow
+    }
+    Write-Host ""
+    exit 1
+}
+
+# Display connection instructions
+Write-Host "Starting Ordem server..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Connection Instructions:" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  1. The server will start on port 4000" -ForegroundColor White
+Write-Host "  2. Open your web browser" -ForegroundColor White
+Write-Host "  3. Navigate to: http://127.0.0.1:4000" -ForegroundColor Green
+Write-Host ""
+Write-Host "  The application will be ready in a few seconds..." -ForegroundColor White
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Press Ctrl+C to stop the server." -ForegroundColor Yellow
+Write-Host ""
+
+# Start the backend
+& $backendExe.FullName
+

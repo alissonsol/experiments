@@ -1,0 +1,16 @@
+# Simple Bazel helper rules to build UI and Rust backend using host tools.
+# These genrules call `npm run build` and `cargo build` respectively. Customize for CI.
+
+genrule(
+    name = "build_ui",
+    outs = ["ui_dist_marker.txt"],
+    cmd = "(cd $(ROOT)/ui && npm install) && (cd $(ROOT)/ui && npm run build) && echo built > $@",
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "build_rust",
+    outs = ["rust_build_marker.txt"],
+    cmd = "(cd $(ROOT)/services/retrieve && cargo build --release) && echo built > $@",
+    visibility = ["//visibility:public"],
+)

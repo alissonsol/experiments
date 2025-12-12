@@ -1,0 +1,93 @@
+# Ordem
+
+Windows service ordering and startup type management tool with a web-based interface.
+
+## Features
+
+- **Dual-Pane View**: Current system services (left) and target configuration (right)
+- **Service Ordering**: Drag-and-drop to reorder target services
+- **Startup Type Management**: Configure startup types (Automatic, Automatic Delayed, Manual, Disabled)
+- **Target Persistence**: Saves target configuration to `%LOCALAPPDATA%\Ordem\ordem.target.xml`
+- **Single Endpoint**: Backend serves both API and UI on `http://127.0.0.1:4000`
+- **Windows-Only**: Requires Windows OS for service management via WMI
+
+## Quick Start
+
+Build and run:
+
+```powershell
+.\scripts\build-all.ps1
+.\scripts\run-all.ps1
+```
+
+Access the UI at `http://127.0.0.1:4000`
+
+## Build Scripts
+
+- `.\scripts\clean-all.ps1` - Remove all build artifacts
+- `.\scripts\build-all.ps1` - Build UI and backend to `dist/`
+- `.\scripts\run-all.ps1` - Build UI and run backend
+- `.\scripts\dist-all.ps1` - Creates ZIP package for distribution
+
+## API Endpoints
+
+- `GET /api/services` - Current Windows services
+- `GET /api/targets` - Saved target configuration
+- `POST /api/targets` - Update target configuration
+- `GET /` - UI (index.html)
+
+## Configuration
+
+- **Port**: `127.0.0.1:4000` (change in `services/retrieve/src/main.rs`)
+- **Target Storage**: `%LOCALAPPDATA%\Ordem\ordem.target.xml`
+- **API Base**: `http://127.0.0.1:4000` (change in `ui/src/main.ts`)
+
+## Project Structure
+
+```text
+.
+├── scripts/
+│   ├── build-all.ps1
+│   ├── run-all.ps1
+│   └── clean-all.ps1
+├── services/retrieve/    # Rust backend
+│   ├── src/main.rs
+│   └── Cargo.toml
+├── ui/                   # TypeScript frontend
+│   ├── src/
+│   │   ├── main.ts
+│   │   └── styles.css
+│   ├── index.html
+│   └── package.json
+└── dist/                 # Build output
+```
+
+## Troubleshooting
+
+- **Services not loading**: Requires Windows with PowerShell
+  - `winget install --id Microsoft.PowerShell --source winget`
+- **Permission errors**: Run as Administrator if needed
+- **vcruntime140.dll error**: Install Visual C++ Redistributable for Visual Studio 2015
+  - `winget install --id Microsoft.VCRedist.2015+.x64 --exact --accept-package-agreements --accept-source-agreements`
+
+## Architecture
+
+**Backend** (Rust/Actix-web):
+
+- Queries Windows services via PowerShell WMI
+- REST API for service data and target management
+- Serves static UI files
+- Stores targets in XML format
+
+**Frontend** (TypeScript):
+
+- Split-pane interface with column alignment
+- Drag-and-drop service reordering
+- Inline startup type editing
+- Pane toggle and reset controls
+
+## Prerequisites
+
+- **Rust** (via [rustup](https://rustup.rs/))
+- **Node.js** (includes npm)
+- **Windows OS** (required for WMI service access)
