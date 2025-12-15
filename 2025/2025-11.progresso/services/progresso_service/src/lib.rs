@@ -45,11 +45,19 @@ pub fn write_progress_xml(progress: &OrdemTargets) -> Result<String> {
 /// For testing: populate the timestamps with 'now'.
 pub fn populate_test_timestamps(progress: &mut OrdemTargets) {
     let now = Local::now().to_rfc3339();
-    for s in progress.services.iter_mut() {
-        s.start_processing_time.get_or_insert(now.clone());
-        s.stop_time.get_or_insert(now.clone());
-        s.end_time.get_or_insert(now.clone());
-        s.cpu_responsive_time.get_or_insert(now.clone());
+    for s in &mut progress.services {
+        if s.start_processing_time.is_none() {
+            s.start_processing_time = Some(now.clone());
+        }
+        if s.stop_time.is_none() {
+            s.stop_time = Some(now.clone());
+        }
+        if s.end_time.is_none() {
+            s.end_time = Some(now.clone());
+        }
+        if s.cpu_responsive_time.is_none() {
+            s.cpu_responsive_time = Some(now.clone());
+        }
     }
 }
 

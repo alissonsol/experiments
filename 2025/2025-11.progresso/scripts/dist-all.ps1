@@ -113,40 +113,20 @@ if (Test-Path $sourceLauncher) {
 Write-Host ""
 
 # ============================================================================
-# Step 4: Create README for distribution
+# Step 4: Copy README for distribution
 # ============================================================================
-Write-Host "[4/5] Creating README..." -ForegroundColor Yellow
+Write-Host "[4/5] Copying README..." -ForegroundColor Yellow
 
-$readmeContent = @'
-# Progresso
-
-A Windows service for monitoring and tracking the progress of Windows services based on target configurations.
-
-Source: [gibhub.com/alissonsol](https://github.com/alissonsol)  
-Copyright (c) 2025, Alisson Sol - All rights reserved.
-
-## Quick Start
-
-1. Extract this ZIP file to a folder on your Windows computer
-2. Open PowerShell in the extracted folder
-3. Run: `.\run-progresso.ps1` (if included)
-
-## Requirements
-
-- Windows operating system
-- PowerShell (included with Windows)
-
-## What's Included
-
-- `dist/backend/` - Backend service executable
-- `dist/ui/` - Optional web UI files
-
-'@
+$sourceReadme = Join-Path $repoRoot "README.progresso.txt"
+if (-not (Test-Path $sourceReadme)) {
+    Write-Error "README file not found at: $sourceReadme"
+    exit 1
+}
 
 $readmePath = Join-Path $packageDir "README.progresso.txt"
-Set-Content -Path $readmePath -Value $readmeContent -Encoding UTF8
+Copy-Item -Path $sourceReadme -Destination $readmePath -Force
 
-Write-Host "  ✓ Created README.txt" -ForegroundColor Green
+Write-Host "  ✓ Copied README.progresso.txt" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================

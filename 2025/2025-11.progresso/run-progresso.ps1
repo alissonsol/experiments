@@ -1,5 +1,5 @@
 <#
-    Copyright (c) 2025 - Alisson Sol
+  Copyright (c) 2025 - Alisson Sol
 # Runs the Progresso service executable in console mode after ensuring
 # `dist\backend\ordem.target.xml` exists. If missing, attempts to copy
 # it from `%LOCALAPPDATA%\Ordem\ordem.target.xml`.
@@ -64,7 +64,7 @@ try {
 
 # Enable Rust diagnostics for the child process (inherited by child)
 $env:RUST_BACKTRACE = '1'
-$env:RUST_LOG = 'debug'
+$env:RUST_LOG = 'warn'
 
 Push-Location $servicesDir
 try {

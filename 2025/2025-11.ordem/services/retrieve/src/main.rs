@@ -35,14 +35,20 @@ fn targets_file_path() -> Option<PathBuf> {
 }
 
 fn parse_service_json(item: &serde_json::Value) -> ServiceInfo {
-    let get_str = |key: &str| item.get(key).and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let get_bool = |key: &str| item.get(key).and_then(|v| v.as_bool()).unwrap_or(false);
+    let get_str = |key: &str| {
+        item.get(key)
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string()
+    };
+    let get_bool = |key: &str| {
+        item.get(key)
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+    };
 
-    // Get the raw StartMode from WMI
     let raw_start_mode = get_str("StartMode");
     let delayed_auto_start = get_bool("DelayedAutoStart");
-
-    // Convert to full string representation
     let start_mode = normalize_start_mode(&raw_start_mode, delayed_auto_start);
 
     ServiceInfo {
@@ -57,12 +63,12 @@ fn parse_service_json(item: &serde_json::Value) -> ServiceInfo {
 }
 
 fn normalize_start_mode(raw_mode: &str, delayed: bool) -> String {
-    match raw_mode {
-        "Auto" if delayed => "Automatic (Delayed Start)".to_string(),
-        "Auto" => "Automatic".to_string(),
-        "Manual" => "Manual".to_string(),
-        "Disabled" => "Disabled".to_string(),
-        _ => raw_mode.to_string(), // Fallback to original value
+    match (raw_mode, delayed) {
+        ("Auto", true) => "Automatic (Delayed Start)".to_string(),
+        ("Auto", false) => "Automatic".to_string(),
+        ("Manual", _) => "Manual".to_string(),
+        ("Disabled", _) => "Disabled".to_string(),
+        _ => raw_mode.to_string(),
     }
 }
 
@@ -86,12 +92,17 @@ async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
         })
         .ok_or_else(|| "Failed to run PowerShell to query services".to_string())?;
 
-    let txt = String::from_utf8_lossy(&stdout);
-    let json: serde_json::Value = serde_json::from_str(&txt)
-        .map_err(|e| format!("JSON parse error: {}\nraw:{}", e, txt))?;
+    let json: serde_json::Value = serde_json::from_slice(&stdout)
+        .map_err(|e| format!("JSON parse error: {}", e))?;
 
     let services = match json {
-        serde_json::Value::Array(arr) => arr.iter().map(parse_service_json).collect(),
+        serde_json::Value::Array(arr) => {
+            let mut services = Vec::with_capacity(arr.len());
+            for item in arr.iter() {
+                services.push(parse_service_json(item));
+            }
+            services
+        }
         serde_json::Value::Object(_) => vec![parse_service_json(&json)],
         _ => Vec::new(),
     };
@@ -108,9 +119,9 @@ async fn api_services() -> impl Responder {
 }
 
 fn read_targets_from_file(path: &PathBuf) -> Option<Vec<ServiceInfo>> {
-    let content = fs::read_to_string(path).ok()?;
-    quick_xml::de::from_str::<OrdemTargets>(&content)
+    fs::read_to_string(path)
         .ok()
+        .and_then(|content| quick_xml::de::from_str::<OrdemTargets>(&content).ok())
         .map(|wrapper| wrapper.services)
 }
 
@@ -118,9 +129,15 @@ fn write_targets_to_file(path: &PathBuf, services: &[ServiceInfo]) -> std::io::R
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }
-    let xml = quick_xml::se::to_string(&OrdemTargets { services: services.to_vec() })
+
+    let wrapper = OrdemTargets {
+        services: services.to_vec(),
+    };
+
+    let xml = quick_xml::se::to_string(&wrapper)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
-    fs::write(path, xml)
+
+    fs::write(path, xml.as_bytes())
 }
 
 #[get("/api/targets")]
@@ -174,11 +191,14 @@ async fn main() -> std::io::Result<()> {
     // to serve the built frontend when present so a single process serves both API and UI.
     fn find_ui_dist() -> Option<PathBuf> {
         let cwd = env::current_dir().ok()?;
-        let exe_dir = env::current_exe().ok().and_then(|p| p.parent().map(|d| d.to_path_buf()));
+        let exe_dir = env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.to_path_buf()));
 
-        let paths = ["dist/ui", "../dist/ui", "../../dist/ui", "ui/dist", "../ui/dist"];
+        const PATHS: &[&str] = &["dist/ui", "../dist/ui", "../../dist/ui", "ui/dist", "../ui/dist"];
 
-        paths.iter()
+        PATHS
+            .iter()
             .flat_map(|&p| {
                 let mut candidates = vec![cwd.join(p)];
                 if let Some(ref exe) = exe_dir {

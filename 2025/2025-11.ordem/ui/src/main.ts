@@ -17,17 +17,17 @@ const API_BASE = `http://${bind}`;
 const app = document.getElementById('app')!;
 
 // Loader animation controls — spiral animation from center to border
-let __loaderRaf = 0 as number;
-let __loaderRunning = false;
-let __loaderEl: HTMLElement | null = null;
-let __loaderTextEl: HTMLElement | null = null;
+let loaderRaf = 0;
+let loaderRunning = false;
+let loaderEl: HTMLElement | null = null;
+let loaderTextEl: HTMLElement | null = null;
 
 function startLoader() {
-  if (__loaderRunning) return;
-  __loaderEl = document.getElementById('loader');
-  __loaderTextEl = __loaderEl?.querySelector('.loader-text') as HTMLElement | null;
-  if (!__loaderEl || !__loaderTextEl) return;
-  __loaderRunning = true;
+  if (loaderRunning) return;
+  loaderEl = document.getElementById('loader');
+  loaderTextEl = loaderEl?.querySelector('.loader-text') as HTMLElement | null;
+  if (!loaderEl || !loaderTextEl) return;
+  loaderRunning = true;
 
   const DURATION = 5000; // Seconds to reach the border
   const ROTATIONS = 6; // number of spiral turns
@@ -36,7 +36,7 @@ function startLoader() {
   function getMaxRadius() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const rect = __loaderTextEl!.getBoundingClientRect();
+    const rect = loaderTextEl!.getBoundingClientRect();
     const margin = 8;
     const halfW = vw / 2;
     const halfH = vh / 2;
@@ -47,7 +47,7 @@ function startLoader() {
   }
 
   function step(ts: number) {
-    if (!__loaderRunning) return;
+    if (!loaderRunning) return;
 
     if (!startTime) startTime = ts;
     const elapsed = ts - startTime;
@@ -60,19 +60,19 @@ function startLoader() {
     const x = r * Math.cos(theta);
     const y = r * Math.sin(theta);
 
-    __loaderTextEl!.style.transform = `translate(-50%,-50%) translate(${x}px, ${y}px)`;
+    loaderTextEl!.style.transform = `translate(-50%,-50%) translate(${x}px, ${y}px)`;
 
     if (elapsed >= DURATION) {
       // reached border. If loader still present, restart from center
       startTime = ts;
     }
 
-    __loaderRaf = requestAnimationFrame(step);
+    loaderRaf = requestAnimationFrame(step);
   }
 
   // Start the spiral animation
-  __loaderTextEl.style.willChange = 'transform';
-  __loaderRaf = requestAnimationFrame(step);
+  loaderTextEl.style.willChange = 'transform';
+  loaderRaf = requestAnimationFrame(step);
   window.addEventListener('resize', onLoaderResize);
 }
 
@@ -82,13 +82,13 @@ function onLoaderResize() {
 }
 
 function stopLoader() {
-  if (!__loaderRunning) return;
-  __loaderRunning = false;
-  cancelAnimationFrame(__loaderRaf);
+  if (!loaderRunning) return;
+  loaderRunning = false;
+  cancelAnimationFrame(loaderRaf);
   window.removeEventListener('resize', onLoaderResize);
-  if (__loaderEl) {
-    __loaderEl.classList.add('fade-out');
-    setTimeout(() => __loaderEl?.remove(), 360);
+  if (loaderEl) {
+    loaderEl.classList.add('fade-out');
+    setTimeout(() => loaderEl?.remove(), 360);
   }
 }
 
@@ -163,11 +163,10 @@ const HEADER_COLUMNS_RIGHT = [
 ] as const;
 
 function mapStartMode(value: string): string {
-  // Backend now returns normalized values, but we still validate/default
   if (!value) return 'Manual';
-  // Check if value is one of our known types
-  const validTypes = ['Automatic (Delayed Start)', 'Automatic', 'Manual', 'Disabled'];
-  if (validTypes.includes(value)) return value;
+
+  // Fast path: check if value is already normalized
+  if (STARTUP_TYPES.includes(value as any)) return value;
 
   // Fallback for legacy or unexpected values
   const lower = value.toLowerCase();
@@ -325,13 +324,23 @@ function renderApp(current: Service[], targets: Service[]) {
   // Sync column widths from header to data rows for a specific pane
   function syncPaneWidths(headerRow: HTMLElement, paneClass: string) {
     const headerCols = headerRow.querySelectorAll('[class^="col-"], .drag-handle');
+    const updates: Array<{colClass: string, width: string}> = [];
+
+    // Batch read operations
     headerCols.forEach((headerCol) => {
-      const colClass = (headerCol as HTMLElement).className.split(' ')[0];
-      const headerWidth = (headerCol as HTMLElement).style.width || `${(headerCol as HTMLElement).offsetWidth}px`;
-      document.querySelectorAll(`.${paneClass} .row .${colClass}`).forEach(cell => {
-        (cell as HTMLElement).style.width = headerWidth;
-      });
+      const col = headerCol as HTMLElement;
+      const colClass = col.className.split(' ')[0];
+      const headerWidth = col.style.width || `${col.offsetWidth}px`;
+      updates.push({colClass, width: headerWidth});
     });
+
+    // Batch write operations
+    for (const {colClass, width} of updates) {
+      const cells = document.querySelectorAll(`.${paneClass} .row .${colClass}`);
+      for (let i = 0; i < cells.length; i++) {
+        (cells[i] as HTMLElement).style.width = width;
+      }
+    }
   }
 
   // Sync initial column widths from headers to data rows
@@ -365,18 +374,22 @@ function renderApp(current: Service[], targets: Service[]) {
         e.preventDefault();
         e.stopPropagation();
 
+        const headerCol = col as HTMLElement;
         const startX = e.pageX;
-        const startWidth = (col as HTMLElement).offsetWidth;
-        const colClass = (col as HTMLElement).className.split(' ')[0];
-        const selector = `.${paneClass} .row .${colClass}`;
-        const cells = document.querySelectorAll(selector);
+        const startWidth = headerCol.offsetWidth;
+        const colClass = headerCol.className.split(' ')[0];
+        const cells = document.querySelectorAll(`.${paneClass} .row .${colClass}`);
+        const cellCount = cells.length;
 
         const onMouseMove = (e: MouseEvent) => {
           const width = Math.max(50, startWidth + (e.pageX - startX));
-          (col as HTMLElement).style.width = `${width}px`;
-          cells.forEach(cell => {
-            (cell as HTMLElement).style.width = `${width}px`;
-          });
+          const widthPx = `${width}px`;
+          headerCol.style.width = widthPx;
+
+          // Use for loop instead of forEach for better performance
+          for (let i = 0; i < cellCount; i++) {
+            (cells[i] as HTMLElement).style.width = widthPx;
+          }
         };
 
         const onMouseUp = () => {
@@ -390,17 +403,69 @@ function renderApp(current: Service[], targets: Service[]) {
     });
   }
 
-  // Event delegation for drag-and-drop
+  // Event delegation for drag-and-drop with auto-scroll
+  let autoScrollInterval: number | null = null;
+
+  const startAutoScroll = (container: HTMLElement, direction: 'up' | 'down') => {
+    if (autoScrollInterval !== null) return;
+
+    const scrollSpeed = 10;
+    autoScrollInterval = window.setInterval(() => {
+      if (direction === 'up') {
+        container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed);
+      } else {
+        container.scrollTop = Math.min(
+          container.scrollHeight - container.clientHeight,
+          container.scrollTop + scrollSpeed
+        );
+      }
+    }, 16);
+  };
+
+  const stopAutoScroll = () => {
+    if (autoScrollInterval !== null) {
+      clearInterval(autoScrollInterval);
+      autoScrollInterval = null;
+    }
+  };
+
   rlist.addEventListener('dragstart', (ev) => {
     const row = (ev.target as HTMLElement).closest('.row') as HTMLElement;
     if (row) ev.dataTransfer!.setData('text/plain', row.dataset.index!);
   });
 
   rlist.addEventListener('dragover', (ev) => {
-    if ((ev.target as HTMLElement).closest('.row')) ev.preventDefault();
+    const row = (ev.target as HTMLElement).closest('.row');
+    if (!row) {
+      stopAutoScroll();
+      return;
+    }
+
+    ev.preventDefault();
+
+    // Auto-scroll when dragging near edges
+    const rect = rlist.getBoundingClientRect();
+    const scrollZone = 50; // pixels from edge to trigger scroll
+    const mouseY = ev.clientY;
+
+    if (mouseY < rect.top + scrollZone) {
+      startAutoScroll(rlist, 'up');
+    } else if (mouseY > rect.bottom - scrollZone) {
+      startAutoScroll(rlist, 'down');
+    } else {
+      stopAutoScroll();
+    }
+  });
+
+  rlist.addEventListener('dragleave', (ev) => {
+    if (ev.target === rlist) {
+      stopAutoScroll();
+    }
   });
 
   rlist.addEventListener('drop', (ev) => {
+    stopAutoScroll();
+
     const row = (ev.target as HTMLElement).closest('.row') as HTMLElement;
     if (!row) return;
     ev.preventDefault();
@@ -414,6 +479,10 @@ function renderApp(current: Service[], targets: Service[]) {
     }
   });
 
+  rlist.addEventListener('dragend', () => {
+    stopAutoScroll();
+  });
+
   const handleStartupChange = (idx: number, val: string) => {
     items[idx].start_mode = val;
     saveTargets(items);
@@ -425,10 +494,13 @@ function renderApp(current: Service[], targets: Service[]) {
   };
 
   function rebuildRight() {
-    rlist.innerHTML = '';
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
     items.forEach((s, i) => {
-      rlist.appendChild(makeRow(s, i, i + 1, handleStartupChange, handleEndTypeChange));
+      fragment.appendChild(makeRow(s, i, i + 1, handleStartupChange, handleEndTypeChange));
     });
+    rlist.innerHTML = '';
+    rlist.appendChild(fragment);
     syncRowHeights();
     syncInitialWidths();
   }

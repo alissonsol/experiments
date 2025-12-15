@@ -11,29 +11,33 @@ pub fn run_sc(args: &[&str]) -> std::io::Result<std::process::Output> {
 }
 
 pub fn is_service_running(name: &str) -> bool {
-    match Command::new("sc").arg("query").arg(name).output() {
-        Ok(out) => {
-            let s = String::from_utf8_lossy(&out.stdout).to_string();
-            s.to_lowercase().contains("running")
-        }
-        Err(_) => false,
-    }
+    Command::new("sc")
+        .arg("query")
+        .arg(name)
+        .output()
+        .ok()
+        .map(|out| String::from_utf8_lossy(&out.stdout).to_lowercase().contains("running"))
+        .unwrap_or(false)
 }
 
 pub fn wait_for_service_state_with_stop(name: &str, desired: &str, timeout_secs: u64, stop_flag: Arc<AtomicBool>) -> bool {
     let start = Instant::now();
-    let desired_l = desired.to_lowercase();
-    while start.elapsed() < Duration::from_secs(timeout_secs) {
+    let desired_lower = desired.to_lowercase();
+    let timeout = Duration::from_secs(timeout_secs);
+    let poll_interval = Duration::from_secs(1);
+
+    while start.elapsed() < timeout {
         if stop_flag.load(std::sync::atomic::Ordering::SeqCst) {
             return false;
         }
+
         if let Ok(out) = Command::new("sc").arg("query").arg(name).output() {
-            let s = String::from_utf8_lossy(&out.stdout).to_string();
-            if s.to_lowercase().contains(&desired_l) {
+            if String::from_utf8_lossy(&out.stdout).to_lowercase().contains(&desired_lower) {
                 return true;
             }
         }
-        sleep(Duration::from_secs(1));
+
+        sleep(poll_interval);
     }
     false
 }

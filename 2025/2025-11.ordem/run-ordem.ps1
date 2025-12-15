@@ -1,5 +1,5 @@
 <#
-    Copyright (c) 2025 - Alisson Sol
+  Copyright (c) 2025 - Alisson Sol
 #>
 $ErrorActionPreference = 'Stop'
 

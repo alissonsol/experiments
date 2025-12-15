@@ -21,11 +21,11 @@ if (Test-Path "ui/package.json") {
             # Build bundle to top-level dist/ui (use relative path so esbuild creates the file)
             npx esbuild src/main.ts --bundle --outfile="../dist/ui/bundle.js" --minify
             # Copy static files
-            Copy-Item -Path "index.html" -Destination (Join-Path $uiDist "index.html") -Force
-            Copy-Item -Path "src/styles.css" -Destination (Join-Path $uiDist "styles.css") -Force
+            Copy-Item -Path "index.html" -Destination $uiDist -Force
+            Copy-Item -Path "src/styles.css" -Destination $uiDist -Force
 
             # Copy package.json to dist/ui and install production dependencies there (optional)
-            Copy-Item -Path "package.json" -Destination (Join-Path $uiDist "package.json") -Force
+            Copy-Item -Path "package.json" -Destination $uiDist -Force
             Push-Location $uiDist
             try {
                 if (Get-Command npm -ErrorAction SilentlyContinue) {
@@ -61,7 +61,7 @@ if (Test-Path "services/retrieve/Cargo.toml") {
             if (Test-Path $srcExe) {
                 $backendDist = Join-Path $dist "backend"
                 if (-not (Test-Path $backendDist)) { New-Item -ItemType Directory -Path $backendDist | Out-Null }
-                Copy-Item -Path $srcExe -Destination (Join-Path $backendDist $exeName) -Force
+                Copy-Item -Path $srcExe -Destination $backendDist -Force
                 Write-Host "Copied backend binary to $backendDist"
             } else {
                 Write-Warning "Could not find built backend binary at $srcExe"

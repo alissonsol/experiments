@@ -8,6 +8,7 @@ Copyright (c) 2025, Alisson Sol - All rights reserved.
 ## Overview
 
 Progresso is a Windows service written in Rust that:
+
 - Reads a target configuration file (`ordem.target.xml`) containing a list of Windows services to monitor
 - Tracks the status and progress of these services
 - Generates progress reports with timestamps for service lifecycle events
@@ -15,9 +16,9 @@ Progresso is a Windows service written in Rust that:
 
 ## Project Structure
 
-```
+```powershell
 progresso/
-├── scripts/                    # Build and distribution scripts
+├── scripts/                   # Build and distribution scripts
 │   ├── build-all.ps1          # Main build script (uses Cargo)
 │   ├── clean-all.ps1          # Clean build artifacts
 │   └── dist-all.ps1           # Create distribution package
@@ -94,6 +95,7 @@ The service reads an XML file containing the list of Windows services to monitor
 ### Progress Output
 
 The service generates progress reports with additional timestamp fields:
+
 - `start_processing_time`: When processing started
 - `stop_time`: When the service stopped
 - `end_time`: When processing ended
@@ -104,7 +106,7 @@ The service generates progress reports with additional timestamp fields:
 ### Console Mode (for testing)
 
 ```powershell
-cd dist/backend
+Set-Location dist/backend
 .\progresso_service.exe
 ```
 
@@ -114,7 +116,7 @@ The service will automatically fall back to console mode if not running as a Win
 
 ```powershell
 # Install the service
-cd services/progresso_service/scripts
+Set-Location services/progresso_service/scripts
 .\install-service.ps1
 
 # Uninstall the service
@@ -155,14 +157,14 @@ cd services/progresso_service/scripts
 ### Running Tests
 
 ```powershell
-cd services/progresso_service
+Set-Location services/progresso_service
 cargo test
 ```
 
 ### Running Examples
 
 ```powershell
-cd services/progresso_service
+Set-Location services/progresso_service
 cargo run --example harness
 ```
 
@@ -170,4 +172,12 @@ This will read `ordem.target.xml` and generate `progresso.example.xml` with popu
 
 ## License
 
-[Specify your license here]
+[The MIT License (MIT)](https://opensource.org/license/mit)
+
+Copyright 2025 Alisson Sol
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

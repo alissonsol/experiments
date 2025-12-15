@@ -106,59 +106,18 @@ Copy-Item -Path $sourceLauncher -Destination $launcherPath -Force
 Write-Host "  ✓ Copied run-ordem.ps1" -ForegroundColor Green
 
 # ============================================================================
-# Step 4: Create README for distribution
+# Step 4: Copy README for distribution
 # ============================================================================
-$readmeContent = @'
-# Ordem
-
-Windows service ordering and startup mode management tool with a web-based interface.
-
-Source: [gibhub.com/alissonsol](https://github.com/alissonsol)  
-Copyright (c) 2025, Alisson Sol - All rights reserved.
-
-## Quick Start
-
-1. Extract this ZIP file to a folder on your Windows computer
-2. Open PowerShell in the extracted folder
-3. Run: `.\run-ordem.ps1`
-4. Open your browser to: http://127.0.0.1:4000
-
-## Requirements
-
-- Windows operating system
-- PowerShell (included with Windows)
-- No additional runtime dependencies required
-
-## What's Included
-
-- `dist/backend/` - Backend server executable
-- `dist/ui/` - Web UI files (HTML, CSS, JavaScript)
-- `run-ordem.ps1` - Launcher script
-
-## Usage
-
-The application allows you to:
-- View current Windows services and their startup modes
-- Define target startup configurations
-- Reorder services for startup sequence
-- Set different end types for services
-
-## Troubleshooting
-
-If you get a PowerShell execution policy error, run:
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-```
-
-## Support
-
-For issues or questions, refer to the project documentation.
-'@
+$sourceReadme = Join-Path $repoRoot "README.ordem.txt"
+if (-not (Test-Path $sourceReadme)) {
+    Write-Error "README file not found at: $sourceReadme"
+    exit 1
+}
 
 $readmePath = Join-Path $packageDir "README.ordem.txt"
-Set-Content -Path $readmePath -Value $readmeContent -Encoding UTF8
+Copy-Item -Path $sourceReadme -Destination $readmePath -Force
 
-Write-Host "  ✓ Created README.txt" -ForegroundColor Green
+Write-Host "  ✓ Copied README.ordem.txt" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================

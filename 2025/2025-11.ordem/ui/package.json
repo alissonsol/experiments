@@ -7,6 +7,6 @@
     "start": "esbuild src/main.ts --bundle --outfile=dist/bundle.js --servedir=dist --sourcemap"
   },
   "devDependencies": {
-    "esbuild": "^0.17.0"
+    "esbuild": "^0.27.1"
   }
 }
