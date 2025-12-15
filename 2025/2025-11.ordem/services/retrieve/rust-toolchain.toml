@@ -1,4 +1,5 @@
 [toolchain]
+# Copyright (c) 2025 - Alisson Sol
 channel = "stable"
 components = ["rustfmt", "clippy"]
 profile = "default"

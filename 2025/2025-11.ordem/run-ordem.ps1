@@ -1,4 +1,6 @@
-#!/usr/bin/env pwsh
+<#
+    Copyright (c) 2025 - Alisson Sol
+#>
 $ErrorActionPreference = 'Stop'
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -16,6 +18,20 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendDir = Join-Path $scriptDir "dist\backend"
 $uiDir = Join-Path $scriptDir "ui"
 $distUiDir = Join-Path $scriptDir "dist\ui"
+
+# Bind address (matches services/retrieve/src/main.rs)
+$bind = "127.0.0.1:4000"
+$EndpointUrl = "http://$bind"
+
+# Helper: open default browser to a URL (Windows-only script, but keep best-effort)
+function Open-Browser($url) {
+    try {
+        Start-Process $url -ErrorAction Stop
+        Write-Host "Opened browser at: $url" -ForegroundColor Green
+    } catch {
+        Write-Warning "Couldn't open browser automatically. Please open: $url"
+    }
+}
 
 # ============================================================================
 # Check for development environment and dependencies
@@ -130,7 +146,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  1. The server will start on port 4000" -ForegroundColor White
 Write-Host "  2. Open your web browser" -ForegroundColor White
-Write-Host "  3. Navigate to: http://127.0.0.1:4000" -ForegroundColor Green
+Write-Host "  3. Navigate to: $EndpointUrl" -ForegroundColor Green
 Write-Host ""
 Write-Host "  The application will be ready in a few seconds..." -ForegroundColor White
 Write-Host ""
@@ -138,6 +154,9 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Press Ctrl+C to stop the server." -ForegroundColor Yellow
 Write-Host ""
+
+# Open default browser to the running service
+Open-Browser $EndpointUrl
 
 # Start the backend
 & $backendExe.FullName

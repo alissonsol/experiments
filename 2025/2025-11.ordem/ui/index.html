@@ -1,3 +1,4 @@
+<!-- Copyright (c) 2025 - Alisson Sol -->
 <!doctype html>
 <html lang="en">
 
@@ -9,8 +10,79 @@
 </head>
 
 <body>
+  <div id="loader" aria-hidden="true">
+    <span class="loader-text">Ordem</span>
+  </div>
   <div id="app"></div>
   <script type="module" src="bundle.js"></script>
+  <script>
+    (function() {
+      const loader = document.getElementById('loader');
+      const text = loader && loader.querySelector('.loader-text');
+      if (!loader || !text) return;
+
+      const DURATION = 60000; // 60 seconds to reach the border
+      const ROTATIONS = 6; // number of spiral turns
+
+      let startTime = null;
+
+      function getMaxRadius() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const rect = text.getBoundingClientRect();
+        const margin = 8;
+        const halfW = vw / 2;
+        const halfH = vh / 2;
+        // distance to nearest border from center, minus half of element and margin
+        const maxX = halfW - rect.width / 2 - margin;
+        const maxY = halfH - rect.height / 2 - margin;
+        return Math.max(0, Math.min(maxX, maxY));
+      }
+
+      function isLoaderHidden() {
+        if (!document.body.contains(loader)) return true;
+        if (loader.classList && loader.classList.contains('fade-out')) return true;
+        const s = window.getComputedStyle(loader);
+        if (s.display === 'none' || s.visibility === 'hidden' || s.opacity === '0') return true;
+        return false;
+      }
+
+      function step(ts) {
+        if (!startTime) startTime = ts;
+        const elapsed = ts - startTime;
+        const t = Math.min(elapsed, DURATION);
+        const frac = t / DURATION;
+
+        const maxR = getMaxRadius();
+        const r = frac * maxR;
+        const theta = frac * ROTATIONS * Math.PI * 2;
+        const x = r * Math.cos(theta);
+        const y = r * Math.sin(theta);
+
+        text.style.transform = `translate(-50%,-50%) translate(${x}px, ${y}px)`;
+
+        if (isLoaderHidden()) {
+          // backend (or app) took over — reset and stop animation
+          text.style.transform = 'translate(-50%,-50%)';
+          return;
+        }
+
+        if (elapsed >= DURATION) {
+          // reached border. If loader still present, restart from center
+          startTime = ts;
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      // Start the spiral animation
+      text.style.willChange = 'transform';
+      requestAnimationFrame(step);
+
+      // Recompute radius on resize and reset animation so it restarts from center
+      window.addEventListener('resize', () => { startTime = null; });
+    })();
+  </script>
 </body>
 
 </html>

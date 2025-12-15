@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -8,6 +9,32 @@ Write-Host ""
 
 $repoRoot = (Get-Location).Path
 $dist = Join-Path $repoRoot "dist"
+
+# Bind address (matches services/retrieve/src/main.rs)
+$bind = "127.0.0.1:4000"
+$EndpointUrl = "http://$bind"
+
+# Helper: open default browser to a URL (best-effort across platforms)
+function Open-Browser($url) {
+    try {
+        Start-Process $url -ErrorAction Stop
+        Write-Host "Opened browser at: $url" -ForegroundColor Green
+        return
+    } catch {
+        # Fallbacks for non-Windows platforms
+        $platform = $PSVersionTable.Platform
+        if ($platform -eq 'Unix') {
+            if (Get-Command xdg-open -ErrorAction SilentlyContinue) {
+                & xdg-open $url
+                return
+            } elseif (Get-Command open -ErrorAction SilentlyContinue) {
+                & open $url
+                return
+            }
+        }
+        Write-Warning "Couldn't open browser automatically. Navigate to: $url"
+    }
+}
 
 # ============================================================================
 # Step 1: Build UI to dist/ui
@@ -81,11 +108,11 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Configuration:" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  Backend Source: $backendSource" -ForegroundColor White
-Write-Host "  Backend URL:    http://127.0.0.1:4000" -ForegroundColor White
+Write-Host "  Backend URL:    $EndpointUrl" -ForegroundColor White
 
 if (Test-Path (Join-Path $dist "ui")) {
     Write-Host "  UI Source:      dist/ui (served by backend)" -ForegroundColor White
-    Write-Host "  UI URL:         http://127.0.0.1:4000 (same as backend)" -ForegroundColor White
+    Write-Host "  UI URL:         $EndpointUrl (same as backend)" -ForegroundColor White
     Write-Host ""
     Write-Host "  ✓ Single endpoint: Backend serves both API and UI" -ForegroundColor Green
 } else {
@@ -99,6 +126,9 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Starting server... Press Ctrl+C to stop." -ForegroundColor Yellow
 Write-Host ""
+
+# Try to open the browser to the endpoint (best-effort)
+Open-Browser $EndpointUrl
 
 # Start the backend
 if ($backendExe) {

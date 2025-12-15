@@ -1,3 +1,5 @@
+// Copyright (c) 2025 - Alisson Sol
+//
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, middleware::Logger};
 use actix_cors::Cors;
 use actix_files::Files;
@@ -12,9 +14,9 @@ struct ServiceInfo {
     name: String,
     description: String,
     status: String,
-    startup_type: String,
+    start_mode: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    end_type: Option<String>,
+    end_mode: Option<String>,
     log_on_as: String,
     path: String,
 }
@@ -34,14 +36,33 @@ fn targets_file_path() -> Option<PathBuf> {
 
 fn parse_service_json(item: &serde_json::Value) -> ServiceInfo {
     let get_str = |key: &str| item.get(key).and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let get_bool = |key: &str| item.get(key).and_then(|v| v.as_bool()).unwrap_or(false);
+
+    // Get the raw StartMode from WMI
+    let raw_start_mode = get_str("StartMode");
+    let delayed_auto_start = get_bool("DelayedAutoStart");
+
+    // Convert to full string representation
+    let start_mode = normalize_start_mode(&raw_start_mode, delayed_auto_start);
+
     ServiceInfo {
         name: get_str("Name"),
         description: get_str("DisplayName"),
         status: get_str("State"),
-        startup_type: get_str("StartMode"),
-        end_type: None,
+        start_mode,
+        end_mode: None,
         log_on_as: get_str("StartName"),
         path: get_str("PathName"),
+    }
+}
+
+fn normalize_start_mode(raw_mode: &str, delayed: bool) -> String {
+    match raw_mode {
+        "Auto" if delayed => "Automatic (Delayed Start)".to_string(),
+        "Auto" => "Automatic".to_string(),
+        "Manual" => "Manual".to_string(),
+        "Disabled" => "Disabled".to_string(),
+        _ => raw_mode.to_string(), // Fallback to original value
     }
 }
 
@@ -50,7 +71,7 @@ async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
         return Err("Not running on Windows".into());
     }
 
-    const PS_COMMAND: &str = "Get-WmiObject -Class Win32_Service | Select-Object Name, DisplayName, State, StartMode, StartName, PathName | ConvertTo-Json -Depth 2";
+    const PS_COMMAND: &str = "Get-WmiObject -Class Win32_Service | Select-Object Name, DisplayName, State, StartMode, DelayedAutoStart, StartName, PathName | ConvertTo-Json -Depth 2";
 
     // Try pwsh first, then powershell
     let stdout = ["pwsh", "powershell"]

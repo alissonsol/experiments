@@ -1,17 +1,96 @@
+// Copyright (c) 2025 - Alisson Sol
+//
 type Service = {
   name: string;
   description: string;
   status: string;
-  startup_type: string;
-  end_type?: string;
+  start_mode: string;
+  end_mode?: string;
   log_on_as: string;
   path: string;
 };
 
-// Backend base URL — change if your backend runs elsewhere
-const API_BASE = 'http://127.0.0.1:4000';
+// Backend base URL — uses the same `bind` value as the retrieve service
+const bind = '127.0.0.1:4000';
+const API_BASE = `http://${bind}`;
 
 const app = document.getElementById('app')!;
+
+// Loader animation controls — spiral animation from center to border
+let __loaderRaf = 0 as number;
+let __loaderRunning = false;
+let __loaderEl: HTMLElement | null = null;
+let __loaderTextEl: HTMLElement | null = null;
+
+function startLoader() {
+  if (__loaderRunning) return;
+  __loaderEl = document.getElementById('loader');
+  __loaderTextEl = __loaderEl?.querySelector('.loader-text') as HTMLElement | null;
+  if (!__loaderEl || !__loaderTextEl) return;
+  __loaderRunning = true;
+
+  const DURATION = 5000; // Seconds to reach the border
+  const ROTATIONS = 6; // number of spiral turns
+  let startTime: number | null = null;
+
+  function getMaxRadius() {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const rect = __loaderTextEl!.getBoundingClientRect();
+    const margin = 8;
+    const halfW = vw / 2;
+    const halfH = vh / 2;
+    // distance to nearest border from center, minus half of element and margin
+    const maxX = halfW - rect.width / 2 - margin;
+    const maxY = halfH - rect.height / 2 - margin;
+    return Math.max(0, Math.min(maxX, maxY));
+  }
+
+  function step(ts: number) {
+    if (!__loaderRunning) return;
+
+    if (!startTime) startTime = ts;
+    const elapsed = ts - startTime;
+    const t = Math.min(elapsed, DURATION);
+    const frac = t / DURATION;
+
+    const maxR = getMaxRadius();
+    const r = frac * maxR;
+    const theta = frac * ROTATIONS * Math.PI * 2;
+    const x = r * Math.cos(theta);
+    const y = r * Math.sin(theta);
+
+    __loaderTextEl!.style.transform = `translate(-50%,-50%) translate(${x}px, ${y}px)`;
+
+    if (elapsed >= DURATION) {
+      // reached border. If loader still present, restart from center
+      startTime = ts;
+    }
+
+    __loaderRaf = requestAnimationFrame(step);
+  }
+
+  // Start the spiral animation
+  __loaderTextEl.style.willChange = 'transform';
+  __loaderRaf = requestAnimationFrame(step);
+  window.addEventListener('resize', onLoaderResize);
+}
+
+function onLoaderResize() {
+  // Reset animation on resize so it restarts from center with new dimensions
+  // The next animation frame will pick up the new dimensions
+}
+
+function stopLoader() {
+  if (!__loaderRunning) return;
+  __loaderRunning = false;
+  cancelAnimationFrame(__loaderRaf);
+  window.removeEventListener('resize', onLoaderResize);
+  if (__loaderEl) {
+    __loaderEl.classList.add('fade-out');
+    setTimeout(() => __loaderEl?.remove(), 360);
+  }
+}
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -67,7 +146,7 @@ const HEADER_COLUMNS = [
   { label: 'Name', className: 'col-name' },
   { label: 'Description', className: 'col-desc' },
   { label: 'Status', className: 'col-status' },
-  { label: 'Startup Type', className: 'col-startup' },
+  { label: 'Startup Mode', className: 'col-startup' },
   { label: 'Log On As', className: 'col-logon' },
   { label: 'Path', className: 'col-path' },
 ] as const;
@@ -77,14 +156,20 @@ const HEADER_COLUMNS_RIGHT = [
   { label: 'Name', className: 'col-name' },
   { label: 'Description', className: 'col-desc' },
   { label: 'Status', className: 'col-status' },
-  { label: 'Startup Type', className: 'col-startup' },
-  { label: 'End Type', className: 'col-endtype' },
+  { label: 'Startup Mode', className: 'col-startup' },
+  { label: 'End Mode', className: 'col-endmode' },
   { label: 'Log On As', className: 'col-logon' },
   { label: 'Path', className: 'col-path' },
 ] as const;
 
-function mapStartupType(value: string): string {
+function mapStartMode(value: string): string {
+  // Backend now returns normalized values, but we still validate/default
   if (!value) return 'Manual';
+  // Check if value is one of our known types
+  const validTypes = ['Automatic (Delayed Start)', 'Automatic', 'Manual', 'Disabled'];
+  if (validTypes.includes(value)) return value;
+
+  // Fallback for legacy or unexpected values
   const lower = value.toLowerCase();
   if (lower.includes('auto') && lower.includes('del')) return 'Automatic (Delayed Start)';
   if (lower.includes('auto')) return 'Automatic';
@@ -115,24 +200,24 @@ function makeRow(
   row.draggable = true;
   row.dataset.index = String(index);
 
-  const startup = createSelect('col-startup select', mapStartupType(s.startup_type));
-  const endtype = createSelect('col-endtype select', mapStartupType(s.end_type || s.startup_type));
+  const startup = createSelect('col-startup select', mapStartMode(s.start_mode));
+  const endtype = createSelect('col-endmode select', mapStartMode(s.end_mode || s.start_mode));
 
   // Update endtype background based on comparison
-  const updateEndTypeHighlight = () => {
+  const updateEndModeHighlight = () => {
     endtype.classList.toggle('different', startup.value !== endtype.value);
   };
 
-  updateEndTypeHighlight();
+  updateEndModeHighlight();
 
   startup.onchange = () => {
     onStartupChange(index, startup.value);
-    updateEndTypeHighlight();
+    updateEndModeHighlight();
   };
 
   endtype.onchange = () => {
     onEndTypeChange(index, endtype.value);
-    updateEndTypeHighlight();
+    updateEndModeHighlight();
   };
 
   row.append(
@@ -180,7 +265,7 @@ function createServiceRow(s: Service, idx: number) {
     el('div', 'col-name', s.name),
     el('div', 'col-desc muted', s.description || ''),
     el('div', 'col-status', s.status),
-    el('div', 'col-startup', s.startup_type),
+    el('div', 'col-startup', s.start_mode),
     el('div', 'col-logon', s.log_on_as),
     el('div', 'col-path muted', s.path)
   );
@@ -191,7 +276,7 @@ function renderApp(current: Service[], targets: Service[]) {
   app.innerHTML = '';
   const root = el('div', 'app');
   const toolbar = el('div', 'toolbar');
-  const toolbarTitle = el('div', 'toolbar-title', 'Ordem — Service ordering and target startup types');
+  const toolbarTitle = el('div', 'toolbar-title', 'Ordem — Service ordering and target startup modes');
   const toolbarLeft = el('div', 'toolbar-group');
   const toolbarRight = el('div', 'toolbar-group');
   toolbar.append(toolbarLeft, toolbarTitle, toolbarRight);
@@ -330,12 +415,12 @@ function renderApp(current: Service[], targets: Service[]) {
   });
 
   const handleStartupChange = (idx: number, val: string) => {
-    items[idx].startup_type = val;
+    items[idx].start_mode = val;
     saveTargets(items);
   };
 
   const handleEndTypeChange = (idx: number, val: string) => {
-    items[idx].end_type = val;
+    items[idx].end_mode = val;
     saveTargets(items);
   };
 
@@ -365,10 +450,10 @@ function renderApp(current: Service[], targets: Service[]) {
   toggleLeft.onclick = () => togglePane(leftPane, rightPane, toggleRight);
   toggleRight.onclick = () => togglePane(rightPane, leftPane, toggleLeft);
 
-  // Manual Startup Type button
-  const manualStartupType = el('button', 'btn btn-reset', 'Manual Startup Type');
+  // Manual Startup Mode button
+  const manualStartupType = el('button', 'btn btn-reset', 'Manual Startup Mode');
   manualStartupType.onclick = async () => {
-    items.forEach(s => s.startup_type = 'Manual');
+    items.forEach(s => s.start_mode = 'Manual');
     await saveTargets(items);
     rebuildRight();
   };
@@ -377,7 +462,7 @@ function renderApp(current: Service[], targets: Service[]) {
   const resetTarget = el('button', 'btn btn-reset', 'Reset Target');
   resetTarget.onclick = async () => {
     if (confirm('Reset targets to match current state? This will overwrite all target configurations.')) {
-      items = current.slice().map(s => ({ ...s, end_type: s.startup_type }));
+      items = current.slice().map(s => ({ ...s, end_mode: s.start_mode }));
       await saveTargets(items);
       rebuildRight();
     }
@@ -395,8 +480,11 @@ function renderApp(current: Service[], targets: Service[]) {
 }
 
 async function start() {
+  // Start loader animation while we fetch backend data
+  startLoader();
   if (!isWindowsClient()) {
     showUnsupported();
+    stopLoader();
     return;
   }
   try {
@@ -404,16 +492,20 @@ async function start() {
       fetchJSON<Service[]>('/api/services'),
       fetchJSON<Service[]>('/api/targets'),
     ]);
-    // Ensure end_type is initialized if missing
+    // Ensure end_mode is initialized if missing
     const normalizedTargets = targets.map(s => ({
       ...s,
-      end_type: s.end_type || s.startup_type
+      end_mode: s.end_mode || s.start_mode
     }));
     renderApp(current, normalizedTargets);
+    // Data is ready — stop the loader animation
+    stopLoader();
   } catch (e) {
     app.innerHTML = `<div style="padding:20px">Error: ${(e as Error).message}</div>`;
     console.error(e);
+    stopLoader();
   }
 }
 
 start();
+

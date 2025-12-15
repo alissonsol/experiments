@@ -1,0 +1,36 @@
+# Ignore distribution artifacts and build outputs
+/dist/
+/dist/**
+/package/
+/package/**
+progresso-dist-*.zip
+
+# Node modules
+/node_modules/
+/ui/node_modules/
+
+# UI build (legacy)
+/ui/dist/
+
+# Rust/Cargo
+/**/target/
+/services/retrieve/target/
+
+# Bazel outputs
+/bazel-*
+/bazel-bin/
+/bazel-out/
+/bazel-testlogs/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
+.DS_Store

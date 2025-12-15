@@ -1,0 +1,11 @@
+module(name = "progresso")
+
+bazel_dep(name = "rules_rust", version = "0.68.1")
+
+crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lockfile = "//:services/progresso_service/Cargo.lock",
+    manifests = ["//:services/progresso_service/Cargo.toml"],
+)
+use_repo(crate, "crates")

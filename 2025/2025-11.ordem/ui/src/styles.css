@@ -1,3 +1,4 @@
+/* Copyright (c) 2025 - Alisson Sol */
 :root {
   --gap: 12px;
   --pane-bg: #f8f9fb;
@@ -8,7 +9,7 @@
   --col-desc-width: 250px;
   --col-status-width: 100px;
   --col-startup-width: 200px;
-  --col-endtype-width: 200px;
+  --col-endmode-width: 200px;
   --col-logon-width: 150px;
   --col-path-width: 300px;
   --drag-handle-width: 40px;
@@ -170,7 +171,7 @@ select[class^="col-"] {
 .col-desc { width: var(--col-desc-width); }
 .col-status { width: var(--col-status-width); }
 .col-startup { width: var(--col-startup-width); }
-.col-endtype { width: var(--col-endtype-width); }
+.col-endmode { width: var(--col-endmode-width); }
 .col-logon { width: var(--col-logon-width); }
 .col-path { width: var(--col-path-width); }
 
@@ -230,3 +231,29 @@ select[class^="col-"] {
   border-radius: 8px;
   max-width: 520px;
 }
+
+/* Loader: floating 'Ordem' text while backend data loads */
+#loader {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.loader-text {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 56px;
+  font-weight: 700;
+  color: #1f2937;
+  text-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  transition: opacity 300ms ease;
+  will-change: transform, opacity;
+}
+
+#loader.fade-out { opacity: 0; transition: opacity 300ms ease; }

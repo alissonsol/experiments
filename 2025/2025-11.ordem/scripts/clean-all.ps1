@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
 Write-Host "This script will remove the top-level dist/ folder and optional Bazel outputs."

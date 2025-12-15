@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+# Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 Write-Host "Building Ordem backend and UI into top-level dist/"
 
@@ -54,7 +55,7 @@ if (Test-Path "services/retrieve/Cargo.toml") {
             # Determine binary name from Cargo.toml package name
             $cargoToml = Get-Content -Path "Cargo.toml" -Raw
             $nameMatch = [regex]::Match($cargoToml, 'name\s*=\s*"(?<n>[^"]+)"')
-            $binName = if ($nameMatch.Success) { $nameMatch.Groups['n'].Value } else { 'ordem_services_retrieve' }
+            $binName = if ($nameMatch.Success) { $nameMatch.Groups['n'].Value } else { 'ordem_service' }
             $exeName = $binName + ".exe"
             $srcExe = Join-Path $targetDir $exeName
             if (Test-Path $srcExe) {

@@ -1,14 +1,17 @@
 # Ordem
 
-Windows service ordering and startup type management tool with a web-based interface.
+Windows service ordering and startup mode management tool with a web-based interface.
+
+Source: [gibhub.com/alissonsol](https://github.com/alissonsol)  
+Copyright (c) 2025, Alisson Sol - All rights reserved.
 
 ## Features
 
 - **Dual-Pane View**: Current system services (left) and target configuration (right)
 - **Service Ordering**: Drag-and-drop to reorder target services
-- **Startup Type Management**: Configure startup types (Automatic, Automatic Delayed, Manual, Disabled)
+- **Startup Mode Management**: Configure startup modes (Automatic, Automatic Delayed, Manual, Disabled)
 - **Target Persistence**: Saves target configuration to `%LOCALAPPDATA%\Ordem\ordem.target.xml`
-- **Single Endpoint**: Backend serves both API and UI on `http://127.0.0.1:4000`
+- **Single Endpoint**: Backend serves both API and UI on `http://127.0.0.1:4000` (configured via `bind` in `services/retrieve/src/main.rs`)
 - **Windows-Only**: Requires Windows OS for service management via WMI
 
 ## Quick Start
@@ -38,29 +41,11 @@ Access the UI at `http://127.0.0.1:4000`
 
 ## Configuration
 
-- **Port**: `127.0.0.1:4000` (change in `services/retrieve/src/main.rs`)
+- **Port**: `127.0.0.1:4000` (change the `bind` value in `services/retrieve/src/main.rs`)
 - **Target Storage**: `%LOCALAPPDATA%\Ordem\ordem.target.xml`
-- **API Base**: `http://127.0.0.1:4000` (change in `ui/src/main.ts`)
+- **API Base**: `http://127.0.0.1:4000` (change the `bind` value in `ui/src/main.ts`)
 
 ## Project Structure
-
-```text
-.
-├── scripts/
-│   ├── build-all.ps1
-│   ├── run-all.ps1
-│   └── clean-all.ps1
-├── services/retrieve/    # Rust backend
-│   ├── src/main.rs
-│   └── Cargo.toml
-├── ui/                   # TypeScript frontend
-│   ├── src/
-│   │   ├── main.ts
-│   │   └── styles.css
-│   ├── index.html
-│   └── package.json
-└── dist/                 # Build output
-```
 
 ## Troubleshooting
 
@@ -83,7 +68,7 @@ Access the UI at `http://127.0.0.1:4000`
 
 - Split-pane interface with column alignment
 - Drag-and-drop service reordering
-- Inline startup type editing
+- Inline startup mode editing
 - Pane toggle and reset controls
 
 ## Prerequisites

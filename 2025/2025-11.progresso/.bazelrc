@@ -1,0 +1,4 @@
+# Windows-specific settings - disable symlinks to avoid permission issues
+build --enable_runfiles=false
+build --nobuild_runfile_links
+

@@ -1,0 +1,12 @@
+load("@rules_rust//rust:rust.bzl", "rust_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_binary(
+    name = "progresso_service",
+    srcs = glob([
+        "../services/progresso_service/src/**/*.rs",
+    ]),
+    crate_root = "../services/progresso_service/src/main.rs",
+    edition = "2021",
+)

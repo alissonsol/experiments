@@ -1,0 +1,20 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "progresso_service",
+    srcs = glob([
+        "services/progresso_service/src/**/*.rs",
+    ]),
+    crate_root = "services/progresso_service/src/main.rs",
+    edition = "2021",
+    deps = [
+        "@crates//:anyhow",
+        "@crates//:chrono",
+        "@crates//:env_logger",
+        "@crates//:log",
+        "@crates//:serde",
+        "@crates//:serde-xml-rs",
+        "@crates//:sysinfo",
+        "@crates//:windows-service",
+    ],
+)
