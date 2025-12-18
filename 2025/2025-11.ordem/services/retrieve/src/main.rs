@@ -239,12 +239,154 @@ async fn api_post_targets(body: web::Json<Vec<ServiceInfo>>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // Initialize logger early to capture all diagnostics
     env_logger::init();
     let bind = "127.0.0.1:4000";
 
     println!("========================================");
     println!("Ordem Service Retrieval Backend");
     println!("========================================");
+    println!();
+
+    // === STARTUP DIAGNOSTICS ===
+    println!("[DIAGNOSTICS] Running startup checks...");
+    println!();
+
+    // 1. Platform check
+    print!("[CHECK 1/6] Platform verification... ");
+    if !cfg!(windows) {
+        eprintln!("FAILED");
+        eprintln!();
+        eprintln!("ERROR: This service requires Windows OS");
+        eprintln!("Current platform is not Windows.");
+        std::process::exit(1);
+    }
+    println!("OK (Windows)");
+
+    // 2. PowerShell availability
+    print!("[CHECK 2/6] PowerShell availability... ");
+    let ps_available = ["pwsh", "powershell"]
+        .iter()
+        .find(|&&cmd| {
+            Command::new(cmd)
+                .args(["-NoProfile", "-Command", "exit 0"])
+                .output()
+                .map(|o| o.status.success())
+                .unwrap_or(false)
+        });
+
+    match ps_available {
+        Some(cmd) => println!("OK ({} found)", cmd),
+        None => {
+            eprintln!("FAILED");
+            eprintln!();
+            eprintln!("ERROR: PowerShell is required but not found");
+            eprintln!("The service needs PowerShell to query Windows services.");
+            eprintln!("Please ensure PowerShell is installed and in PATH.");
+            std::process::exit(1);
+        }
+    }
+
+    // 3. Service query test
+    print!("[CHECK 3/6] Windows service query test... ");
+    match get_services_from_system().await {
+        Ok(services) => println!("OK ({} services found)", services.len()),
+        Err(e) => {
+            eprintln!("FAILED");
+            eprintln!();
+            eprintln!("ERROR: Cannot query Windows services");
+            eprintln!("Details: {}", e);
+            eprintln!();
+            eprintln!("This may indicate:");
+            eprintln!("  - Insufficient permissions to query WMI");
+            eprintln!("  - PowerShell execution policy restrictions");
+            eprintln!("  - WMI service is not running");
+            std::process::exit(1);
+        }
+    }
+
+    // 4. Configuration directory
+    print!("[CHECK 4/6] Configuration directory... ");
+    let targets_path = match targets_file_path() {
+        Some(p) => {
+            println!("OK");
+            println!("              Path: {}", p.display());
+            p
+        }
+        None => {
+            eprintln!("FAILED");
+            eprintln!();
+            eprintln!("ERROR: Cannot determine configuration file path");
+            eprintln!("Missing environment variables: LOCALAPPDATA or USERPROFILE");
+            std::process::exit(1);
+        }
+    };
+
+    // 5. Configuration write test
+    print!("[CHECK 5/6] Configuration write test... ");
+    if let Some(parent) = targets_path.parent() {
+        match fs::create_dir_all(parent) {
+            Ok(_) => {
+                // Test write permissions with a temp file
+                let test_file = parent.join(".ordem_write_test");
+                match fs::write(&test_file, b"test") {
+                    Ok(_) => {
+                        let _ = fs::remove_file(&test_file);
+                        println!("OK (writable)");
+                    }
+                    Err(e) => {
+                        eprintln!("FAILED");
+                        eprintln!();
+                        eprintln!("ERROR: Cannot write to configuration directory");
+                        eprintln!("Path: {}", parent.display());
+                        eprintln!("Details: {}", e);
+                        eprintln!();
+                        eprintln!("Check folder permissions and disk space.");
+                        std::process::exit(1);
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("FAILED");
+                eprintln!();
+                eprintln!("ERROR: Cannot create configuration directory");
+                eprintln!("Path: {}", parent.display());
+                eprintln!("Details: {}", e);
+                std::process::exit(1);
+            }
+        }
+    } else {
+        println!("SKIPPED (no parent)");
+    }
+
+    // 6. Port availability
+    print!("[CHECK 6/6] Port availability ({}:4000)... ", "127.0.0.1");
+    match std::net::TcpListener::bind(bind) {
+        Ok(listener) => {
+            drop(listener); // Release the port immediately
+            println!("OK (available)");
+        }
+        Err(e) => {
+            eprintln!("FAILED");
+            eprintln!();
+            eprintln!("ERROR: Cannot bind to {}", bind);
+            eprintln!("Details: {}", e);
+            eprintln!();
+            eprintln!("Possible causes:");
+            eprintln!("  - Port 4000 is already in use by another process");
+            eprintln!("  - Firewall is blocking the port");
+            eprintln!("  - Another instance of ordem_service is running");
+            eprintln!();
+            eprintln!("To find what's using the port, run:");
+            eprintln!("  netstat -ano | findstr :4000");
+            std::process::exit(1);
+        }
+    }
+
+    println!();
+    println!("[DIAGNOSTICS] All startup checks passed!");
+    println!("========================================");
+    println!();
 
     /// Attempts to locate the built frontend UI distribution folder.
     /// Searches multiple common locations relative to both the current directory and executable.
@@ -289,7 +431,9 @@ async fn main() -> std::io::Result<()> {
     println!("========================================");
     println!();
 
-    HttpServer::new(move || {
+    // Start HTTP server with enhanced error handling
+    print!("[STARTUP] Binding to {}... ", bind);
+    let server = HttpServer::new(move || {
         let mut app = App::new()
             .wrap(Cors::permissive())
             .wrap(Logger::default())
@@ -305,7 +449,30 @@ async fn main() -> std::io::Result<()> {
 
         app
     })
-    .bind(bind)?
-    .run()
-    .await
+    .bind(bind)
+    .map_err(|e| {
+        eprintln!("FAILED");
+        eprintln!();
+        eprintln!("ERROR: Failed to bind HTTP server to {}", bind);
+        eprintln!("Details: {}", e);
+        eprintln!();
+        eprintln!("This is unexpected since port availability was verified.");
+        eprintln!("Another process may have claimed the port between checks.");
+        e
+    })?;
+
+    println!("OK");
+    println!("[STARTUP] Starting HTTP server...");
+    println!();
+    println!("Server is running. Press Ctrl+C to stop.");
+    println!();
+
+    server.run().await.map_err(|e| {
+        eprintln!();
+        eprintln!("========================================");
+        eprintln!("ERROR: Server stopped unexpectedly");
+        eprintln!("========================================");
+        eprintln!("Details: {}", e);
+        e
+    })
 }

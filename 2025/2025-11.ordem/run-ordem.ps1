@@ -137,6 +137,84 @@ if (-not $backendExe) {
     exit 1
 }
 
+# ============================================================================
+# Check for VC++ Redistributable (required for Rust executables)
+# ============================================================================
+Write-Host "Checking runtime dependencies..." -ForegroundColor Cyan
+
+# Check if vcruntime140.dll is available
+$vcRuntimeFound = $false
+$systemPaths = @(
+    "$env:SystemRoot\System32",
+    "$env:SystemRoot\SysWOW64"
+)
+
+foreach ($path in $systemPaths) {
+    if (Test-Path (Join-Path $path "vcruntime140.dll")) {
+        $vcRuntimeFound = $true
+        break
+    }
+}
+
+if (-not $vcRuntimeFound) {
+    Write-Host ""
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host "Missing Runtime Dependency" -ForegroundColor Red
+    Write-Host "========================================" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "The Microsoft Visual C++ Redistributable is required but not found." -ForegroundColor Yellow
+    Write-Host "This is needed to run the ordem service executable." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Attempting to install it automatically using winget..." -ForegroundColor Cyan
+    Write-Host ""
+
+    # Check if winget is available
+    $hasWinget = Get-Command winget -ErrorAction SilentlyContinue
+    if (-not $hasWinget) {
+        Write-Host "winget is not available on this system." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Please install the Microsoft Visual C++ Redistributable manually:" -ForegroundColor White
+        Write-Host "  1. Visit: https://aka.ms/vs/17/release/vc_redist.x64.exe" -ForegroundColor White
+        Write-Host "  2. Download and run the installer" -ForegroundColor White
+        Write-Host "  3. Restart this script" -ForegroundColor White
+        Write-Host ""
+        Write-Error "Cannot continue without VC++ Redistributable."
+        exit 1
+    }
+
+    Write-Host "Installing Microsoft Visual C++ Redistributable 2015-2022..." -ForegroundColor Yellow
+    try {
+        # Install VC++ Redistributable using winget
+        $installResult = winget install --id Microsoft.VCRedist.2015+.x64 --exact --accept-package-agreements --accept-source-agreements 2>&1
+
+        if ($LASTEXITCODE -eq 0 -or $LASTEXITCODE -eq -1978335189) {
+            # Exit code -1978335189 (0x8A15000B) means "No applicable update found" - package already installed
+            Write-Host "✓ Microsoft Visual C++ Redistributable is now available" -ForegroundColor Green
+            Write-Host ""
+        } else {
+            Write-Host "Installation may have encountered issues (exit code: $LASTEXITCODE)" -ForegroundColor Yellow
+            Write-Host "Output: $installResult" -ForegroundColor Gray
+            Write-Host ""
+            Write-Host "If the service still fails to start, please install manually:" -ForegroundColor Yellow
+            Write-Host "  https://aka.ms/vs/17/release/vc_redist.x64.exe" -ForegroundColor White
+            Write-Host ""
+        }
+    } catch {
+        Write-Host "Failed to install VC++ Redistributable automatically." -ForegroundColor Red
+        Write-Host "Error: $_" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Please install it manually from:" -ForegroundColor White
+        Write-Host "  https://aka.ms/vs/17/release/vc_redist.x64.exe" -ForegroundColor White
+        Write-Host ""
+        Write-Error "Cannot continue without VC++ Redistributable."
+        exit 1
+    }
+} else {
+    Write-Host "✓ Microsoft Visual C++ Redistributable found" -ForegroundColor Green
+}
+
+Write-Host ""
+
 # Display connection instructions
 Write-Host "Starting Ordem server..." -ForegroundColor Yellow
 Write-Host ""
