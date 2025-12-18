@@ -1,5 +1,16 @@
 // Copyright (c) 2025 - Alisson Sol
 //
+// Ordem Service Retrieval Backend
+//
+// A REST API server that provides endpoints for querying Windows services
+// and managing target service configurations. Built with Actix-web.
+//
+// # Endpoints
+// - `GET /api/services` - Retrieves all Windows services from the system
+// - `GET /api/targets` - Retrieves saved target configurations
+// - `POST /api/targets` - Saves target configurations
+// - `GET /` - Serves the frontend UI (if available)
+
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, middleware::Logger};
 use actix_cors::Cors;
 use actix_files::Files;
@@ -9,6 +20,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
+/// Represents a Windows service with its configuration and state.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct ServiceInfo {
     name: String,
@@ -21,12 +33,18 @@ struct ServiceInfo {
     path: String,
 }
 
+/// Wrapper for XML serialization of service targets.
 #[derive(Debug, Serialize, Deserialize)]
 struct OrdemTargets {
     #[serde(rename = "Service")]
     services: Vec<ServiceInfo>,
 }
 
+/// Determines the file path for storing target configurations.
+/// Uses LOCALAPPDATA environment variable, with fallback to USERPROFILE.
+///
+/// # Returns
+/// `Some(PathBuf)` with the path to ordem.target.xml, or `None` if environment variables are missing.
 fn targets_file_path() -> Option<PathBuf> {
     env::var("LOCALAPPDATA")
         .or_else(|_| env::var("USERPROFILE").map(|p| format!("{p}\\AppData\\Local")))
@@ -34,6 +52,13 @@ fn targets_file_path() -> Option<PathBuf> {
         .map(|base| PathBuf::from(base).join("Ordem").join("ordem.target.xml"))
 }
 
+/// Parses a single service entry from JSON returned by PowerShell WMI query.
+///
+/// # Arguments
+/// * `item` - JSON value containing service information
+///
+/// # Returns
+/// A populated `ServiceInfo` struct with normalized start mode.
 fn parse_service_json(item: &serde_json::Value) -> ServiceInfo {
     let get_str = |key: &str| {
         item.get(key)
@@ -62,6 +87,14 @@ fn parse_service_json(item: &serde_json::Value) -> ServiceInfo {
     }
 }
 
+/// Normalizes a Windows service start mode to a standard format.
+///
+/// # Arguments
+/// * `raw_mode` - The raw start mode string from WMI
+/// * `delayed` - Whether delayed auto-start is enabled
+///
+/// # Returns
+/// A normalized startup mode string.
 fn normalize_start_mode(raw_mode: &str, delayed: bool) -> String {
     match (raw_mode, delayed) {
         ("Auto", true) => "Automatic (Delayed Start)".to_string(),
@@ -72,6 +105,11 @@ fn normalize_start_mode(raw_mode: &str, delayed: bool) -> String {
     }
 }
 
+/// Retrieves all Windows services from the system using PowerShell WMI queries.
+/// Tries pwsh first, then falls back to powershell for compatibility.
+///
+/// # Returns
+/// `Ok(Vec<ServiceInfo>)` on success, or `Err(String)` with error message on failure.
 async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
     if !cfg!(windows) {
         return Err("Not running on Windows".into());
@@ -79,7 +117,7 @@ async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
 
     const PS_COMMAND: &str = "Get-WmiObject -Class Win32_Service | Select-Object Name, DisplayName, State, StartMode, DelayedAutoStart, StartName, PathName | ConvertTo-Json -Depth 2";
 
-    // Try pwsh first, then powershell
+    // Try pwsh first (PowerShell 7+), then fall back to powershell (Windows PowerShell 5.x)
     let stdout = ["pwsh", "powershell"]
         .iter()
         .find_map(|&cmd| {
@@ -95,6 +133,7 @@ async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
     let json: serde_json::Value = serde_json::from_slice(&stdout)
         .map_err(|e| format!("JSON parse error: {}", e))?;
 
+    // Parse JSON response - handle both array (multiple services) and object (single service)
     let services = match json {
         serde_json::Value::Array(arr) => {
             let mut services = Vec::with_capacity(arr.len());
@@ -110,6 +149,7 @@ async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
     Ok(services)
 }
 
+/// API endpoint to retrieve all Windows services from the system.
 #[get("/api/services")]
 async fn api_services() -> impl Responder {
     match get_services_from_system().await {
@@ -118,6 +158,13 @@ async fn api_services() -> impl Responder {
     }
 }
 
+/// Reads target configurations from the XML file.
+///
+/// # Arguments
+/// * `path` - Path to the ordem.target.xml file
+///
+/// # Returns
+/// `Some(Vec<ServiceInfo>)` if file exists and parses successfully, `None` otherwise.
 fn read_targets_from_file(path: &PathBuf) -> Option<Vec<ServiceInfo>> {
     fs::read_to_string(path)
         .ok()
@@ -125,6 +172,15 @@ fn read_targets_from_file(path: &PathBuf) -> Option<Vec<ServiceInfo>> {
         .map(|wrapper| wrapper.services)
 }
 
+/// Writes target configurations to the XML file.
+/// Creates the parent directory if it doesn't exist.
+///
+/// # Arguments
+/// * `path` - Path where the XML file should be written
+/// * `services` - Service configurations to save
+///
+/// # Returns
+/// `Ok(())` on success, or an IO error on failure.
 fn write_targets_to_file(path: &PathBuf, services: &[ServiceInfo]) -> std::io::Result<()> {
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -140,6 +196,8 @@ fn write_targets_to_file(path: &PathBuf, services: &[ServiceInfo]) -> std::io::R
     fs::write(path, xml.as_bytes())
 }
 
+/// API endpoint to retrieve saved target configurations.
+/// Initializes the file with current system services if it doesn't exist.
 #[get("/api/targets")]
 async fn api_get_targets() -> impl Responder {
     let Some(path) = targets_file_path() else {
@@ -166,6 +224,7 @@ async fn api_get_targets() -> impl Responder {
     }
 }
 
+/// API endpoint to save target configurations.
 #[post("/api/targets")]
 async fn api_post_targets(body: web::Json<Vec<ServiceInfo>>) -> impl Responder {
     let Some(path) = targets_file_path() else {
@@ -187,8 +246,12 @@ async fn main() -> std::io::Result<()> {
     println!("Ordem Service Retrieval Backend");
     println!("========================================");
 
-    // Try to locate a `ui/dist` folder next to the repository. This allows the server
-    // to serve the built frontend when present so a single process serves both API and UI.
+    /// Attempts to locate the built frontend UI distribution folder.
+    /// Searches multiple common locations relative to both the current directory and executable.
+    /// This allows the server to serve both API and UI from a single process.
+    ///
+    /// # Returns
+    /// `Some(PathBuf)` if the UI dist folder is found, `None` otherwise.
     fn find_ui_dist() -> Option<PathBuf> {
         let cwd = env::current_dir().ok()?;
         let exe_dir = env::current_exe()

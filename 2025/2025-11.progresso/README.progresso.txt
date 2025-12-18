@@ -1,4 +1,4 @@
-# Progresso
+﻿# Progresso
 
 A Windows service for monitoring and tracking the progress of Windows services based on target configurations.
 

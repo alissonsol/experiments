@@ -1,4 +1,4 @@
-<#
+﻿<#
   Copyright (c) 2025 - Alisson Sol
 # Runs the Progresso service executable in console mode after ensuring
 # `dist\backend\ordem.target.xml` exists. If missing, attempts to copy

@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
@@ -6,6 +6,16 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Progresso Distribution Packager" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
+
+# Import dependency checking module
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
+
+# Check dependencies before creating distribution
+if (-not (Test-AllDependencies -RequiredTools @('Cargo'))) {
+    Write-Host "Distribution creation cannot proceed without required dependencies." -ForegroundColor Red
+    exit 1
+}
 
 $repoRoot = (Get-Location).Path
 $distDir = Join-Path $repoRoot "dist"

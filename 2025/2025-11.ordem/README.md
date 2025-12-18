@@ -1,4 +1,4 @@
-# Ordem
+﻿# Ordem
 
 Windows service ordering and startup mode management tool with a web-based interface.
 
@@ -16,20 +16,32 @@ Copyright (c) 2025, Alisson Sol - All rights reserved.
 
 ## Quick Start
 
-Build and run:
+### 1. Install Dependencies
+
+```powershell
+.\scripts\install-dependencies.ps1
+```
+
+This will automatically install:
+- **Node.js** v23.5.0 (for building the TypeScript frontend)
+- **Rust** v1.84.0 (for building the backend API)
+- **Bazel** (optional build system)
+
+**Note**: After installation, restart your terminal to refresh the PATH.
+
+### 2. Build and Run
 
 ```powershell
 .\scripts\build-all.ps1
-.\scripts\run-all.ps1
 ```
 
 Access the UI at `http://127.0.0.1:4000`
 
 ## Build Scripts
 
+- `.\scripts\install-dependencies.ps1` - Install all required dependencies (Node.js, Rust, Bazel)
 - `.\scripts\clean-all.ps1` - Remove all build artifacts
-- `.\scripts\build-all.ps1` - Build UI and backend to `dist/`
-- `.\scripts\run-all.ps1` - Build UI and run backend
+- `.\scripts\build-all.ps1` - Build UI and backend to `dist/`, then run backend
 - `.\scripts\dist-all.ps1` - Creates ZIP package for distribution
 
 ## API Endpoints
@@ -65,8 +77,25 @@ Access the UI at `http://127.0.0.1:4000`
 
 ## Prerequisites
 
-- **Rust** (via [rustup](https://rustup.rs/))
-- **Node.js** (includes npm)
+### Automated Installation (Recommended)
+
+Use the provided installation script to automatically install all dependencies:
+
+```powershell
+.\scripts\install-dependencies.ps1
+```
+
+This script uses `winget` and requires:
+- Windows 10 version 1809 or later
+- Administrative privileges may be required
+
+### Manual Installation
+
+If you prefer manual installation:
+
+- **Node.js** v23.5.0+ (via [nodejs.org](https://nodejs.org/) or [rustup](https://rustup.rs/))
+- **Rust** v1.84.0+ (via [rustup.rs](https://rustup.rs/))
+- **Bazel** (optional, via [bazel.build](https://bazel.build/))
 - **Windows OS** (required for WMI service access)
 
 ## Troubleshooting

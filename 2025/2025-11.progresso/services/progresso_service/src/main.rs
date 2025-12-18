@@ -1,52 +1,89 @@
-mod service_ctrl;
-
 // Copyright (c) 2025 - Alisson Sol
 //
+// Progresso Windows Service
+//
+// A Windows service that reads target service configurations from `ordem.target.xml`,
+// executes service start/stop commands, monitors CPU usage, and writes timestamped
+// progress reports. Can run as a Windows service or in console mode.
+//
+// # Configuration
+// Reads from: `ordem.target.xml` in the working directory
+// Writes to: `progresso.YYYYMMDD.HHMMSS.xml` with timestamped execution results
+//
+// # Operation
+// 1. Reads target configurations
+// 2. For each service, starts/stops based on end_mode
+// 3. Waits for CPU usage to drop below threshold (60%)
+// 4. Records timestamps for each operation
+// 5. Writes incremental progress to XML file
+
 use chrono::Local;
 use serde_xml_rs::from_str;
 use std::fs;
-use std::io::Write;
-// std::process::Command used in service_ctrl module
+use std::io::{BufWriter, Write};
 use std::sync::{atomic::{AtomicBool, Ordering}, Arc};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 use sysinfo::System;
 
 use anyhow::Result;
-use std::io::BufWriter;
 use windows_service::service_control_handler::{self, ServiceControlHandlerResult};
 use windows_service::service_dispatcher;
 use windows_service::service::{ServiceControl, ServiceControlAccept, ServiceExitCode, ServiceState, ServiceStatus, ServiceType};
 
-use progresso_service::OrdemTargets;
+use progresso_service::{OrdemTargets, service_ctrl};
 
+/// Windows service name as registered with the Service Control Manager.
 const SERVICE_NAME: &str = "ProgressoService";
 
+/// Input configuration file name (must be in working directory).
+const INPUT_FILE: &str = "ordem.target.xml";
+
+/// Output file prefix for progress reports.
+const OUTPUT_PREFIX: &str = "progresso";
+
+// Performance tuning constants
+/// Interval between CPU usage polls.
+const CPU_POLL_INTERVAL: Duration = Duration::from_secs(1);
+/// Maximum time to wait for CPU to drop below threshold (5 minutes).
+const CPU_WAIT_TIMEOUT: Duration = Duration::from_secs(300);
+/// Maximum time to wait for a service state transition (1 minute).
+const SERVICE_STATE_TIMEOUT: Duration = Duration::from_secs(60);
+/// CPU usage threshold percentage - processing continues when below this value.
+const CPU_THRESHOLD: f32 = 60.0;
+/// Minimum CPU change percentage to report (reduces log spam).
+const CPU_REPORT_DELTA: f32 = 5.0;
+
+/// Application entry point.
+///
+/// Attempts to start as a Windows service first. If that fails (e.g., when run
+/// from command line), falls back to console mode for testing and debugging.
 fn main() {
     env_logger::init();
 
-    // Try to run as service; if that fails, run as console
-    match service_dispatcher::start(SERVICE_NAME, service_main) {
-        Ok(_) => return, // service completed
-        Err(e) => {
-            eprintln!("Not running as service ({}), falling back to console mode", e);
-        }
-    }
+    // Try to run as Windows service; falls back to console mode if not launched by SCM
+    if let Err(e) = service_dispatcher::start(SERVICE_NAME, service_main) {
+        eprintln!("Not running as service ({}), falling back to console mode", e);
 
-    let stop_flag = Arc::new(AtomicBool::new(false));
-    if let Err(e) = run_main(stop_flag.clone()) {
-        eprintln!("Error: {}", e);
-        std::process::exit(1);
+        let stop_flag = Arc::new(AtomicBool::new(false));
+        if let Err(e) = run_main(stop_flag) {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
     }
 }
 
+/// Windows service entry point called by the Service Control Manager.
+///
+/// Registers a control handler for stop/interrogate commands, signals the service
+/// as running, executes the main worker, then signals stopped on completion.
 extern "system" fn service_main(_argc: u32, _argv: *mut *mut u16) {
-    // register service control handler
     let stop_flag = Arc::new(AtomicBool::new(false));
-    let flag_clone = stop_flag.clone();
+    let flag_clone = Arc::clone(&stop_flag);
 
-    let status_handle = match service_control_handler::register(SERVICE_NAME, move |control_event| {
-        match control_event {
+    // Register handler for service control events (stop, interrogate)
+    let status_handle = match service_control_handler::register(SERVICE_NAME, move |event| {
+        match event {
             ServiceControl::Stop | ServiceControl::Interrogate => {
                 flag_clone.store(true, Ordering::SeqCst);
                 ServiceControlHandlerResult::NoError
@@ -54,15 +91,15 @@ extern "system" fn service_main(_argc: u32, _argv: *mut *mut u16) {
             _ => ServiceControlHandlerResult::NotImplemented,
         }
     }) {
-        Ok(h) => h,
+        Ok(handle) => handle,
         Err(e) => {
             eprintln!("Failed to register service control handler: {}", e);
             return;
         }
     };
 
-    // tell SCM that we're running
-    let status = ServiceStatus {
+    // Notify SCM that the service is now running
+    let running_status = ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
         current_state: ServiceState::Running,
         controls_accepted: ServiceControlAccept::STOP,
@@ -71,16 +108,15 @@ extern "system" fn service_main(_argc: u32, _argv: *mut *mut u16) {
         wait_hint: Duration::from_secs(10),
         process_id: None,
     };
+    let _ = status_handle.set_service_status(running_status);
 
-    let _ = status_handle.set_service_status(status);
-
-    // run main worker
-    if let Err(e) = run_main(stop_flag.clone()) {
+    // Execute main processing loop
+    if let Err(e) = run_main(Arc::clone(&stop_flag)) {
         eprintln!("Service worker error: {}", e);
     }
 
-    // signal stopped
-    let _ = status_handle.set_service_status(ServiceStatus {
+    // Notify SCM that the service has stopped
+    let stopped_status = ServiceStatus {
         service_type: ServiceType::OWN_PROCESS,
         current_state: ServiceState::Stopped,
         controls_accepted: ServiceControlAccept::empty(),
@@ -88,143 +124,233 @@ extern "system" fn service_main(_argc: u32, _argv: *mut *mut u16) {
         checkpoint: 0,
         wait_hint: Duration::from_secs(0),
         process_id: None,
-    });
+    };
+    let _ = status_handle.set_service_status(stopped_status);
 }
 
+/// Main worker function that processes all target services.
+///
+/// Workflow for each service:
+/// 1. Records start processing timestamp
+/// 2. Checks current running state
+/// 3. Starts or stops service based on `end_mode` configuration
+/// 4. Waits for state transition to complete
+/// 5. Waits for CPU usage to drop below threshold
+/// 6. Records completion timestamps
+/// 7. Writes incremental progress to output file
+///
+/// # Arguments
+///
+/// * `stop_flag` - Atomic flag for graceful shutdown signaling. When set to `true`,
+///   the function will complete the current service and exit the loop.
+///
+/// # Returns
+///
+/// * `Ok(())` - All services processed (or stopped early via flag)
+/// * `Err` - File I/O or XML parsing failed
 fn run_main(stop_flag: Arc<AtomicBool>) -> Result<()> {
-    let ordem_path = "ordem.target.xml";
-    let raw = fs::read_to_string(ordem_path)?;
-    let ordem: OrdemTargets = from_str(&raw).unwrap_or_default();
+    // Read and parse input configuration
+    let raw_xml = fs::read_to_string(INPUT_FILE)?;
+    let ordem: OrdemTargets = from_str(&raw_xml).unwrap_or_default();
+
+    // Create timestamped output file
     let timestamp = Local::now().format("%Y%m%d.%H%M%S");
-    let progresso_path = format!("progresso.{}.xml", timestamp);
+    let output_path = format!("{}.{}.xml", OUTPUT_PREFIX, timestamp);
+    fs::File::create(&output_path)?;
 
-    fs::File::create(&progresso_path)?;
+    // Pre-allocate progress tracking with known capacity
+    let mut progress = OrdemTargets::with_capacity(ordem.len());
 
-    let mut progress = OrdemTargets::default();
-    progress.services.reserve(ordem.services.len());
-
-    // CPU monitor
+    // Initialize CPU monitoring system
     let mut sys = System::new_all();
-    let cpu_threshold = 60.0_f32; // percent; could be made configurable
 
-    println!("\n========================================");
-    println!("Processing {} service(s)", ordem.services.len());
-    println!("========================================\n");
+    print_header(ordem.len());
 
     for mut svc in ordem.services {
+        // Check for graceful shutdown request
         if stop_flag.load(Ordering::SeqCst) {
             eprintln!("Stop requested before processing next service");
             break;
         }
 
-        let now = Local::now();
-        svc.start_processing_time = Some(now.to_rfc3339());
+        svc.record_start_processing();
 
-        let Some(svc_name) = svc.name.as_deref().filter(|n| !n.is_empty()) else {
-            log::warn!("Skipping service with empty name");
-            println!("⚠ Skipping service with empty name");
-            continue;
+        // Extract service name (owned copy to avoid borrow issues)
+        let svc_name = match svc.name.as_ref().filter(|n| !n.is_empty()) {
+            Some(name) => name.clone(),
+            None => {
+                log::warn!("Skipping service with empty name");
+                println!("  Skipping service with empty name");
+                continue;
+            }
         };
 
         println!("[{}] Processing service...", svc_name);
 
-        // Remember whether it was running before we start any actions
-        let was_running = service_ctrl::is_service_running(svc_name);
-        svc.stop_time = Some(now.to_rfc3339());
-        svc.end_time = Some(now.to_rfc3339());
+        // Capture initial state before any modifications
+        let was_running = service_ctrl::is_service_running(&svc_name);
+        svc.record_stop();
+        svc.record_end();
 
-        if let Some(et) = &svc.end_mode {
-            let should_start = et.to_lowercase().contains("automatic");
-
-            if should_start {
-                if was_running {
-                    log::info!("Service '{}' already running and target end_mode is '{}'; skipping.", svc_name, et);
-                    println!("  ✓ Already running (target: {})", et);
-                } else {
-                    log::info!("Starting '{}' with target end_mode '{}'.", svc_name, et);
-                    println!("  → Starting service (target: {})...", et);
-                    let _ = service_ctrl::run_sc(&["start", svc_name]);
-                    if !service_ctrl::wait_for_service_state_with_stop(svc_name, "RUNNING", STOP_TIMEOUT_SECS, Arc::clone(&stop_flag)) {
-                        log::warn!("Starting '{}' failed.", svc_name);
-                        println!("  ✗ Failed to start");
-                    } else {
-                        println!("  ✓ Started successfully");
-                    }
-                    svc.end_time = Some(Local::now().to_rfc3339());
-                }
-            } else {
-                if !was_running {
-                    log::info!("Service '{}' already stopped and target end_mode is '{}'; skipping.", svc_name, et);
-                    println!("  ✓ Already stopped (target: {})", et);
-                    svc.stop_time.get_or_insert_with(|| Local::now().to_rfc3339());
-                } else {
-                    log::info!("Stopping '{}' with target end_mode '{}'.", svc_name, et);
-                    println!("  → Stopping service (target: {})...", et);
-                    let _ = service_ctrl::run_sc(&["stop", svc_name]);
-                    if !service_ctrl::wait_for_service_state_with_stop(svc_name, "STOPPED", STOP_TIMEOUT_SECS, Arc::clone(&stop_flag)) {
-                        log::warn!("Stopping '{}' failed.", svc_name);
-                        println!("  ✗ Failed to stop");
-                    } else {
-                        println!("  ✓ Stopped successfully");
-                    }
-                    svc.stop_time = Some(Local::now().to_rfc3339());
-                }
-            }
+        // Process based on end_mode configuration
+        if let Some(end_mode) = svc.end_mode.clone() {
+            process_service_action(&mut svc, &svc_name, &end_mode, was_running, &stop_flag);
         } else {
             println!("  - No end_mode configured, skipping");
         }
 
-        // Wait for CPU below threshold
-        println!("  → Waiting for CPU below {}%...", cpu_threshold);
-        let start_wait = Instant::now();
-        let mut last_reported_usage = -1.0_f32;
-        loop {
-            if stop_flag.load(Ordering::SeqCst) {
-                log::info!("Stop requested while waiting for CPU");
-                println!("  ! Stop requested");
-                svc.cpu_responsive_time = Some(Local::now().to_rfc3339());
-                break;
-            }
-            sys.refresh_cpu_all();
-            let usage = sys.global_cpu_usage();
+        // Wait for system CPU to stabilize before processing next service
+        wait_for_cpu_stable(&mut sys, &mut svc, &stop_flag);
 
-            // Report CPU usage every 5% change
-            if (usage - last_reported_usage).abs() >= 5.0 {
-                println!("    CPU: {:.1}%", usage);
-                last_reported_usage = usage;
-            }
-
-            if usage < cpu_threshold {
-                println!("  ✓ CPU below threshold ({:.1}%)", usage);
-                svc.cpu_responsive_time = Some(Local::now().to_rfc3339());
-                break;
-            }
-            if start_wait.elapsed() > Duration::from_secs(CPU_WAIT_TIMEOUT_SECS) {
-                println!("  ⏱ CPU wait timeout reached ({:.1}%)", usage);
-                // give up after configured timeout
-                svc.cpu_responsive_time = Some(Local::now().to_rfc3339());
-                break;
-            }
-            sleep(CPU_POLL_INTERVAL);
-        }
-
+        // Save progress incrementally after each service
         progress.services.push(svc);
-        // write progress file after each service
-        write_progress_file(&progress, &progresso_path)?;
+        write_progress_file(&progress, &output_path)?;
         println!();
     }
 
-    println!("========================================");
-    println!("Processing complete!");
-    println!("Progress file: {}", progresso_path);
-    println!("========================================\n");
+    print_footer(&output_path);
     Ok(())
 }
 
-const CPU_POLL_INTERVAL: Duration = Duration::from_secs(1);
-const CPU_WAIT_TIMEOUT_SECS: u64 = 300;
-const STOP_TIMEOUT_SECS: u64 = 60;
+/// Executes the start or stop action for a service based on its end_mode.
+///
+/// # Arguments
+///
+/// * `svc` - Service entry to update with timestamps
+/// * `svc_name` - Service name for sc.exe commands
+/// * `end_mode` - Target end mode (contains "automatic" to start, otherwise stop)
+/// * `was_running` - Whether the service was running before this action
+/// * `stop_flag` - Graceful shutdown flag
+fn process_service_action(
+    svc: &mut progresso_service::ServiceEntry,
+    svc_name: &str,
+    end_mode: &str,
+    was_running: bool,
+    stop_flag: &Arc<AtomicBool>,
+) {
+    let should_start = svc.should_start();
+    let timeout_secs = SERVICE_STATE_TIMEOUT.as_secs();
 
+    if should_start {
+        if was_running {
+            log::info!("Service '{}' already running (target: {}); skipping.", svc_name, end_mode);
+            println!("  Already running (target: {})", end_mode);
+        } else {
+            log::info!("Starting '{}' (target: {}).", svc_name, end_mode);
+            println!("  Starting service (target: {})...", end_mode);
+            let _ = service_ctrl::run_sc(&["start", svc_name]);
+
+            if service_ctrl::wait_for_service_state_with_stop(svc_name, "RUNNING", timeout_secs, Arc::clone(stop_flag)) {
+                println!("  Started successfully");
+            } else {
+                log::warn!("Starting '{}' failed.", svc_name);
+                println!("  Failed to start");
+            }
+            svc.record_end();
+        }
+    } else if !was_running {
+        log::info!("Service '{}' already stopped (target: {}); skipping.", svc_name, end_mode);
+        println!("  Already stopped (target: {})", end_mode);
+    } else {
+        log::info!("Stopping '{}' (target: {}).", svc_name, end_mode);
+        println!("  Stopping service (target: {})...", end_mode);
+        let _ = service_ctrl::run_sc(&["stop", svc_name]);
+
+        if service_ctrl::wait_for_service_state_with_stop(svc_name, "STOPPED", timeout_secs, Arc::clone(stop_flag)) {
+            println!("  Stopped successfully");
+        } else {
+            log::warn!("Stopping '{}' failed.", svc_name);
+            println!("  Failed to stop");
+        }
+        svc.record_stop();
+    }
+}
+
+/// Waits for CPU usage to drop below the threshold before continuing.
+///
+/// This ensures the system is responsive before processing the next service,
+/// preventing overload scenarios.
+///
+/// # Arguments
+///
+/// * `sys` - System info handle for CPU monitoring
+/// * `svc` - Service entry to record CPU responsive timestamp
+/// * `stop_flag` - Graceful shutdown flag
+fn wait_for_cpu_stable(
+    sys: &mut System,
+    svc: &mut progresso_service::ServiceEntry,
+    stop_flag: &Arc<AtomicBool>,
+) {
+    println!("  Waiting for CPU below {}%...", CPU_THRESHOLD);
+
+    let start_wait = Instant::now();
+    let mut last_reported_usage = -1.0_f32;
+
+    loop {
+        // Check for shutdown request
+        if stop_flag.load(Ordering::SeqCst) {
+            log::info!("Stop requested while waiting for CPU");
+            println!("  Stop requested");
+            svc.record_cpu_responsive();
+            break;
+        }
+
+        sys.refresh_cpu_all();
+        let usage = sys.global_cpu_usage();
+
+        // Report significant CPU changes to avoid log spam
+        if (usage - last_reported_usage).abs() >= CPU_REPORT_DELTA {
+            println!("    CPU: {:.1}%", usage);
+            last_reported_usage = usage;
+        }
+
+        if usage < CPU_THRESHOLD {
+            println!("  CPU below threshold ({:.1}%)", usage);
+            svc.record_cpu_responsive();
+            break;
+        }
+
+        if start_wait.elapsed() > CPU_WAIT_TIMEOUT {
+            println!("  CPU wait timeout reached ({:.1}%)", usage);
+            svc.record_cpu_responsive();
+            break;
+        }
+
+        sleep(CPU_POLL_INTERVAL);
+    }
+}
+
+/// Prints the processing header with service count.
+#[inline]
+fn print_header(service_count: usize) {
+    println!("\n========================================");
+    println!("Processing {} service(s)", service_count);
+    println!("========================================\n");
+}
+
+/// Prints the completion footer with output file path.
+#[inline]
+fn print_footer(output_path: &str) {
+    println!("========================================");
+    println!("Processing complete!");
+    println!("Progress file: {}", output_path);
+    println!("========================================\n");
+}
+
+/// Writes the current progress data to an XML file with proper formatting.
+///
+/// Creates a complete XML document with declaration header and serialized progress data.
+/// Uses buffered I/O for efficiency when writing incrementally after each service.
+///
+/// # Arguments
+///
+/// * `progress` - The progress data to serialize
+/// * `path` - Output file path (will be overwritten)
+///
+/// # Returns
+///
+/// * `Ok(())` - File written successfully
+/// * `Err` - Serialization or file I/O failed
 fn write_progress_file(progress: &OrdemTargets, path: &str) -> Result<()> {
     let xml_body = progresso_service::write_progress_xml(progress)
         .map_err(|e| {
@@ -232,12 +358,11 @@ fn write_progress_file(progress: &OrdemTargets, path: &str) -> Result<()> {
             anyhow::anyhow!("serialize error: {}", e)
         })?;
 
-    let f = fs::File::create(path)?;
-    let mut w = BufWriter::new(f);
-    write!(w, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n")?;
-    w.write_all(xml_body.as_bytes())?;
-    w.flush()?;
+    let file = fs::File::create(path)?;
+    let mut writer = BufWriter::new(file);
+    writeln!(writer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>")?;
+    writer.write_all(xml_body.as_bytes())?;
+    writer.flush()?;
+
     Ok(())
 }
-
-// service control helpers are implemented in src/service_ctrl.rs and used via crate::service_ctrl

@@ -1,5 +1,8 @@
 // Copyright (c) 2025 - Alisson Sol
 //
+/**
+ * Represents a Windows service with its configuration and state.
+ */
 type Service = {
   name: string;
   description: string;
@@ -22,6 +25,10 @@ let loaderRunning = false;
 let loaderEl: HTMLElement | null = null;
 let loaderTextEl: HTMLElement | null = null;
 
+/**
+ * Starts the animated loader with a spiral animation from center to border.
+ * The animation continues in a loop, returning to center when it reaches the border.
+ */
 function startLoader() {
   if (loaderRunning) return;
   loaderEl = document.getElementById('loader');
@@ -81,6 +88,9 @@ function onLoaderResize() {
   // The next animation frame will pick up the new dimensions
 }
 
+/**
+ * Stops the loader animation and removes it from the DOM with a fade-out effect.
+ */
 function stopLoader() {
   if (!loaderRunning) return;
   loaderRunning = false;
@@ -92,6 +102,13 @@ function stopLoader() {
   }
 }
 
+/**
+ * Creates an HTML element with optional class and text content.
+ * @param tag - The HTML tag name
+ * @param cls - Optional CSS class name(s)
+ * @param txt - Optional text content
+ * @returns The created HTML element
+ */
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   cls?: string,
@@ -118,8 +135,18 @@ function showUnsupported() {
   document.body.appendChild(modal);
 }
 
+/**
+ * Detects if the client is running on Windows based on the user agent.
+ * @returns true if running on Windows, false otherwise
+ */
 const isWindowsClient = () => navigator.userAgent.includes('Windows');
 
+/**
+ * Fetches JSON data from the backend API.
+ * @param url - The API endpoint URL (relative or absolute)
+ * @returns Promise resolving to the parsed JSON response
+ * @throws Error if the request fails
+ */
 async function fetchJSON<T>(url: string): Promise<T> {
   const fetchUrl = url.startsWith('http') ? url : API_BASE + url;
   const res = await fetch(fetchUrl);
@@ -127,6 +154,10 @@ async function fetchJSON<T>(url: string): Promise<T> {
   return res.json();
 }
 
+/**
+ * Saves the target service configurations to the backend.
+ * @param targets - Array of service configurations to save
+ */
 async function saveTargets(targets: Service[]) {
   try {
     await fetch(API_BASE + '/api/targets', {
@@ -162,6 +193,12 @@ const HEADER_COLUMNS_RIGHT = [
   { label: 'Path', className: 'col-path' },
 ] as const;
 
+/**
+ * Normalizes a service startup mode string to one of the standard types.
+ * Uses fast-path checking for already normalized values, with fallback for legacy formats.
+ * @param value - The raw startup mode string
+ * @returns Normalized startup mode string
+ */
 function mapStartMode(value: string): string {
   if (!value) return 'Manual';
 
@@ -176,7 +213,12 @@ function mapStartMode(value: string): string {
   return 'Manual';
 }
 
-// Create select element with options (reusable)
+/**
+ * Creates a select element populated with startup type options.
+ * @param className - CSS class name for the select element
+ * @param value - The initial selected value
+ * @returns Configured HTMLSelectElement
+ */
 function createSelect(className: string, value: string): HTMLSelectElement {
   const select = el('select', className);
   STARTUP_TYPES.forEach(v => {
@@ -321,12 +363,17 @@ function renderApp(current: Service[], targets: Service[]) {
   setupColumnResize(leftHeaderRow, 'left-pane');
   setupColumnResize(rightHeaderRow, 'right-pane');
 
-  // Sync column widths from header to data rows for a specific pane
+  /**
+   * Synchronizes column widths from header to data rows for a specific pane.
+   * Uses batched read/write operations to minimize layout thrashing and improve performance.
+   * @param headerRow - The header row element containing column definitions
+   * @param paneClass - CSS class identifying the pane to update
+   */
   function syncPaneWidths(headerRow: HTMLElement, paneClass: string) {
     const headerCols = headerRow.querySelectorAll('[class^="col-"], .drag-handle');
     const updates: Array<{colClass: string, width: string}> = [];
 
-    // Batch read operations
+    // Batch read operations to avoid layout thrashing
     headerCols.forEach((headerCol) => {
       const col = headerCol as HTMLElement;
       const colClass = col.className.split(' ')[0];
@@ -334,7 +381,7 @@ function renderApp(current: Service[], targets: Service[]) {
       updates.push({colClass, width: headerWidth});
     });
 
-    // Batch write operations
+    // Batch write operations for optimal performance
     for (const {colClass, width} of updates) {
       const cells = document.querySelectorAll(`.${paneClass} .row .${colClass}`);
       for (let i = 0; i < cells.length; i++) {
@@ -403,7 +450,10 @@ function renderApp(current: Service[], targets: Service[]) {
     });
   }
 
-  // Event delegation for drag-and-drop with auto-scroll
+  /**
+   * Implements drag-and-drop with auto-scroll support.
+   * Auto-scrolls the container when dragging near the edges for better UX.
+   */
   let autoScrollInterval: number | null = null;
 
   const startAutoScroll = (container: HTMLElement, direction: 'up' | 'down') => {
@@ -551,6 +601,10 @@ function renderApp(current: Service[], targets: Service[]) {
   syncInitialWidths();
 }
 
+/**
+ * Application entry point. Initializes the UI and loads service data from the backend.
+ * Displays a loader during data fetching and handles errors gracefully.
+ */
 async function start() {
   // Start loader animation while we fetch backend data
   startLoader();
@@ -560,6 +614,7 @@ async function start() {
     return;
   }
   try {
+    // Fetch current services and saved targets in parallel for better performance
     const [current, targets] = await Promise.all([
       fetchJSON<Service[]>('/api/services'),
       fetchJSON<Service[]>('/api/targets'),

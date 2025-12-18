@@ -1,12 +1,21 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
+
+# Import dependency checking module
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Progresso: Clean All" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
+# Note: For clean operations, we don't strictly require all dependencies,
+# but we'll inform the user if any are missing for informational purposes
+Test-AllDependencies -RequiredTools @('Bazel') -Quiet $false | Out-Null
+
+Write-Host ""
 $repoRoot = (Get-Location).Path
 
 Write-Host "[1/4] Cleaning Rust target directory..." -ForegroundColor Yellow

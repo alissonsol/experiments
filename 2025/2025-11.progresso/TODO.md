@@ -1,4 +1,4 @@
-# TODO - Progresso
+﻿# TODO - Progresso
 
 Source: [gibhub.com/alissonsol](https://github.com/alissonsol)  
 Copyright (c) 2025, Alisson Sol - All rights reserved.

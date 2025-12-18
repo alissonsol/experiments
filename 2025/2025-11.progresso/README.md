@@ -1,4 +1,4 @@
-# Progresso
+﻿# Progresso
 
 A Windows service for monitoring and tracking the progress of Windows services based on target configurations.
 
@@ -19,6 +19,7 @@ Progresso is a Windows service written in Rust that:
 ```powershell
 progresso/
 ├── scripts/                   # Build and distribution scripts
+│   ├── install-dependencies.ps1 # Install Rust, Bazel via winget
 │   ├── build-all.ps1          # Main build script (uses Cargo)
 │   ├── clean-all.ps1          # Clean build artifacts
 │   └── dist-all.ps1           # Create distribution package
@@ -48,7 +49,30 @@ progresso/
 
 ### Prerequisites
 
-- **Rust** (1.70+): Install from [rustup.rs](https://rustup.rs/)
+#### Automated Installation (Recommended)
+
+Use the provided installation script to automatically install all dependencies:
+
+```powershell
+.\scripts\install-dependencies.ps1
+```
+
+This will automatically install:
+- **Rust** v1.84.0 (for building the Windows service)
+- **Bazel** (optional build system)
+
+**Note**: After installation, restart your terminal to refresh the PATH.
+
+This script uses `winget` and requires:
+- Windows 10 version 1809 or later
+- Administrative privileges may be required
+
+#### Manual Installation
+
+If you prefer manual installation:
+
+- **Rust** v1.84.0+ (via [rustup.rs](https://rustup.rs/))
+- **Bazel** (optional, via [bazel.build](https://bazel.build/))
 - **PowerShell** (for build scripts)
 
 ### Build Commands

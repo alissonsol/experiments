@@ -1,7 +1,17 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 Write-Host "Building Ordem backend and UI into top-level dist/"
+
+# Import dependency checking module
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
+
+# Check dependencies before building
+if (-not (Test-AllDependencies -RequiredTools @('Cargo', 'Node', 'npm'))) {
+    Write-Host "Build cannot proceed without required dependencies." -ForegroundColor Red
+    exit 1
+}
 
 $repoRoot = (Get-Location).Path
 $dist = Join-Path $repoRoot "dist"
@@ -19,7 +29,7 @@ if (Test-Path "ui/package.json") {
     try {
         if (Get-Command npm -ErrorAction SilentlyContinue) {
             # Build bundle to top-level dist/ui (use relative path so esbuild creates the file)
-            npx esbuild src/main.ts --bundle --outfile="../dist/ui/bundle.js" --minify
+            npx --yes esbuild src/main.ts --bundle --outfile="../dist/ui/bundle.js" --minify
             # Copy static files
             Copy-Item -Path "index.html" -Destination $uiDist -Force
             Copy-Item -Path "src/styles.css" -Destination $uiDist -Force
@@ -29,7 +39,7 @@ if (Test-Path "ui/package.json") {
             Push-Location $uiDist
             try {
                 if (Get-Command npm -ErrorAction SilentlyContinue) {
-                    npm install --omit=dev
+                    npm install --omit=dev --yes
                 } else {
                     Write-Warning "npm not found — skipping node_modules install into dist/ui"
                 }
@@ -50,8 +60,14 @@ if (Test-Path "services/retrieve/Cargo.toml") {
     Push-Location "services/retrieve"
     try {
         if (Get-Command cargo -ErrorAction SilentlyContinue) {
+            # Build with stable Rust toolchain
             cargo build --release
-            $targetDir = Join-Path (Get-Location).Path "target\release"
+            # When a specific target is set in .cargo/config.toml, output goes to target/<target>/release
+            # Check both locations for compatibility
+            $targetDir = Join-Path (Get-Location).Path "target\x86_64-pc-windows-msvc\release"
+            if (-not (Test-Path $targetDir)) {
+                $targetDir = Join-Path (Get-Location).Path "target\release"
+            }
             # Determine binary name from Cargo.toml package name
             $cargoToml = Get-Content -Path "Cargo.toml" -Raw
             $nameMatch = [regex]::Match($cargoToml, 'name\s*=\s*"(?<n>[^"]+)"')

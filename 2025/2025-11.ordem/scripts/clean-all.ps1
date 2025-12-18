@@ -1,10 +1,19 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
+
+# Import dependency checking module
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 Write-Host "This script will remove the top-level dist/ folder and optional Bazel outputs."
 Write-Host "It can also run 'bazel clean --expunge' and 'git clean -fdx' if you confirm."
 
+# Note: For clean operations, we don't strictly require all dependencies,
+# but we'll inform the user if any are missing for informational purposes
+Test-AllDependencies -RequiredTools @('Bazel') -Quiet $false | Out-Null
+
+Write-Host ""
 $confirm = Read-Host "Type YES to continue and perform the clean (case-sensitive)"
 if ($confirm -ne 'YES') {
     Write-Host "Aborted by user. No changes made."

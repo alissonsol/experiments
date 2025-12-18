@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
@@ -6,6 +6,16 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Progresso: Build All" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
+
+# Import dependency checking module
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
+
+# Check dependencies before building
+if (-not (Test-AllDependencies -RequiredTools @('Cargo'))) {
+    Write-Host "Build cannot proceed without required dependencies." -ForegroundColor Red
+    exit 1
+}
 
 # NOTE: This script uses Cargo instead of Bazel due to Windows symlink limitations.
 # Bazel's rules_rust (crate_universe) requires symlink creation which needs either:
@@ -48,7 +58,12 @@ if (Test-Path $backendDist) { Remove-Item $backendDist -Recurse -Force }
 New-Item -ItemType Directory -Path $backendDist -Force | Out-Null
 
 # Find built binary produced by Cargo
-$cargoTarget = Join-Path $serviceDir "target\release\progresso_service.exe"
+# When a specific target is set in .cargo/config.toml, output goes to target/<target>/release
+$cargoTarget = Join-Path $serviceDir "target\x86_64-pc-windows-msvc\release\progresso_service.exe"
+if (-not (Test-Path $cargoTarget)) {
+    # Fallback to default location if target-specific path doesn't exist
+    $cargoTarget = Join-Path $serviceDir "target\release\progresso_service.exe"
+}
 if (Test-Path $cargoTarget) {
     Copy-Item -Path $cargoTarget -Destination $backendDist -Force
     Write-Host "  ✓ Copied progresso_service.exe to dist/backend" -ForegroundColor Green
