@@ -9,6 +9,7 @@
 // - `GET /api/services` - Retrieves all Windows services from the system
 // - `GET /api/targets` - Retrieves saved target configurations
 // - `POST /api/targets` - Saves target configurations
+// - `POST /api/targets-pruned` - Saves only services where start_mode differs from end_mode
 // - `GET /` - Serves the frontend UI (if available)
 
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, middleware::Logger};
@@ -19,6 +20,10 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
+
+// Configuration constants
+const BIND_ADDRESS: &str = "127.0.0.1:4000";
+const MAX_SERVICES_PAYLOAD: usize = 10_000; // Maximum services in POST payload
 
 /// Represents a Windows service with its configuration and state.
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -59,14 +64,23 @@ fn targets_file_path() -> Option<PathBuf> {
 ///
 /// # Returns
 /// A populated `ServiceInfo` struct with normalized start mode.
+///
+/// # Performance Notes
+///
+/// - Helper closures reduce code duplication
+/// - `unwrap_or("")` provides safe defaults for missing fields
+/// - Direct string conversion minimizes allocations
 fn parse_service_json(item: &serde_json::Value) -> ServiceInfo {
-    let get_str = |key: &str| {
+    // Helper to extract string fields with fallback to empty string
+    let get_str = |key: &str| -> String {
         item.get(key)
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_string()
     };
-    let get_bool = |key: &str| {
+
+    // Helper to extract boolean fields with fallback to false
+    let get_bool = |key: &str| -> bool {
         item.get(key)
             .and_then(|v| v.as_bool())
             .unwrap_or(false)
@@ -89,32 +103,64 @@ fn parse_service_json(item: &serde_json::Value) -> ServiceInfo {
 
 /// Normalizes a Windows service start mode to a standard format.
 ///
+/// Converts WMI start mode values to user-friendly strings that match
+/// the Windows Services MMC snap-in display format.
+///
 /// # Arguments
-/// * `raw_mode` - The raw start mode string from WMI
-/// * `delayed` - Whether delayed auto-start is enabled
+/// * `raw_mode` - The raw start mode string from WMI ("Auto", "Manual", "Disabled")
+/// * `delayed` - Whether delayed auto-start is enabled (only applies to "Auto" mode)
 ///
 /// # Returns
-/// A normalized startup mode string.
+/// A normalized startup mode string matching Windows Services UI conventions.
+///
+/// # Examples
+///
+/// ```ignore
+/// normalize_start_mode("Auto", true)   // Returns "Automatic (Delayed Start)"
+/// normalize_start_mode("Auto", false)  // Returns "Automatic"
+/// normalize_start_mode("Manual", false) // Returns "Manual"
+/// ```
+#[inline]
 fn normalize_start_mode(raw_mode: &str, delayed: bool) -> String {
     match (raw_mode, delayed) {
         ("Auto", true) => "Automatic (Delayed Start)".to_string(),
         ("Auto", false) => "Automatic".to_string(),
         ("Manual", _) => "Manual".to_string(),
         ("Disabled", _) => "Disabled".to_string(),
+        // Preserve unknown modes as-is for forward compatibility
         _ => raw_mode.to_string(),
     }
 }
 
 /// Retrieves all Windows services from the system using PowerShell WMI queries.
-/// Tries pwsh first, then falls back to powershell for compatibility.
+///
+/// Attempts to use PowerShell Core (`pwsh`) first for better performance, then
+/// falls back to Windows PowerShell (`powershell`) for compatibility with older systems.
 ///
 /// # Returns
-/// `Ok(Vec<ServiceInfo>)` on success, or `Err(String)` with error message on failure.
+/// * `Ok(Vec<ServiceInfo>)` - Successfully retrieved and parsed service list
+/// * `Err(String)` - Error message if PowerShell execution or parsing failed
+///
+/// # Implementation Notes
+///
+/// - Uses WMI (Win32_Service class) for comprehensive service information
+/// - Returns JSON for efficient parsing and forward compatibility
+/// - Handles both single-service and multi-service JSON responses
+/// - Pre-allocates vector capacity when possible to reduce allocations
+///
+/// # Errors
+///
+/// Returns errors in these scenarios:
+/// - Not running on Windows platform
+/// - PowerShell not available or execution fails
+/// - JSON response is malformed or cannot be parsed
 async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
+    // Platform check - this service only works on Windows
     if !cfg!(windows) {
-        return Err("Not running on Windows".into());
+        return Err("Not running on Windows (WMI queries require Windows OS)".into());
     }
 
+    // PowerShell command to query all services via WMI
     const PS_COMMAND: &str = "Get-WmiObject -Class Win32_Service | Select-Object Name, DisplayName, State, StartMode, DelayedAutoStart, StartName, PathName | ConvertTo-Json -Depth 2";
 
     // Try pwsh first (PowerShell 7+), then fall back to powershell (Windows PowerShell 5.x)
@@ -128,22 +174,33 @@ async fn get_services_from_system() -> Result<Vec<ServiceInfo>, String> {
                 .filter(|o| o.status.success())
                 .map(|o| o.stdout)
         })
-        .ok_or_else(|| "Failed to run PowerShell to query services".to_string())?;
+        .ok_or_else(|| {
+            "Failed to run PowerShell to query services (tried pwsh and powershell)".to_string()
+        })?;
 
+    // Parse JSON response from PowerShell
     let json: serde_json::Value = serde_json::from_slice(&stdout)
-        .map_err(|e| format!("JSON parse error: {}", e))?;
+        .map_err(|e| format!("JSON parse error from PowerShell output: {}", e))?;
 
     // Parse JSON response - handle both array (multiple services) and object (single service)
     let services = match json {
         serde_json::Value::Array(arr) => {
+            // Pre-allocate with exact capacity to avoid reallocations
             let mut services = Vec::with_capacity(arr.len());
-            for item in arr.iter() {
+            for item in &arr {
                 services.push(parse_service_json(item));
             }
             services
         }
-        serde_json::Value::Object(_) => vec![parse_service_json(&json)],
-        _ => Vec::new(),
+        serde_json::Value::Object(_) => {
+            // Single service returned - wrap in vector
+            vec![parse_service_json(&json)]
+        }
+        _ => {
+            // Unexpected JSON type - return empty list rather than error
+            log::warn!("Unexpected JSON type from PowerShell service query");
+            Vec::new()
+        }
     };
 
     Ok(services)
@@ -227,6 +284,15 @@ async fn api_get_targets() -> impl Responder {
 /// API endpoint to save target configurations.
 #[post("/api/targets")]
 async fn api_post_targets(body: web::Json<Vec<ServiceInfo>>) -> impl Responder {
+    // Validate payload size to prevent excessive memory usage
+    if body.len() > MAX_SERVICES_PAYLOAD {
+        return HttpResponse::BadRequest().body(format!(
+            "Payload too large: {} services (max: {})",
+            body.len(),
+            MAX_SERVICES_PAYLOAD
+        ));
+    }
+
     let Some(path) = targets_file_path() else {
         return HttpResponse::InternalServerError().body("Could not determine targets file path");
     };
@@ -237,11 +303,45 @@ async fn api_post_targets(body: web::Json<Vec<ServiceInfo>>) -> impl Responder {
     }
 }
 
+/// API endpoint to save pruned target configurations.
+/// Only saves services where start_mode differs from end_mode.
+#[post("/api/targets-pruned")]
+async fn api_post_targets_pruned(body: web::Json<Vec<ServiceInfo>>) -> impl Responder {
+    // Validate payload size to prevent excessive memory usage
+    if body.len() > MAX_SERVICES_PAYLOAD {
+        return HttpResponse::BadRequest().body(format!(
+            "Payload too large: {} services (max: {})",
+            body.len(),
+            MAX_SERVICES_PAYLOAD
+        ));
+    }
+
+    let Some(path) = targets_file_path() else {
+        return HttpResponse::InternalServerError().body("Could not determine targets file path");
+    };
+
+    // Filter services where start_mode is different from end_mode
+    let pruned_services: Vec<ServiceInfo> = body
+        .iter()
+        .filter(|service| {
+            service.end_mode
+                .as_ref()
+                .map(|end| end != &service.start_mode)
+                .unwrap_or(false)
+        })
+        .cloned()
+        .collect();
+
+    match write_targets_to_file(&path, &pruned_services) {
+        Ok(_) => HttpResponse::Ok().body("saved"),
+        Err(e) => HttpResponse::InternalServerError().body(format!("write error: {}", e)),
+    }
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     // Initialize logger early to capture all diagnostics
     env_logger::init();
-    let bind = "127.0.0.1:4000";
 
     println!("========================================");
     println!("Ordem Service Retrieval Backend");
@@ -360,8 +460,8 @@ async fn main() -> std::io::Result<()> {
     }
 
     // 6. Port availability
-    print!("[CHECK 6/6] Port availability ({}:4000)... ", "127.0.0.1");
-    match std::net::TcpListener::bind(bind) {
+    print!("[CHECK 6/6] Port availability ({})... ", BIND_ADDRESS);
+    match std::net::TcpListener::bind(BIND_ADDRESS) {
         Ok(listener) => {
             drop(listener); // Release the port immediately
             println!("OK (available)");
@@ -369,7 +469,7 @@ async fn main() -> std::io::Result<()> {
         Err(e) => {
             eprintln!("FAILED");
             eprintln!();
-            eprintln!("ERROR: Cannot bind to {}", bind);
+            eprintln!("ERROR: Cannot bind to {}", BIND_ADDRESS);
             eprintln!("Details: {}", e);
             eprintln!();
             eprintln!("Possible causes:");
@@ -389,19 +489,48 @@ async fn main() -> std::io::Result<()> {
     println!();
 
     /// Attempts to locate the built frontend UI distribution folder.
-    /// Searches multiple common locations relative to both the current directory and executable.
-    /// This allows the server to serve both API and UI from a single process.
+    ///
+    /// Searches multiple common locations relative to both the current directory
+    /// and the executable location. This allows the server to find the UI whether
+    /// run from the project root during development or from the installed location.
+    ///
+    /// # Search Order
+    ///
+    /// For each path pattern, checks both:
+    /// 1. Relative to current working directory
+    /// 2. Relative to executable directory
+    ///
+    /// Path patterns searched:
+    /// - `dist/ui` - Standard build output location
+    /// - `../dist/ui` - When running from subdirectory
+    /// - `../../dist/ui` - When running from nested subdirectory
+    /// - `ui/dist` - Alternative build location
+    /// - `../ui/dist` - When UI is sibling directory
     ///
     /// # Returns
-    /// `Some(PathBuf)` if the UI dist folder is found, `None` otherwise.
+    /// * `Some(PathBuf)` - Path to the UI distribution folder if found
+    /// * `None` - UI folder not found in any searched location
+    ///
+    /// # Performance Notes
+    ///
+    /// - Early returns on first match (short-circuit evaluation)
+    /// - Filesystem checks are relatively expensive but unavoidable
     fn find_ui_dist() -> Option<PathBuf> {
         let cwd = env::current_dir().ok()?;
         let exe_dir = env::current_exe()
             .ok()
             .and_then(|p| p.parent().map(|d| d.to_path_buf()));
 
-        const PATHS: &[&str] = &["dist/ui", "../dist/ui", "../../dist/ui", "ui/dist", "../ui/dist"];
+        // Common UI distribution folder locations (in priority order)
+        const PATHS: &[&str] = &[
+            "dist/ui",      // Standard build output
+            "../dist/ui",   // Run from subdirectory
+            "../../dist/ui",// Run from nested subdirectory
+            "ui/dist",      // Alternative location
+            "../ui/dist",   // UI as sibling
+        ];
 
+        // Search each path in both current directory and executable directory
         PATHS
             .iter()
             .flat_map(|&p| {
@@ -417,11 +546,11 @@ async fn main() -> std::io::Result<()> {
     let ui_path = find_ui_dist();
 
     if let Some(ref p) = ui_path {
-        println!("Backend:  http://{}", bind);
-        println!("Frontend: http://{} (served from: {})", bind, p.display());
+        println!("Backend:  http://{}", BIND_ADDRESS);
+        println!("Frontend: http://{} (served from: {})", BIND_ADDRESS, p.display());
         println!("Mode:     Integrated (single endpoint)");
     } else {
-        println!("Backend:  http://{}", bind);
+        println!("Backend:  http://{}", BIND_ADDRESS);
         println!("Frontend: NOT FOUND");
         println!("Mode:     API-only (no UI)");
         println!();
@@ -432,14 +561,15 @@ async fn main() -> std::io::Result<()> {
     println!();
 
     // Start HTTP server with enhanced error handling
-    print!("[STARTUP] Binding to {}... ", bind);
+    print!("[STARTUP] Binding to {}... ", BIND_ADDRESS);
     let server = HttpServer::new(move || {
         let mut app = App::new()
             .wrap(Cors::permissive())
             .wrap(Logger::default())
             .service(api_services)
             .service(api_get_targets)
-            .service(api_post_targets);
+            .service(api_post_targets)
+            .service(api_post_targets_pruned);
 
         if let Some(ref p) = ui_path {
             app = app.service(Files::new("/", p).index_file("index.html"));
@@ -449,11 +579,11 @@ async fn main() -> std::io::Result<()> {
 
         app
     })
-    .bind(bind)
+    .bind(BIND_ADDRESS)
     .map_err(|e| {
         eprintln!("FAILED");
         eprintln!();
-        eprintln!("ERROR: Failed to bind HTTP server to {}", bind);
+        eprintln!("ERROR: Failed to bind HTTP server to {}", BIND_ADDRESS);
         eprintln!("Details: {}", e);
         eprintln!();
         eprintln!("This is unexpected since port availability was verified.");

@@ -250,12 +250,23 @@ pub fn write_progress_xml(progress: &OrdemTargets) -> Result<String> {
 /// assert!(progress.services[0].start_processing_time.is_some());
 /// ```
 pub fn populate_test_timestamps(progress: &mut OrdemTargets) {
+    // Generate timestamp once to avoid cloning - all services get the same time
     let now = Local::now().to_rfc3339();
+
     for service in &mut progress.services {
-        service.start_processing_time.get_or_insert_with(|| now.clone());
-        service.stop_time.get_or_insert_with(|| now.clone());
-        service.end_time.get_or_insert_with(|| now.clone());
-        service.cpu_responsive_time.get_or_insert_with(|| now.clone());
+        // Use if-let pattern to avoid closure overhead
+        if service.start_processing_time.is_none() {
+            service.start_processing_time = Some(now.clone());
+        }
+        if service.stop_time.is_none() {
+            service.stop_time = Some(now.clone());
+        }
+        if service.end_time.is_none() {
+            service.end_time = Some(now.clone());
+        }
+        if service.cpu_responsive_time.is_none() {
+            service.cpu_responsive_time = Some(now.clone());
+        }
     }
 }
 

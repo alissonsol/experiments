@@ -1,4 +1,5 @@
-﻿# Check if running on Windows
+﻿# Copyright (c) 2025 - Alisson Sol
+# Check if running on Windows
 if (-not $IsWindows -and (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
     Write-Host "ERROR: This script is Windows-specific and can only run on Windows." -ForegroundColor Red
     Write-Host "Please use the appropriate installation script for your operating system." -ForegroundColor Yellow

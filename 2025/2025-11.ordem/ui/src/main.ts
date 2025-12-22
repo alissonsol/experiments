@@ -13,9 +13,10 @@ type Service = {
   path: string;
 };
 
-// Backend base URL — uses the same `bind` value as the retrieve service
-const bind = '127.0.0.1:4000';
-const API_BASE = `http://${bind}`;
+// Configuration constants
+const BIND_ADDRESS = '127.0.0.1:4000';
+const API_BASE = `http://${BIND_ADDRESS}`;
+const SAVE_DEBOUNCE_MS = 300; // Debounce save operations to reduce backend load
 
 const app = document.getElementById('app')!;
 
@@ -104,12 +105,13 @@ function stopLoader() {
 
 /**
  * Creates an HTML element with optional class and text content.
+ * Utility function to reduce boilerplate in DOM creation.
  * @param tag - The HTML tag name
  * @param cls - Optional CSS class name(s)
  * @param txt - Optional text content
  * @returns The created HTML element
  */
-function el<K extends keyof HTMLElementTagNameMap>(
+function createElement<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   cls?: string,
   txt?: string
@@ -119,6 +121,9 @@ function el<K extends keyof HTMLElementTagNameMap>(
   if (txt) e.textContent = txt;
   return e;
 }
+
+// Alias for backward compatibility and brevity
+const el = createElement;
 
 function showUnsupported() {
   const modal = el('div', 'modal');
@@ -154,19 +159,48 @@ async function fetchJSON<T>(url: string): Promise<T> {
   return res.json();
 }
 
+// Debouncing for save operations
+let saveTimeout: number | null = null;
+
 /**
- * Saves the target service configurations to the backend.
+ * Saves the target service configurations to the backend with debouncing.
+ * Debouncing reduces backend load during rapid changes by batching requests.
  * @param targets - Array of service configurations to save
  */
 async function saveTargets(targets: Service[]) {
+  // Clear previous timeout to implement debouncing
+  if (saveTimeout !== null) {
+    clearTimeout(saveTimeout);
+  }
+
+  saveTimeout = window.setTimeout(async () => {
+    try {
+      await fetch(API_BASE + '/api/targets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(targets),
+      });
+    } catch (e) {
+      console.error('Failed to save targets:', e);
+    }
+  }, SAVE_DEBOUNCE_MS);
+}
+
+/**
+ * Saves pruned target service configurations to the backend.
+ * Only saves services where start_mode differs from end_mode.
+ * This operation is immediate (not debounced) as it's user-triggered.
+ * @param targets - Array of service configurations to filter and save
+ */
+async function savePrunedTargets(targets: Service[]) {
   try {
-    await fetch(API_BASE + '/api/targets', {
+    await fetch(API_BASE + '/api/targets-pruned', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(targets),
     });
   } catch (e) {
-    console.error('Failed to save targets', e);
+    console.error('Failed to save pruned targets:', e);
   }
 }
 
@@ -230,7 +264,16 @@ function createSelect(className: string, value: string): HTMLSelectElement {
   return select;
 }
 
-function makeRow(
+/**
+ * Creates an editable service row for the target pane.
+ * @param s - Service data
+ * @param index - Index in the services array
+ * @param rowNumber - Display row number (1-indexed)
+ * @param onStartupChange - Callback for startup mode changes
+ * @param onEndTypeChange - Callback for end mode changes
+ * @returns Configured row element with drag-and-drop support
+ */
+function createEditableServiceRow(
   s: Service,
   index: number,
   rowNumber: number,
@@ -547,7 +590,7 @@ function renderApp(current: Service[], targets: Service[]) {
     // Use DocumentFragment for better performance
     const fragment = document.createDocumentFragment();
     items.forEach((s, i) => {
-      fragment.appendChild(makeRow(s, i, i + 1, handleStartupChange, handleEndTypeChange));
+      fragment.appendChild(createEditableServiceRow(s, i, i + 1, handleStartupChange, handleEndTypeChange));
     });
     rlist.innerHTML = '';
     rlist.appendChild(fragment);
@@ -590,8 +633,16 @@ function renderApp(current: Service[], targets: Service[]) {
     }
   };
 
+  // Prune Output button
+  const pruneOutput = el('button', 'btn btn-reset', 'Prune Output');
+  pruneOutput.onclick = async () => {
+    if (confirm('Save only services where End Mode differs from Startup Mode?')) {
+      await savePrunedTargets(items);
+    }
+  };
+
   toolbarLeft.append(toggleLeft, toggleRight);
-  toolbarRight.append(manualStartupType, resetTarget);
+  toolbarRight.append(manualStartupType, resetTarget, pruneOutput);
   content.append(leftPane, rightPane);
   root.append(toolbar, content);
   app.appendChild(root);

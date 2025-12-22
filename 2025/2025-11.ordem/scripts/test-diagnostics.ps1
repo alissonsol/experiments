@@ -1,3 +1,4 @@
+# Copyright (c) 2025 - Alisson Sol
 # Test script to demonstrate the ordem service diagnostics
 # This script will stop any running instance and test the new diagnostics
 

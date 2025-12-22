@@ -44,18 +44,44 @@ Access the UI at `http://127.0.0.1:4000`
 - `.\scripts\build-all.ps1` - Build UI and backend to `dist/`, then run backend
 - `.\scripts\dist-all.ps1` - Creates ZIP package for distribution
 
+### Antivirus Configuration (Important)
+
+During the build process, Rust's Cargo build system generates temporary executables called `build-script-build.exe` for dependency compilation. These are **legitimate build artifacts** but may trigger false positives in some antivirus software.
+
+To avoid build interruptions:
+
+1. **Add an antivirus exclusion** for the build directory:
+   ```
+   [project-root]\services\retrieve\target\
+   ```
+
+2. **Windows Defender exclusion** (Run PowerShell as Administrator):
+   ```powershell
+   Add-MpPreference -ExclusionPath "C:\path\to\your\project\services\retrieve\target"
+   ```
+
+3. **Alternative**: Configure your antivirus to allow Cargo build processes
+
+These build scripts are:
+- Generated only during compilation
+- Never distributed or executed at runtime
+- Automatically cleaned with `.\scripts\clean-all.ps1`
+- Excluded from version control via `.gitignore`
+
+If you cannot add exclusions, you may experience slower builds as the antivirus scans each generated file.
+
 ## API Endpoints
 
 - `GET /api/services` - Current Windows services
 - `GET /api/targets` - Saved target configuration
 - `POST /api/targets` - Update target configuration
+- `POST /api/targets-pruned` - Save only services where End Mode differs from Startup Mode
 - `GET /` - UI (index.html)
 
 ## Configuration
 
-- **Port**: `127.0.0.1:4000` (change the `bind` value in `services/retrieve/src/main.rs`)
+- **Port**: `127.0.0.1:4000` (change `BIND_ADDRESS` in both `services/retrieve/src/main.rs` and `ui/src/main.ts`)
 - **Target Storage**: `%LOCALAPPDATA%\Ordem\ordem.target.xml`
-- **API Base**: `http://127.0.0.1:4000` (change the `bind` value in `ui/src/main.ts`)
 
 ## Project Structure
 
@@ -74,6 +100,27 @@ Access the UI at `http://127.0.0.1:4000`
 - Drag-and-drop service reordering
 - Inline startup mode editing
 - Pane toggle and reset controls
+
+## Key Features Explained
+
+### Prune Output
+
+Saves only services where End Mode differs from Startup Mode, reducing clutter in your configuration file.
+
+**Usage:**
+1. Modify End Mode values in the right pane
+2. Click "Prune Output" in the toolbar
+3. Confirm to save only modified services
+
+**Important:** Subsequent changes will save all entries until you prune again.
+
+### Button Comparison
+
+| Button | Purpose | Effect |
+|--------|---------|--------|
+| **Prune Output** | Export only changes | Saves services where `end_mode ≠ start_mode` |
+| **Reset Target** | Revert to defaults | Sets all `end_mode = start_mode` |
+| **Manual Startup** | Set all to Manual | Sets all `start_mode = "Manual"` |
 
 ## Prerequisites
 
@@ -100,11 +147,15 @@ If you prefer manual installation:
 
 ## Troubleshooting
 
-- **Services not loading**: Requires Windows with PowerShell
-  - `winget install --id Microsoft.PowerShell --source winget`
-- **Permission errors**: Run as Administrator if needed
-- **vcruntime140.dll error**: Install Visual C++ Redistributable for Visual Studio 2015
-  - `winget install --id Microsoft.VCRedist.2015+.x64 --exact --accept-package-agreements --accept-source-agreements`
+Having issues? See the comprehensive **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** guide for detailed solutions.
+
+**Quick Fixes:**
+- **Services not loading**: Requires Windows with PowerShell → Run as Administrator
+- **vcruntime140.dll error**: Run `.\run-ordem.ps1` (auto-installs VC++ Redistributable)
+- **Port 4000 in use**: Check `netstat -ano | findstr :4000` to find the conflicting process
+- **Silent exit**: Run `.\run-ordem.ps1` to see diagnostic output
+
+For comprehensive troubleshooting, startup diagnostics, and advanced solutions, see **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**.
 
 ## License
 

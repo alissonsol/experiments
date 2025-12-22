@@ -16,14 +16,112 @@ try {
     $scriptDir = Get-Location
 }
 
-$servicesDir = Join-Path $scriptDir 'dist\backend'
-$targetFile = Join-Path $servicesDir 'ordem.target.xml'
+# Check if the project has been built
+function Check-Build {
+    param(
+        [string]$ServicesDir,
+        [string]$ExePath,
+        [string]$ScriptDir
+    )
 
-if (-not (Test-Path $servicesDir)) {
-    Write-Error "Expected directory not found: $servicesDir. Ensure the distribution is built."
-    exit 2
+    if ((-not (Test-Path $ServicesDir)) -or (-not (Test-Path $ExePath))) {
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Yellow
+        Write-Host "Project Not Built" -ForegroundColor Yellow
+        Write-Host "========================================" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "The executable '$ExePath' was not found." -ForegroundColor Red
+        Write-Host "The project needs to be built before running." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Would you like to run the build-all script now? (Y/N)" -ForegroundColor Cyan
+        $response = Read-Host
+
+        if ($response -match '^[Yy]') {
+            $buildScript = Join-Path $ScriptDir 'scripts\build-all.ps1'
+            if (Test-Path $buildScript) {
+                Write-Host ""
+                Write-Host "Running build-all script..." -ForegroundColor Green
+                & $buildScript
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Error "Build failed. Please fix build errors before running."
+                    exit 3
+                }
+                Write-Host ""
+                Write-Host "Build completed successfully. Continuing with run..." -ForegroundColor Green
+                Write-Host ""
+                # Re-check if executable now exists
+                if (-not (Test-Path $ExePath)) {
+                    Write-Error "Executable still not found after build: $ExePath"
+                    exit 3
+                }
+            } else {
+                Write-Error "Build script not found: $buildScript"
+                exit 3
+            }
+        } else {
+            Write-Host "Build cancelled. Please run scripts\build-all.ps1 manually and try again." -ForegroundColor Yellow
+            exit 3
+        }
+    }
 }
 
+# Check for runtime dependencies (VC++ Redistributable)
+function Check-Dependencies {
+    Write-Host "Checking runtime dependencies..." -ForegroundColor Cyan
+
+    # Check if vcruntime140.dll is available
+    $vcRuntimeFound = $false
+    $systemPaths = @(
+        "$env:SystemRoot\System32",
+        "$env:SystemRoot\SysWOW64"
+    )
+
+    foreach ($path in $systemPaths) {
+        if (Test-Path (Join-Path $path "vcruntime140.dll")) {
+            $vcRuntimeFound = $true
+            break
+        }
+    }
+
+    if (-not $vcRuntimeFound) {
+        Write-Host ""
+        Write-Host "========================================" -ForegroundColor Red
+        Write-Host "Missing Runtime Dependency" -ForegroundColor Red
+        Write-Host "========================================" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "The Microsoft Visual C++ Redistributable is required but not found." -ForegroundColor Yellow
+        Write-Host "This is needed to run the progresso service executable." -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Please run the install-dependencies script to install it:" -ForegroundColor White
+        Write-Host "  scripts\install-dependencies.ps1" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Error "Cannot continue without VC++ Redistributable."
+        exit 1
+    } else {
+        Write-Host "✓ Microsoft Visual C++ Redistributable found" -ForegroundColor Green
+    }
+
+    Write-Host ""
+}
+
+$servicesDir = Join-Path $scriptDir 'dist\backend'
+$exePath = Join-Path $servicesDir 'progresso_service.exe'
+
+# ============================================================================
+# Check build and dependencies
+# ============================================================================
+
+# First check if the project is built
+Check-Build -ServicesDir $servicesDir -ExePath $exePath -ScriptDir $scriptDir
+
+# Then check runtime dependencies
+Check-Dependencies
+
+# ============================================================================
+# Setup ordem.target.xml
+# ============================================================================
+
+$targetFile = Join-Path $servicesDir 'ordem.target.xml'
 if (-not (Test-Path $targetFile)) {
     $src = Join-Path $env:LOCALAPPDATA 'Ordem\ordem.target.xml'
     if (Test-Path $src) {
@@ -43,11 +141,6 @@ if (-not (Test-Path $targetFile)) {
     exit 1
 }
 
-$exePath = Join-Path $servicesDir 'progresso_service.exe'
-if (-not (Test-Path $exePath)) {
-    Write-Error "Executable not found: $exePath. Build the distribution before running."
-    exit 3
-}
 Write-Host "Starting progresso_service.exe in console mode (working dir: $servicesDir)"
 
 # Prepare log file and enable verbose Rust logging/backtraces for diagnostics

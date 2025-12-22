@@ -15,6 +15,10 @@ progresso-dist-*.zip
 # Rust/Cargo
 /**/target/
 /services/retrieve/target/
+# Explicitly ignore build-script-build.exe files that may trigger antivirus
+**/build-script-build.exe
+**/build_script_build*.exe
+**/build_script_build*.pdb
 
 # Bazel outputs
 /bazel-*

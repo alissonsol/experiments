@@ -175,11 +175,12 @@ fn run_main(stop_flag: Arc<AtomicBool>) -> Result<()> {
 
         svc.record_start_processing();
 
-        // Extract service name (owned copy to avoid borrow issues)
-        let svc_name = match svc.name.as_ref().filter(|n| !n.is_empty()) {
-            Some(name) => name.clone(),
+        // Extract service name - check early to avoid unnecessary work
+        // Clone the name string to avoid borrow checker issues (we need mutable access to svc later)
+        let svc_name = match svc.name() {
+            Some(name) => name.to_string(),
             None => {
-                log::warn!("Skipping service with empty name");
+                log::warn!("Skipping service with empty or missing name");
                 println!("  Skipping service with empty name");
                 continue;
             }
@@ -193,6 +194,7 @@ fn run_main(stop_flag: Arc<AtomicBool>) -> Result<()> {
         svc.record_end();
 
         // Process based on end_mode configuration
+        // Clone end_mode to avoid borrow checker complexity (it's a small string)
         if let Some(end_mode) = svc.end_mode.clone() {
             process_service_action(&mut svc, &svc_name, &end_mode, was_running, &stop_flag);
         } else {
@@ -221,6 +223,11 @@ fn run_main(stop_flag: Arc<AtomicBool>) -> Result<()> {
 /// * `end_mode` - Target end mode (contains "automatic" to start, otherwise stop)
 /// * `was_running` - Whether the service was running before this action
 /// * `stop_flag` - Graceful shutdown flag
+///
+/// # Performance Notes
+///
+/// - Borrows strings instead of cloning to reduce allocations
+/// - Early returns when service is already in desired state
 fn process_service_action(
     svc: &mut progresso_service::ServiceEntry,
     svc_name: &str,
@@ -228,7 +235,8 @@ fn process_service_action(
     was_running: bool,
     stop_flag: &Arc<AtomicBool>,
 ) {
-    let should_start = svc.should_start();
+    // Determine action based on end_mode (avoid multiple string comparisons)
+    let should_start = end_mode.to_lowercase().contains("automatic");
     let timeout_secs = SERVICE_STATE_TIMEOUT.as_secs();
 
     if should_start {
@@ -269,13 +277,26 @@ fn process_service_action(
 /// Waits for CPU usage to drop below the threshold before continuing.
 ///
 /// This ensures the system is responsive before processing the next service,
-/// preventing overload scenarios.
+/// preventing overload scenarios. Implements adaptive polling with delta-based
+/// reporting to reduce console spam.
 ///
 /// # Arguments
 ///
-/// * `sys` - System info handle for CPU monitoring
+/// * `sys` - System info handle for CPU monitoring (reused across calls for efficiency)
 /// * `svc` - Service entry to record CPU responsive timestamp
-/// * `stop_flag` - Graceful shutdown flag
+/// * `stop_flag` - Graceful shutdown flag for early termination
+///
+/// # Behavior
+///
+/// - Polls CPU usage every second
+/// - Reports only when usage changes by ≥5% (see [`CPU_REPORT_DELTA`])
+/// - Times out after 5 minutes (see [`CPU_WAIT_TIMEOUT`])
+/// - Records timestamp when CPU drops below threshold or on timeout/cancellation
+///
+/// # Performance Notes
+///
+/// - Reuses System instance to avoid re-initialization overhead
+/// - Uses atomic operations for thread-safe cancellation
 fn wait_for_cpu_stable(
     sys: &mut System,
     svc: &mut progresso_service::ServiceEntry,
@@ -287,7 +308,7 @@ fn wait_for_cpu_stable(
     let mut last_reported_usage = -1.0_f32;
 
     loop {
-        // Check for shutdown request
+        // Check for shutdown request (fast path - atomic load)
         if stop_flag.load(Ordering::SeqCst) {
             log::info!("Stop requested while waiting for CPU");
             println!("  Stop requested");
@@ -304,13 +325,20 @@ fn wait_for_cpu_stable(
             last_reported_usage = usage;
         }
 
+        // Check threshold (success case)
         if usage < CPU_THRESHOLD {
             println!("  CPU below threshold ({:.1}%)", usage);
             svc.record_cpu_responsive();
             break;
         }
 
+        // Check timeout (failure case - CPU still high)
         if start_wait.elapsed() > CPU_WAIT_TIMEOUT {
+            log::warn!(
+                "CPU wait timeout reached after {} seconds (current: {:.1}%)",
+                CPU_WAIT_TIMEOUT.as_secs(),
+                usage
+            );
             println!("  CPU wait timeout reached ({:.1}%)", usage);
             svc.record_cpu_responsive();
             break;

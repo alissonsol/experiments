@@ -57,6 +57,15 @@ if (Test-Path "ui/package.json") {
 # Build Rust backend and copy binary into dist/backend
 if (Test-Path "services/retrieve/Cargo.toml") {
     Write-Host "Building Rust backend and copying artifact into $dist/backend"
+
+    # Inform users about potential antivirus interference
+    $targetDir = Join-Path $repoRoot "services\retrieve\target"
+    Write-Host ""
+    Write-Host "Note: Rust build generates temporary build-script-build.exe files." -ForegroundColor Cyan
+    Write-Host "If your antivirus interferes, add an exclusion for: $targetDir" -ForegroundColor Cyan
+    Write-Host "See README.md 'Antivirus Configuration' section for details." -ForegroundColor Cyan
+    Write-Host ""
+
     Push-Location "services/retrieve"
     try {
         if (Get-Command cargo -ErrorAction SilentlyContinue) {

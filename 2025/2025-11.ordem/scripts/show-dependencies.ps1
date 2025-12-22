@@ -1,4 +1,5 @@
-﻿Write-Host '========================================'  -ForegroundColor Cyan
+﻿# Copyright (c) 2025 - Alisson Sol
+Write-Host '========================================'  -ForegroundColor Cyan
 Write-Host 'ordem Project - Installed Dependencies' -ForegroundColor Cyan
 Write-Host '========================================'  -ForegroundColor Cyan
 Write-Host ''

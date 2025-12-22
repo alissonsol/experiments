@@ -34,6 +34,14 @@ if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
     exit 1
 }
 
+# Inform users about potential antivirus interference
+$targetDir = Join-Path $repoRoot "services\progresso_service\target"
+Write-Host ""
+Write-Host "Note: Rust build generates temporary build-script-build.exe files." -ForegroundColor Cyan
+Write-Host "If your antivirus interferes, add an exclusion for: $targetDir" -ForegroundColor Cyan
+Write-Host "See README.md 'Antivirus Configuration' section for details." -ForegroundColor Cyan
+Write-Host ""
+
 # Build the progresso_service using Cargo
 $serviceDir = Join-Path $repoRoot "services\progresso_service"
 Push-Location $serviceDir

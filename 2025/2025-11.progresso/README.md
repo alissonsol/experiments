@@ -95,6 +95,32 @@ The build script uses **Cargo** (Rust's native build tool) instead of Bazel due 
 - Binary: `dist/backend/progresso_service.exe`
 - Distribution package: `progresso-dist-YYYYMMDD-HHMMSS.zip`
 
+### Antivirus Configuration (Important)
+
+During the build process, Rust's Cargo build system generates temporary executables called `build-script-build.exe` for dependency compilation. These are **legitimate build artifacts** but may trigger false positives in some antivirus software.
+
+To avoid build interruptions:
+
+1. **Add an antivirus exclusion** for the build directory:
+   ```
+   [project-root]\services\progresso_service\target\
+   ```
+
+2. **Windows Defender exclusion** (Run PowerShell as Administrator):
+   ```powershell
+   Add-MpPreference -ExclusionPath "C:\path\to\your\project\services\progresso_service\target"
+   ```
+
+3. **Alternative**: Configure your antivirus to allow Cargo build processes
+
+These build scripts are:
+- Generated only during compilation
+- Never distributed or executed at runtime
+- Automatically cleaned with `.\scripts\clean-all.ps1`
+- Excluded from version control via `.gitignore`
+
+If you cannot add exclusions, you may experience slower builds as the antivirus scans each generated file.
+
 ## Configuration
 
 ### Target Configuration File (`ordem.target.xml`)
@@ -193,6 +219,19 @@ cargo run --example harness
 ```
 
 This will read `ordem.target.xml` and generate `progresso.example.xml` with populated timestamps.
+
+## Troubleshooting
+
+Having issues? See the comprehensive **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** guide for detailed solutions.
+
+**Quick Fixes:**
+- **Project not built**: Run `.\scripts\build-all.ps1`
+- **ordem.target.xml missing**: Place it in `dist\backend\` or `%LOCALAPPDATA%\Ordem\`
+- **Antivirus blocks build**: Add exclusion for `services\progresso_service\target\`
+- **Service won't start/stop**: Run as Administrator
+- **CPU wait timeout**: Normal for heavy system load, service continues anyway
+
+For comprehensive troubleshooting, Windows service issues, and advanced solutions, see **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)**.
 
 ## License
 

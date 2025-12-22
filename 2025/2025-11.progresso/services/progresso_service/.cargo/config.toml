@@ -1,2 +1,9 @@
 [build]
 target = "x86_64-pc-windows-msvc"
+# Use a dedicated target directory to isolate build artifacts
+# This allows users to add a specific antivirus exclusion for the build directory
+target-dir = "target"
+
+[profile.release]
+# Incremental compilation reduces the number of build script rebuilds
+incremental = true
