@@ -2,8 +2,12 @@
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
-# Import dependency checking module
+# Navigate to project root and save previous location
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+Push-Location $projectRoot
+
+# Import dependency checking module
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 Write-Host "This script will remove the top-level dist/ folder and optional Bazel outputs."
@@ -29,7 +33,7 @@ function Remove-IfExists($path) {
     }
 }
 
-$repoRoot = (Get-Location).Path
+$repoRoot = $projectRoot
 
 # Remove top-level dist folder
 Remove-IfExists (Join-Path $repoRoot "dist")
@@ -70,3 +74,6 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 }
 
 Write-Host "Clean finished."
+
+# Return to previous location
+Pop-Location

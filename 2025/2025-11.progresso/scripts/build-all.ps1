@@ -2,13 +2,17 @@
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
+# Navigate to project root and save previous location
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+Push-Location $projectRoot
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Progresso: Build All" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Import dependency checking module
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 # Check dependencies before building
@@ -17,6 +21,24 @@ if (-not (Test-AllDependencies -RequiredTools @('Cargo'))) {
     exit 1
 }
 
+# Initialize MSVC build environment (required for Rust to find link.exe)
+Write-Host ""
+if (-not (Initialize-MSVCEnvironment)) {
+    Write-Host ""
+    Write-Host "Failed to initialize MSVC build environment." -ForegroundColor Red
+    Write-Host "Rust requires MSVC toolchain to link executables on Windows." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "This error typically occurs when:" -ForegroundColor Yellow
+    Write-Host "  - Visual Studio Build Tools are not installed" -ForegroundColor White
+    Write-Host "  - The 'Desktop development with C++' workload is missing" -ForegroundColor White
+    Write-Host "  - link.exe is not in PATH and cannot be automatically located" -ForegroundColor White
+    Write-Host ""
+    Write-Host "To fix this issue, run: .\scripts\install-dependencies.ps1" -ForegroundColor Cyan
+    Write-Host ""
+    exit 1
+}
+Write-Host ""
+
 # NOTE: This script uses Cargo instead of Bazel due to Windows symlink limitations.
 # Bazel's rules_rust (crate_universe) requires symlink creation which needs either:
 # - Windows Developer Mode enabled, OR
@@ -24,7 +46,7 @@ if (-not (Test-AllDependencies -RequiredTools @('Cargo'))) {
 # To use Bazel instead, enable Developer Mode in Windows Settings > Privacy & Security > For developers
 # Then run: bazel build //:progresso_service
 
-$repoRoot = (Get-Location).Path
+$repoRoot = $projectRoot
 $distDir = Join-Path $repoRoot "dist"
 
 Write-Host "[1/2] Building progresso_service with Cargo..." -ForegroundColor Yellow
@@ -81,3 +103,6 @@ if (Test-Path $cargoTarget) {
 
 Write-Host ""
 Write-Host "Build finished." -ForegroundColor Cyan
+
+# Return to previous location
+Pop-Location

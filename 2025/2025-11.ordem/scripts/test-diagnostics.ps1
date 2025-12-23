@@ -2,6 +2,11 @@
 # Test script to demonstrate the ordem service diagnostics
 # This script will stop any running instance and test the new diagnostics
 
+# Navigate to project root and save previous location
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+Push-Location $projectRoot
+
 Write-Host "=== Ordem Service Diagnostics Test ===" -ForegroundColor Cyan
 Write-Host ""
 
@@ -16,3 +21,6 @@ Write-Host "Starting ordem service with diagnostics enabled..." -ForegroundColor
 Write-Host ""
 
 & "services\retrieve\target\x86_64-pc-windows-msvc\release\ordem_service.exe"
+
+# Return to previous location
+Pop-Location

@@ -2,8 +2,12 @@
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
-# Import dependency checking module
+# Navigate to project root and save previous location
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+Push-Location $projectRoot
+
+# Import dependency checking module
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -16,7 +20,7 @@ Write-Host ""
 Test-AllDependencies -RequiredTools @('Bazel') -Quiet $false | Out-Null
 
 Write-Host ""
-$repoRoot = (Get-Location).Path
+$repoRoot = $projectRoot
 
 Write-Host "[1/4] Cleaning Rust target directory..." -ForegroundColor Yellow
 $cargoTarget = Join-Path $repoRoot "services\progresso_service\target"
@@ -78,3 +82,6 @@ Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Clean complete!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
+
+# Return to previous location
+Pop-Location

@@ -3,6 +3,13 @@ param(
     [string]$ServiceName = "ProgressoService"
 )
 
+# Navigate to project root and save previous location
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$serviceRoot = Split-Path -Parent $scriptDir
+$servicesRoot = Split-Path -Parent $serviceRoot
+$projectRoot = Split-Path -Parent $servicesRoot
+Push-Location $projectRoot
+
 Write-Host "Stopping and removing service '$ServiceName'"
 
 function Find-Nssm {
@@ -28,3 +35,6 @@ if ($nssm) {
     sc.exe delete $ServiceName | Out-Null
     Write-Host "Service removed (sc delete)."
 }
+
+# Return to previous location
+Pop-Location

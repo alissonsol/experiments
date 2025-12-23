@@ -34,6 +34,13 @@ if (-not $isAdmin) {
     exit
 }
 
+# Navigate to project root and save previous location
+# (Done after admin check since we re-launch the script)
+$scriptPath = $MyInvocation.MyCommand.Path
+$scriptDir = Split-Path -Parent $scriptPath
+$projectRoot = Split-Path -Parent $scriptDir
+Push-Location $projectRoot
+
 $ErrorActionPreference = "Stop"
 
 $REQUIRED_NODE_VERSION = "25.2.1"
@@ -554,3 +561,6 @@ Start-Process -FilePath "powershell.exe" -ArgumentList $arguments
 Write-Host "New PowerShell window opened at project root with dependency information." -ForegroundColor Green
 Write-Host "You can now close this administrator window." -ForegroundColor Yellow
 Write-Host ""
+
+# Return to previous location
+Pop-Location

@@ -63,7 +63,7 @@ fn main() {
 
     // Try to run as Windows service; falls back to console mode if not launched by SCM
     if let Err(e) = service_dispatcher::start(SERVICE_NAME, service_main) {
-        eprintln!("Not running as service ({}), falling back to console mode", e);
+        println!("Warning: Not running as service ({}), falling back to console mode", e);
 
         let stop_flag = Arc::new(AtomicBool::new(false));
         if let Err(e) = run_main(stop_flag) {

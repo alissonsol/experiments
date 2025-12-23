@@ -2,13 +2,17 @@
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
+# Navigate to project root and save previous location
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+Push-Location $projectRoot
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Ordem Distribution Packager" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Import dependency checking module
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 # Check dependencies before creating distribution
@@ -17,7 +21,7 @@ if (-not (Test-AllDependencies -RequiredTools @('Cargo', 'Node', 'npm'))) {
     exit 1
 }
 
-$repoRoot = (Get-Location).Path
+$repoRoot = $projectRoot
 $distDir = Join-Path $repoRoot "dist"
 $packageDir = Join-Path $repoRoot "package"
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -159,4 +163,7 @@ Write-Host "  1. Send the ZIP file to the target computer" -ForegroundColor Whit
 Write-Host "  2. Extract the ZIP file" -ForegroundColor White
 Write-Host "  3. Run: .\run-ordem.ps1" -ForegroundColor White
 Write-Host ""
+
+# Return to previous location
+Pop-Location
 

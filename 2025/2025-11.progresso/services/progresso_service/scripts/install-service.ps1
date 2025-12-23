@@ -8,6 +8,13 @@ param(
     [string]$StartMode = 'auto'
 )
 
+# Navigate to project root and save previous location
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$serviceRoot = Split-Path -Parent $scriptDir
+$servicesRoot = Split-Path -Parent $serviceRoot
+$projectRoot = Split-Path -Parent $servicesRoot
+Push-Location $projectRoot
+
 function Find-Nssm {
     $paths = $env:Path -split ';'
     foreach ($p in $paths) {
@@ -47,3 +54,6 @@ if ($nssm) {
     sc.exe start $ServiceName | Out-Null
     Write-Host "Service installed (sc create)."
 }
+
+# Return to previous location
+Pop-Location

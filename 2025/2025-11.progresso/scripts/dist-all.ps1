@@ -2,13 +2,17 @@
 # Copyright (c) 2025 - Alisson Sol
 $ErrorActionPreference = 'Stop'
 
+# Navigate to project root and save previous location
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent $scriptDir
+Push-Location $projectRoot
+
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "Progresso Distribution Packager" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Import dependency checking module
-$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 # Check dependencies before creating distribution
@@ -17,7 +21,7 @@ if (-not (Test-AllDependencies -RequiredTools @('Cargo'))) {
     exit 1
 }
 
-$repoRoot = (Get-Location).Path
+$repoRoot = $projectRoot
 $distDir = Join-Path $repoRoot "dist"
 $packageDir = Join-Path $repoRoot "package"
 $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -160,3 +164,6 @@ Write-Host "  Package: $zipName" -ForegroundColor White
 Write-Host "  Size:    $([math]::Round((Get-Item $zipPath).Length / 1MB, 2)) MB" -ForegroundColor White
 Write-Host "  Path:    $zipPath" -ForegroundColor White
 Write-Host ""
+
+# Return to previous location
+Pop-Location

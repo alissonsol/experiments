@@ -170,5 +170,16 @@ Write-Host ""
 Open-Browser $EndpointUrl
 
 # Start the backend
-& $backendExe.FullName
+Push-Location $backendDir
+try {
+    & $backendExe.FullName
+    $exitCode = $LASTEXITCODE
+} catch {
+    Write-Error "Execution failed: $_"
+    $exitCode = 100
+} finally {
+    Pop-Location
+}
+
+exit $exitCode
 

@@ -151,6 +151,138 @@ function Test-NpmInstalled {
     return $false
 }
 
+function Initialize-MSVCEnvironment {
+    <#
+    .SYNOPSIS
+    Initializes the MSVC build environment for the current PowerShell session.
+
+    .DESCRIPTION
+    Locates and runs VsDevCmd.bat to set up the Visual Studio build environment,
+    which includes adding link.exe and other MSVC tools to the PATH.
+    This is required for Rust to successfully link Windows executables.
+
+    .PARAMETER Quiet
+    If $true, suppresses detailed output.
+
+    .EXAMPLE
+    Initialize-MSVCEnvironment
+
+    .EXAMPLE
+    if (-not (Initialize-MSVCEnvironment -Quiet)) {
+        Write-Error "Failed to setup MSVC environment"
+        exit 1
+    }
+    #>
+    param([bool]$Quiet = $false)
+
+    # Check if link.exe is already in PATH (environment already initialized)
+    if (Get-Command link.exe -ErrorAction SilentlyContinue) {
+        if (-not $Quiet) {
+            Write-Host "  ✓ MSVC environment already initialized (link.exe found in PATH)" -ForegroundColor Green
+        }
+        return $true
+    }
+
+    if (-not $Quiet) {
+        Write-Host ""
+        Write-Host "Initializing MSVC build environment..." -ForegroundColor Cyan
+    }
+
+    # Locate Visual Studio installation using vswhere
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+
+    if (-not (Test-Path $vswhere)) {
+        if (-not $Quiet) {
+            Write-Host "  ✗ vswhere.exe not found - Visual Studio may not be installed" -ForegroundColor Red
+            Write-Host ""
+            Write-Host "To fix this issue:" -ForegroundColor Yellow
+            Write-Host "  1. Install Visual Studio Build Tools or Visual Studio" -ForegroundColor White
+            Write-Host "  2. Make sure to include 'Desktop development with C++' workload" -ForegroundColor White
+            Write-Host "  3. Or run: .\scripts\install-dependencies.ps1" -ForegroundColor Cyan
+            Write-Host ""
+        }
+        return $false
+    }
+
+    # Find VS installation with C++ build tools
+    try {
+        $vsPath = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2>$null
+
+        if (-not $vsPath) {
+            if (-not $Quiet) {
+                Write-Host "  ✗ Visual Studio installation with C++ tools not found" -ForegroundColor Red
+                Write-Host ""
+                Write-Host "To fix this issue:" -ForegroundColor Yellow
+                Write-Host "  1. Install Visual Studio Build Tools or Visual Studio" -ForegroundColor White
+                Write-Host "  2. Make sure to include 'Desktop development with C++' workload" -ForegroundColor White
+                Write-Host "  3. Or run: .\scripts\install-dependencies.ps1" -ForegroundColor Cyan
+                Write-Host ""
+            }
+            return $false
+        }
+
+        # Locate VsDevCmd.bat
+        $vsDevCmd = Join-Path $vsPath "Common7\Tools\VsDevCmd.bat"
+
+        if (-not (Test-Path $vsDevCmd)) {
+            if (-not $Quiet) {
+                Write-Host "  ✗ VsDevCmd.bat not found at: $vsDevCmd" -ForegroundColor Red
+            }
+            return $false
+        }
+
+        if (-not $Quiet) {
+            Write-Host "  Found Visual Studio at: $vsPath" -ForegroundColor Gray
+        }
+
+        # Run VsDevCmd.bat and capture environment variables
+        # We use cmd.exe to run the batch file, then export all environment variables
+        $tempFile = [System.IO.Path]::GetTempFileName()
+
+        # Run VsDevCmd.bat in cmd.exe, then output all environment variables to temp file
+        & cmd.exe /c "`"$vsDevCmd`" -no_logo && set" | Out-File -FilePath $tempFile -Encoding ASCII
+
+        # Parse environment variables and set them in current session
+        Get-Content $tempFile | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') {
+                $name = $matches[1]
+                $value = $matches[2]
+
+                # Update current session environment
+                Set-Item -Path "env:$name" -Value $value -ErrorAction SilentlyContinue
+            }
+        }
+
+        # Clean up temp file
+        Remove-Item $tempFile -ErrorAction SilentlyContinue
+
+        # Verify that link.exe is now available
+        if (Get-Command link.exe -ErrorAction SilentlyContinue) {
+            if (-not $Quiet) {
+                Write-Host "  ✓ MSVC environment initialized successfully" -ForegroundColor Green
+                $linkPath = (Get-Command link.exe).Path
+                Write-Host "  ✓ link.exe found at: $linkPath" -ForegroundColor Green
+            }
+            return $true
+        } else {
+            if (-not $Quiet) {
+                Write-Host "  ✗ MSVC environment setup completed but link.exe still not found" -ForegroundColor Red
+                Write-Host ""
+                Write-Host "This may indicate an incomplete Visual Studio installation." -ForegroundColor Yellow
+                Write-Host "Try reinstalling with the 'Desktop development with C++' workload." -ForegroundColor Yellow
+                Write-Host ""
+            }
+            return $false
+        }
+
+    } catch {
+        if (-not $Quiet) {
+            Write-Host "  ✗ Error initializing MSVC environment: $_" -ForegroundColor Red
+        }
+        return $false
+    }
+}
+
 function Test-AllDependencies {
     <#
     .SYNOPSIS
@@ -249,5 +381,6 @@ Export-ModuleMember -Function @(
     'Test-BazelInstalled',
     'Test-NodeInstalled',
     'Test-NpmInstalled',
-    'Test-AllDependencies'
+    'Test-AllDependencies',
+    'Initialize-MSVCEnvironment'
 )
