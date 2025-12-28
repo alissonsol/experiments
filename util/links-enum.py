@@ -101,8 +101,8 @@ def main():
     """Main function to run the script."""
     print("Scanning repository for files and links...")
 
-    # Get the directory where the script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Get the current working directory
+    script_dir = os.getcwd()
 
     # Scan the repository
     data = scan_repository(script_dir)

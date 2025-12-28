@@ -326,8 +326,8 @@ def main():
     """Main function to run the script."""
     print("Checking links from links-list.json...\n")
 
-    # Get the directory where the script is located
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Get the current working directory
+    script_dir = os.getcwd()
 
     # Paths
     json_file = os.path.join(script_dir, 'links-list.json')
