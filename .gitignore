@@ -396,3 +396,5 @@ MigrationBackup/
 **/resources.output.copy.yml
 **/.terraform*
 **/terraform.tfstate
+**/data-*.json
+**/pork*.csv
