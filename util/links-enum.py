@@ -54,6 +54,8 @@ def extract_links_from_html(filepath):
 def scan_repository(root_path='.'):
     """
     Scan all files in the repository and extract links.
+    Tracks unique links across all pages and only lists each link destination
+    the first time it appears.
 
     Args:
         root_path: Root directory to start scanning from
@@ -62,6 +64,7 @@ def scan_repository(root_path='.'):
         Dictionary with file information and links
     """
     result = {"files": []}
+    global_seen_links = set()  # Track all unique link destinations across all files
 
     # Walk through all directories
     for root, dirs, files in os.walk(root_path):
@@ -77,17 +80,30 @@ def scan_repository(root_path='.'):
             # Convert to relative path with forward slashes for consistency
             relative_path = os.path.relpath(filepath, root_path).replace('\\', '/')
 
-            links = []
+            all_links = []
+            new_links = []      # Links appearing for the first time
+            repeated_links = []  # Links that were already seen in previous files
 
             # Check if file is HTML
             if filename.endswith(('.htm', '.html')):
-                links = extract_links_from_html(filepath)
+                all_links = extract_links_from_html(filepath)
+
+                # Separate links into new and repeated
+                for link in all_links:
+                    if link not in global_seen_links:
+                        new_links.append(link)
+                        global_seen_links.add(link)
+                    else:
+                        repeated_links.append(link)
 
             # Add file entry
             file_entry = {
                 "path": relative_path,
-                "links": links,
-                "link_count": len(links)
+                "links": new_links,
+                "link_count": len(new_links),
+                "repeated_links": repeated_links,
+                "repeated_count": len(repeated_links),
+                "total_links_in_file": len(all_links)
             }
             result["files"].append(file_entry)
 
@@ -113,8 +129,15 @@ def main():
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     print(f"Found {len(data['files'])} files")
-    total_links = sum(file_entry['link_count'] for file_entry in data['files'])
-    print(f"Extracted {total_links} total links")
+
+    # Calculate statistics
+    unique_links = sum(file_entry['link_count'] for file_entry in data['files'])
+    repeated_links = sum(file_entry.get('repeated_count', 0) for file_entry in data['files'])
+    total_links = sum(file_entry.get('total_links_in_file', 0) for file_entry in data['files'])
+
+    print(f"Extracted {total_links} total link occurrences")
+    print(f"  - {unique_links} unique links (listed in output)")
+    print(f"  - {repeated_links} repeated links (suppressed)")
     print(f"Results saved to: {output_file}")
 
 
