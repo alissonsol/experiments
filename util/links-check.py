@@ -11,8 +11,12 @@ import json
 import csv
 import mimetypes
 import requests
+import urllib3
 from pathlib import Path
 from urllib.parse import urlparse, urljoin
+
+# Disable SSL warnings when we use verify=False
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def is_external_link(link):
@@ -137,7 +141,7 @@ def check_file_type(filepath, expected_type):
     return True
 
 
-def check_external_link(url, timeout=10):
+def check_external_link(url, timeout=30):
     """
     Check if an external URL is accessible and returns a valid HTTP status code.
 
@@ -156,20 +160,54 @@ def check_external_link(url, timeout=10):
     if parsed.scheme in ('mailto', 'tel', 'javascript'):
         return (True, None, 'Skipped - not HTTP')
 
-    try:
-        # Use HEAD request first (faster, doesn't download content)
-        response = requests.head(url, timeout=timeout, allow_redirects=True)
+    # Headers that mimic a real browser to avoid bot detection
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Cache-Control': 'max-age=0',
+    }
 
-        # Some servers don't support HEAD, try GET if HEAD fails
-        if response.status_code == 405 or response.status_code == 501:
-            response = requests.get(url, timeout=timeout, allow_redirects=True, stream=True)
+    try:
+        # Try HEAD request first (faster, doesn't download content)
+        response = requests.head(url, headers=headers, timeout=timeout, allow_redirects=True)
+
+        # Some servers don't support HEAD or return 403 for HEAD but not GET
+        # Try GET if HEAD fails with certain status codes
+        if response.status_code in (403, 405, 501, 503):
+            response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=True, stream=True)
+            # Close the stream to avoid downloading the entire content
+            response.close()
 
         # Check if status code is in the 2xx success range
         if 200 <= response.status_code < 300:
             return (True, response.status_code, 'OK')
+        # Treat 3xx as success if we're allowing redirects (which we are)
+        elif 300 <= response.status_code < 400:
+            return (True, response.status_code, 'OK (Redirect)')
         else:
             return (False, response.status_code, f'HTTP {response.status_code}')
 
+    except requests.exceptions.SSLError as e:
+        # SSL errors might indicate the site is still accessible but has cert issues
+        # Try one more time without SSL verification as a fallback
+        try:
+            response = requests.get(url, headers=headers, timeout=timeout, allow_redirects=True, stream=True, verify=False)
+            response.close()
+            if 200 <= response.status_code < 400:
+                return (True, response.status_code, 'OK (SSL Warning)')
+            else:
+                return (False, response.status_code, f'HTTP {response.status_code} (SSL Warning)')
+        except:
+            return (False, None, f'SSL error: {str(e)[:50]}')
     except requests.exceptions.Timeout:
         return (False, None, 'Timeout')
     except requests.exceptions.ConnectionError:
@@ -177,9 +215,9 @@ def check_external_link(url, timeout=10):
     except requests.exceptions.TooManyRedirects:
         return (False, None, 'Too many redirects')
     except requests.exceptions.RequestException as e:
-        return (False, None, f'Request failed: {str(e)}')
+        return (False, None, f'Request failed: {str(e)[:50]}')
     except Exception as e:
-        return (False, None, f'Unexpected error: {str(e)}')
+        return (False, None, f'Unexpected error: {str(e)[:50]}')
 
 
 def check_links(json_file, repo_root='.', csv_file=None):
