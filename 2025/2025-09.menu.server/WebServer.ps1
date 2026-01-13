@@ -32,7 +32,10 @@ function Get-MimeType {
         '.woff2' = 'font/woff2';
         '.ttf'   = 'font/ttf';
         '.eot'   = 'application/vnd.ms-fontobject';
-        '.otf'   = 'font/otf'
+        '.otf'   = 'font/otf';
+        '.cer'   = 'application/x-x509-ca-cert';
+        '.crt'   = 'application/x-x509-ca-cert';
+        '.pem'   = 'application/x-pem-file'
     }
 
     if ($mimeTypes.ContainsKey($extension)) {
@@ -95,31 +98,61 @@ function Start-SimpleWebServer {
                     }
                     Write-Output "Serving: $filePath"
 
-                    if (Test-Path -Path $filePath -PathType Leaf) {
-                        # Read the file and write it to the response stream.
-                        $fileBytes = [System.IO.File]::ReadAllBytes($filePath)
-                        $response.ContentLength64 = $fileBytes.Length
+                    try {
+                        if ($null -ne $filePath -and (Test-Path -Path $filePath -PathType Leaf)) {
+                            # Read the file and write it to the response stream.
+                            $fileBytes = [System.IO.File]::ReadAllBytes($filePath)
 
-                        # Set the correct MIME type for the file using our custom function.
-                        $mimeType = Get-MimeType -FilePath $filePath
-                        $response.ContentType = $mimeType
+                            # Set the correct MIME type for the file using our custom function.
+                            $mimeType = Get-MimeType -FilePath $filePath
+                            $response.ContentType = $mimeType
 
-                        $response.OutputStream.Write($fileBytes, 0, $fileBytes.Length)
+                            # Set content length AFTER determining content type and BEFORE writing
+                            $response.ContentLength64 = $fileBytes.Length
+
+                            $response.OutputStream.Write($fileBytes, 0, $fileBytes.Length)
+                            Write-Output "Served $($fileBytes.Length) bytes as $mimeType"
+                        }
+                        else {
+                            # File not found.
+                            $response.StatusCode = 404
+                            $response.StatusDescription = "Not Found"
+                            $notFoundMessage = "<h1>404 Not Found</h1><p>The requested URL was not found on this server: $relativePath</p>"
+                            $notFoundBytes = [System.Text.Encoding]::UTF8.GetBytes($notFoundMessage)
+                            $response.ContentType = "text/html"
+                            $response.ContentLength64 = $notFoundBytes.Length
+                            $response.OutputStream.Write($notFoundBytes, 0, $notFoundBytes.Length)
+                        }
                     }
-                    else {
-                        # File not found.
-                        $response.StatusCode = 404
-                        $response.StatusDescription = "Not Found"
-                        $notFoundMessage = "<h1>404 Not Found</h1><p>The requested URL was not found on this server: $relativePath</p>"
-                        $notFoundBytes = [System.Text.Encoding]::UTF8.GetBytes($notFoundMessage)
-                        $response.ContentLength64 = $notFoundBytes.Length
-                        $response.OutputStream.Write($notFoundBytes, 0, $notFoundBytes.Length)
+                    catch {
+                        Write-Error "Error serving $filePath : $($_.Exception.Message)"
+                        Write-Error "Stack trace: $($_.ScriptStackTrace)"
+                        # Try to send error response if possible
+                        try {
+                            $response.StatusCode = 500
+                            $response.StatusDescription = "Internal Server Error"
+                        }
+                        catch {
+                            # Response may already be partially sent
+                        }
                     }
-                    $response.Close()
+                    finally {
+                        try {
+                            $response.Close()
+                        }
+                        catch {
+                            Write-Warning "Failed to close response: $($_.Exception.Message)"
+                        }
+                    }
                 }
             }
             catch {
-                Write-Error $_.Exception.Message
+                Write-Error "Server error: $($_.Exception.Message)"
+                Write-Error "Exception type: $($_.Exception.GetType().FullName)"
+                Write-Error "Stack trace: $($_.ScriptStackTrace)"
+                if ($_.Exception.InnerException) {
+                    Write-Error "Inner exception: $($_.Exception.InnerException.Message)"
+                }
             }
             finally {
                 if ($httpListener.IsListening) {
@@ -175,7 +208,12 @@ try {
     Start-SimpleWebServer -ContentPath $contentFolder @PSBoundParameters
 }
 catch {
-    Write-Error "Failed to start web server: $_"
+    Write-Error "Failed to start web server: $($_.Exception.Message)"
+    Write-Error "Exception type: $($_.Exception.GetType().FullName)"
+    Write-Error "Script stack trace: $($_.ScriptStackTrace)"
+    if ($_.Exception.InnerException) {
+        Write-Error "Inner exception: $($_.Exception.InnerException.Message)"
+    }
 }
 finally {
     Write-Output "Exiting script."
