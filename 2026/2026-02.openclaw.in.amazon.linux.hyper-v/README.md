@@ -37,9 +37,12 @@ This is how to quickly create VMs with specific configuration. First, the steps 
 - Configure the files in the `vmconfig` folder.
   - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
 - Execute the PowerShell script `vmcreate.ps1 <vmname>`.
-  - For example, `vmcreate.ps1 openclaw01` will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
+  - For example, `vmcreate.ps1 openclaw01`
+    - This will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
 - From the Hyper-V Manager, start the new virtual machine.
 - Login and change the password.
+  - Unless you changed the defaults, at this point the user is `ec2-user` and the password is `amazonlinux`.
+  - Having to type the password again to confirm you want to change it is as annoying as it gets!
   - At this point, if there is any update since the Amazon Linux image was last downloaded, you will be asked to execute the command `/usr/bin/dnf check-release-update`. Proceed as per the instructions to upgrade the operating system binaries before proceeding.
 - Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.openclaw.bash`.
   - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.openclaw.bash` to the root of the target VM. After execution the Bash script, the Graphical User Interface and the tools from section 2 are installed.
@@ -56,7 +59,11 @@ Test VM connectivity.
 - For convenience, you can find the IP addresses for the running guests from the Hyper-V host with this PowerShell command:
   - `Get-VM | Where-Object {$_.State -eq "Running"} | Get-VMNetworkAdapter | Select-Object VMName, IPAddresses`
 
-<mark>Technicall, that is all folks!</mark> You should now be able to follow the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started)
+<mark>Technicall, that is all folks!</mark> You should now be able to follow the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started). You have the requirements installed, and can start by running the onboarding wizard: `openclaw onboard --install-daemon`. Note: you may benefit from installing and configuring other required software ahead of time, like AI connectors, email clients, messaging clients, etc.
+
+Careful: you are about to give AI some precious access to your accounts!
+
+![](images/001.openclaw.config.png)
 
 ## 3) Optional
 
