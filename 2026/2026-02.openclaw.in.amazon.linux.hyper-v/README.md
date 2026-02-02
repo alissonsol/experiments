@@ -1,0 +1,75 @@
+# Openclaw in Amazon Linux Hyper-v
+
+Copyright (c) 2019-2026 by Alisson Sol
+
+## 1) Get all in!
+
+This is an update of a previous effort to get Amazon Linux working with Hyper-v locally [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v). That was already an update from another effort that was based on [Amazon WorkSpaces](https://github.com/alissonsol/archive/tree/main/WorkSpaces/2019-03.WorkSpaces.AmazonLinux.setup). See [requirements and limitations](https://docs.aws.amazon.com/linux/al2023/ug/hyperv-supported-configurations.html). Instructions here were tested using Amazon Linux 2023 (not Amazon Linux 1 or Amazon Linux 2). Unless instructions indicate it differently, commands and environment variables used are from [PowerShell](https://github.com/powershell/powershell).
+
+This version uses all the "shortcuts" from the previous effort. If you need more customization, you need to go back [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v) and following the more detailed instructions.
+
+### 1) Downloading the latest files
+
+Check that the PowerShell version is a recent one (> 7.5) and that you run from an Administrator window.
+
+```powershell
+> $PSVersionTable.PSVersion
+
+Major  Minor  Patch  PreReleaseLabel BuildLabel
+-----  -----  -----  --------------- ----------
+7      5      4
+```
+
+<mark>Run the PowerShell script [`amazon.linux.hyper-v.download.ps1`](./amazon.linux.hyper-v.download.ps1).</mark>
+
+The folder [`seedconfig`](./seedconfig/) in this repository has examples for the `-data` files. The repository also has a ready to use binary [`seed.iso`](./seed.iso) file. See the default password for the default user `ec2-user` in the [`user-data`](./seedconfig/user-data) file. You will be asked to change the default password for the default user after the first login. This is likely not the big security risk you will face today!
+
+## 2) Creating the VM(s)
+
+One VM is good. Many VMs: far better.
+
+This is how to quickly create VMs with specific configuration. First, the steps that needed to be executed just one time per host machine.
+- In order to automate the process of creating the `seed.iso` files, download an install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install).
+- Confirm that the path to the executable `oscdimg.exe` is correct at the top of the `vmcreate-common.psm1` PowerShell module.
+- The PowerShell script `amazon.linux.hyper-v.download.ps1` needs to be executed at least once per host machine.
+
+<mark>Now, for each VM to be created.</mark>
+- Configure the files in the `vmconfig` folder.
+  - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
+- Execute the PowerShell script `vmcreate.ps1 <vmname>`.
+  - For example, `vmcreate.ps1 openclaw01` will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
+- Login and change the password.
+  - At this point, if there is any update since the Amazon Linux image was last downloaded, you will be asked to execute the command `/usr/bin/dnf check-release-update`. Proceed as per the instructions to upgrade the operating system binaries before proceeding.
+- Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.openclaw.bash`.
+  - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.openclaw.bash` to the root of the target VM. After execution the Bash script, the Graphical User Interface and the tools from section 2 are installed.
+- Execute `sudo reboot now` and the VM reboots already in the GUI mode with the tools.
+
+<mark>CHECKPOINT: This is a great time to create a checkpoint `VM Configured` for each VM.</mark>
+
+- If lost track, all you did so far was to configure the data files, execute two PowerShell scripts, change a password, execute a Bash script, and reboot. You are now in a GUI and can start a browser or VS Code.
+  - Technically, you can add the line to run `bash amazon.linux.openclaw.bash` to the `user-data` file. That usually ends-up creating a confusing first login that is still under the command line interface, instead of the GUI, when the password needs to be changed. It is a personal preference to do that, which technically removes one step in the process (execute a Bash script).
+
+Test VM connectivity.
+- Open a terminal and get the IP for each VM: `ifconfig` or `ifconfig eth0`.
+- Ping to another IP address. Try DNS resolution: `ping www.google.com`.
+- For convenience, you can find the IP addresses for the running guests from the Hyper-V host with this PowerShell command:
+  - `Get-VM | Where-Object {$_.State -eq "Running"} | Get-VMNetworkAdapter | Select-Object VMName, IPAddresses`
+
+<mark>Technicall, that is all folks!</mark> You should now be able to follow the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started)
+
+## 3) Optional
+
+This assumes that the user has already executed the "tools" installation, and so Visual Studio Code is available to edit any files, the Firefox Browser is available to visit sites, etc. These are all optional. The commands below are "hacks" for x86_x64 architectures and locked to versions of the keys and packages. Update as needed.
+
+- Install PowerShell
+  - `sudo dnf install powershell -y`
+
+## 4) TODO
+
+### 4.1) GUI resolution improvement
+
+This is a good contribution opportunity, since it is still a "TODO". The following path was tested, but instructions didn't work.
+- Instructions for server from the [Tutorial: Configure TigerVNC server on AL2023](https://docs.aws.amazon.com/linux/al2023/ug/vnc-configuration-al2023.html).
+- Client tested from: [Download TightVNC](https://www.tightvnc.com/download.php).
+
+Tried changing the resolution to 1920x1080, and still got 1024x768. For now, since working with multiple VMs, not a roadblock, and just an inconvenience.

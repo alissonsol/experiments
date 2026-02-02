@@ -1,0 +1,13 @@
+#cloud-config
+#vim:syntax=yaml
+users:
+# A user by the name `ec2-user` is created in the image by default.
+  - default
+chpasswd:
+  list: |
+    ec2-user:amazonlinux
+# In the above line, do not add any spaces after 'ec2-user:'.
+
+runcmd:
+  - curl -o amazon.linux.openclaw.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.openclaw.in.amazon.linux.hyper-v/amazon.linux.openclaw.bash
+  - chmod a+x amazon.linux.openclaw.bash
