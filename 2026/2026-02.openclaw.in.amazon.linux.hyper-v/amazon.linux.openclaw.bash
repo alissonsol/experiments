@@ -21,8 +21,8 @@ npm install -g openclaw@latest
 # Run OpenClaw onboarding (installs daemon with defaults, no interactive prompts)
 openclaw onboard --install-daemon --non-interactive --workspace ~/openclaw
 
-# Verify OpenClaw installation
-openclaw doctor
+# Verify OpenClaw installation (non-interactive to skip prompts)
+openclaw doctor --non-interactive
 
 # Show installed versions
 echo "Git: `git --version`"
