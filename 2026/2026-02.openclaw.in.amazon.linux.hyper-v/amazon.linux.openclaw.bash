@@ -18,8 +18,8 @@ npm --version
 # Install OpenClaw
 npm install -g openclaw@latest
 
-# Run OpenClaw onboarding (installs daemon)
-openclaw onboard --install-daemon
+# Run OpenClaw onboarding (installs daemon with defaults, no interactive prompts)
+openclaw onboard --install-daemon --non-interactive --workspace ~/openclaw
 
 # Verify OpenClaw installation
 openclaw doctor
