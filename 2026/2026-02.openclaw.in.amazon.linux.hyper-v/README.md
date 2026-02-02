@@ -38,6 +38,7 @@ This is how to quickly create VMs with specific configuration. First, the steps 
   - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
 - Execute the PowerShell script `vmcreate.ps1 <vmname>`.
   - For example, `vmcreate.ps1 openclaw01` will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
+- From the Hyper-V Manager, start the new virtual machine.
 - Login and change the password.
   - At this point, if there is any update since the Amazon Linux image was last downloaded, you will be asked to execute the command `/usr/bin/dnf check-release-update`. Proceed as per the instructions to upgrade the operating system binaries before proceeding.
 - Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.openclaw.bash`.

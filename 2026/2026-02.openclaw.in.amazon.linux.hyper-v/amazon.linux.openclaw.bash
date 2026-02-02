@@ -10,10 +10,8 @@ dnf -y install git
 git --version
 
 # Install Node.js 22+ (required for OpenClaw)
-dnf -y install nodejs npm
-# If dnf provides an older version, use NodeSource for Node.js 22:
-# curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
-# dnf -y install nodejs
+curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+dnf -y install nodejs
 node --version
 npm --version
 
