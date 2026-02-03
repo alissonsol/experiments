@@ -6,7 +6,18 @@ Copyright (c) 2019-2026 by Alisson Sol
 
 Minimal commands for creating the `openclaw01` VM. See sections below for details.
 
+**Getting only the needed folder**
+```powershell
+git clone --filter=blob:none --sparse https://github.com/alissonsol/experiments.git
+cd experiments
+git sparse-checkout add 2026\2026-02.openclaw.in.amazon.linux.hyper-v
+cd 2026\2026-02.openclaw.in.amazon.linux.hyper-v\
+```
+
 **On the Windows host (Administrator PowerShell, one-time setup):**
+
+Assuming you are in the `experiments\2026\2026-02.openclaw.in.amazon.linux.hyper-v` folder.
+
 ```powershell
 .\amazon.linux.hyper-v.download.ps1
 ```
