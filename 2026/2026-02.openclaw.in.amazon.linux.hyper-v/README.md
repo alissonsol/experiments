@@ -1,4 +1,4 @@
-# Openclaw in Amazon Linux Hyper-v
+# OpenClaw in Amazon Linux using Windows Hyper-v
 
 Copyright (c) 2019-2026 by Alisson Sol
 

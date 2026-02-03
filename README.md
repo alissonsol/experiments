@@ -2,6 +2,10 @@
 
 The random experiments by Alisson Sol
 
+## 2026
+
+- 2026-02 - Scripts to quickly setup [OpenClaw](2026/2026-02.openclaw.in.amazon.linux.hyper-v/) in Amazon Linux using Windows Hyper-v
+
 ## 2025
 
 - 2025-11 - Public version of the [Progresso](2025/2025-11.progresso/) console to start services in order
