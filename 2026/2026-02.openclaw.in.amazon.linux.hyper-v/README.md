@@ -2,7 +2,34 @@
 
 Copyright (c) 2019-2026 by Alisson Sol
 
+## 0) Too long. Don't want to read the details. Only the needed commands
+
+Minimal commands for creating the `openclaw01` VM. See sections below for details.
+
+**On the Windows host (PowerShell, one-time setup):**
+```powershell
+.\amazon.linux.hyper-v.download.ps1
+```
+
+**On the Windows host (PowerShell, create VM):**
+```powershell
+# Edit vmconfig/meta-data to set local-hostname to openclaw01
+.\vmcreate.ps1 openclaw01
+```
+
+**On the VM (after first login and password change):**
+
+Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data) file, at this point the user is `ec2-user` and the password is `amazonlinux`.
+
+```bash
+cd /
+sudo bash amazon.linux.tools.bash
+sudo reboot now
+```
+
 ## 1) Get all in!
+
+What can you do during [The Long Dark Tea-Time of the Soul](https://en.wikipedia.org/wiki/The_Long_Dark_Tea-Time_of_the_Soul)?
 
 This is an update of a previous effort to get Amazon Linux working with Hyper-v locally [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v). That was already an update from another effort that was based on [Amazon WorkSpaces](https://github.com/alissonsol/archive/tree/main/WorkSpaces/2019-03.WorkSpaces.AmazonLinux.setup). See [requirements and limitations](https://docs.aws.amazon.com/linux/al2023/ug/hyperv-supported-configurations.html). Instructions here were tested using Amazon Linux 2023 (not Amazon Linux 1 or Amazon Linux 2). Unless instructions indicate it differently, commands and environment variables used are from [PowerShell](https://github.com/powershell/powershell).
 
@@ -41,7 +68,7 @@ This is how to quickly create VMs with specific configuration. First, the steps 
     - This will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
 - From the Hyper-V Manager, start the new virtual machine.
 - Login and change the password.
-  - Unless you changed the defaults, at this point the user is `ec2-user` and the password is `amazonlinux`.
+  - Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data) file, at this point the user is `ec2-user` and the password is `amazonlinux`.
   - Having to type the password again to confirm you want to change it is as annoying as it gets!
   - At this point, if there is any update since the Amazon Linux image was last downloaded, you will be asked to execute the command `/usr/bin/dnf check-release-update`. Proceed as per the instructions to upgrade the operating system binaries before proceeding.
 - Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.openclaw.bash`.
