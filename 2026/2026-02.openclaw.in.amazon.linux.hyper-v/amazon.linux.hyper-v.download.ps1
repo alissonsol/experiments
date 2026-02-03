@@ -56,9 +56,3 @@ if ($entry) {
 	$stream.Close()
 }
 $zip.Dispose()
-
-# Download seed.iso from the same origin as the script into $localVhdxPath
-$seedIsoUrl = "https://github.com/alissonsol/experiments/blob/main/2025/2025-09.amazon.linux.hyper-v/seed.iso?raw=true"
-$seedIsoFile = Join-Path $localVhdxPath "seed.iso"
-Remove-Item $seedIsoFile -Force -ErrorAction SilentlyContinue
-Invoke-WebRequest -Uri $seedIsoUrl -OutFile $seedIsoFile
