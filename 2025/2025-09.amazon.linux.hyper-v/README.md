@@ -1,6 +1,6 @@
 # Setup an Amazon Linux Developer VM on premises
 
-Setup instruction for software development - Copyright (c) 2019-2025 by Alisson Sol
+Setup instruction for software development - Copyright (c) 2019-2026 by Alisson Sol
 
 ## 1) Getting the Amazon Linux up and running
 
@@ -12,13 +12,21 @@ This is an update of a previous effort that used [Amazon WorkSpaces](https://git
 
 Ready? Proceed to the download [site](https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2-download.html). Click the link to the [cnd.amazonlinux.com](https://cdn.amazonlinux.com/al2023/os-images/latest/), and get to the `hyperv` subfolder. There will be large `vhdx.zip` file, which is the one to download. A hint here: you can see by the long file name that this image is being constantly updated. I usually keep the ZIP file copied nearby. Then, I unzip the content, while copying to `$env:ProgramData\Microsoft\Windows\Virtual Hard Disks`. Used to be `$env:Public\Documents\Hyper-V\Virtual hard disks`, but why would Microsoft keep locations stable when those updating Markdown files need a job?!
 
-Before proceeding, you need to create a file `seed.iso`, with the volume label `cidata`. This file defines the default password for the user during the first login, as per instructions [here](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html). Which would be reasonable instructions, if someone using Windows Hyper-V had the Linux and macOS tools! A possible solution is to [Download and install the Windows ADK](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install), using the command line tool `oscdimg`, which has clear command line [parameters](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options). Instead, I used AnyBurn, which you can download for free from [AnyBurn.com](https://anyburn.com/). You then just add the files `meta-data` and `user-data` with the configurations of your choice, and don't forget the volume label (see picture).
-
-![](images/001.AnyBurn.config.PNG)
+### 1.b) Creating the `seed.iso` file
 
 The folder [`seedconfig`](./seedconfig/) in this repository has examples for the `-data` files. The repository also has a ready to use binary [`seed.iso`](./seed.iso) file. See the default password for the default user `ec2-user` in the [`user-data`](./seedconfig/user-data) file. You will be asked to change the default password for the default user after the first login. This is likely not the big security risk you will face today!
 
-### 1.b) Creating the VM
+After any metadata changes, you need to recreate the file `seed.iso`, with the volume label `cidata`. This file packs the metadata files as per instructions [here](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html). Which would be reasonable instructions, if someone using Windows Hyper-V had the Linux and macOS tools!
+
+The automation-friendly solution is to [Download and install the Windows ADK](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install), using the command line tool `oscdimg`, which has clear command line [parameters](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options) (Irony!).
+
+<mark>SHORTCUT: For `vmcreate.ps1` to automate the `seed.iso` creation your need to [Download and install the Windows ADK](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install) and double-check the path to `oscdimg` in line 19 of [`vmcreate-common.psm1`](./vmcreate-common.psm1)</mark>
+
+Another option, which now means you shouldn't use `vmcreate.ps1` (or adapt it) is to use CD creation software like [AnyBurn](https://anyburn.com/). You then just add the files `meta-data` and `user-data` with the configurations of your choice, and don't forget the volume label (see picture).
+
+![](images/001.AnyBurn.config.PNG)
+
+### 1.c) Creating the VM
 
 <mark>SHORTCUT: If you are considering creating multiple VMs, jump to section 3.a now.</mark>
 
@@ -40,7 +48,7 @@ Next, I go to the `Hyper-V Manager` and selecting the local server, righ-click a
 
 Apply the changes. You can now start the VM, as per the instructions to [Run AL2 as a virtual machine on premises](https://docs.aws.amazon.com/linux/al2/ug/amazon-linux-2-virtual-machine.html). Unless you changed the defaults in the file `user-data`, you will login with the `ec2-user` account and the password defined there, and be promptly asked to change the password.
 
-### 1.c) Network checks!
+### 1.d) Network checks!
 
 Before proceeding, check network connectivity. A simple command like `ping 8.8.8.8` should check if the network is connected. Then `ping google.com` would check if the DNS service client stack is working.
 
@@ -170,6 +178,7 @@ This is how to quickly create VMs with specific configuration. First, the steps 
 Now, for each VM to be created.
 - Configure the files in the `vmconfig` folder.
   - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
+  - Depending on your changes, see the instructions above to recreate the `seed.iso` file.
 - Execute the PowerShell script `vmcreate.ps1 <vmname>`.
   - For example, `vmcreate.ps1 server01` will create a VM named `server01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
 - Login and change the password.

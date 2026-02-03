@@ -1,9 +1,9 @@
 <#PSScriptInfo
 .VERSION 0.1
-.GUID e50a15d0-96f6-11f0-a790-b9c7039a859e
+.GUID 81d2775c-8763-41bf-824c-ad05bb4167db
 .AUTHOR Alisson Sol
 .COMPANYNAME None
-.COPYRIGHT (c) 2025 Alisson Sol et al.
+.COPYRIGHT (c) 2026 Alisson Sol et al.
 .TAGS
 .LICENSEURI http://www.yuruna.com
 .PROJECTURI http://www.yuruna.com
@@ -74,7 +74,7 @@ $vhdxFile = Join-Path $localVhdxPath "$vhdxName/$vhdxName.vhdx"
 $defaultVhdxFile = Join-Path $localVhdxPath "$defaultVhdxName.vhdx"
 
 # If the vmName parameter was provided and differs from the default, ensure the VHDX is a copy
-if ($PSBoundParameters.ContainsKey('vmName') -and $vmName -ne $defaultVmName) {
+if ($vmName -ne $defaultVmName) {
 	if (Test-Path -Path $defaultVhdxFile) {
 		if (!(Test-Path -Path $vhdxFile)) {
 			Write-Output "Creating VHDX for '$vmName' by copying default VHDX..."

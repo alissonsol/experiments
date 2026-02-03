@@ -74,7 +74,7 @@ $vhdxFile = Join-Path $localVhdxPath "$vhdxName/$vhdxName.vhdx"
 $defaultVhdxFile = Join-Path $localVhdxPath "$defaultVhdxName.vhdx"
 
 # If the vmName parameter was provided and differs from the default, ensure the VHDX is a copy
-if ($PSBoundParameters.ContainsKey('vmName') -and $vmName -ne $defaultVmName) {
+if ($vmName -ne $defaultVmName) {
 	if (Test-Path -Path $defaultVhdxFile) {
 		if (!(Test-Path -Path $vhdxFile)) {
 			Write-Output "Creating VHDX for '$vmName' by copying default VHDX..."

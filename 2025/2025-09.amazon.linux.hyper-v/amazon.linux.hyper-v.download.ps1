@@ -42,7 +42,7 @@ $destFile = Join-Path $localVhdxPath "amazonlinux.zip"
 Remove-Item $destFile -Force -ErrorAction SilentlyContinue
 Invoke-WebRequest -Uri $url -OutFile $destFile
 
-# Extract the .vhdx file from the zip and save as amazonlinux2023.vhdx
+# Extract the .vhdx file from the zip and save as amazonlinux.vhdx
 $vhdxName = "amazonlinux.vhdx"
 $vhdxFile = Join-Path $localVhdxPath $vhdxName
 Remove-Item $vhdxFile -Force -ErrorAction SilentlyContinue

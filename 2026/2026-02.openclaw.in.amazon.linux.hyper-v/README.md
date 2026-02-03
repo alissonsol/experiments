@@ -6,15 +6,14 @@ Copyright (c) 2019-2026 by Alisson Sol
 
 Minimal commands for creating the `openclaw01` VM. See sections below for details.
 
-**On the Windows host (PowerShell, one-time setup):**
+**On the Windows host (Administrator PowerShell, one-time setup):**
 ```powershell
 .\amazon.linux.hyper-v.download.ps1
 ```
 
-**On the Windows host (PowerShell, create VM):**
+**On the Windows host (Administrator PowerShell, create VM):**
 ```powershell
-# Edit vmconfig/meta-data to set local-hostname to openclaw01
-.\vmcreate.ps1 openclaw01
+.\amazon.linux.hyper-v.create.ps1
 ```
 
 **On the VM (after first login and password change):**
@@ -25,6 +24,13 @@ Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data
 cd /
 sudo bash amazon.linux.tools.bash
 sudo reboot now
+```
+**On the VM (after reboot in the Gragphical UX):**
+
+Open terminal and configure OpenClaw. This is past the install step in the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started).
+
+```bash
+openclaw onboard --install-daemon
 ```
 
 ## 1) Get all in!
@@ -63,6 +69,7 @@ This is how to quickly create VMs with specific configuration. First, the steps 
 <mark>Now, for each VM to be created.</mark>
 - Configure the files in the `vmconfig` folder.
   - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
+  - See the instructions [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v) to recreate the `seed.iso` file.
 - Execute the PowerShell script `vmcreate.ps1 <vmname>`.
   - For example, `vmcreate.ps1 openclaw01`
     - This will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).

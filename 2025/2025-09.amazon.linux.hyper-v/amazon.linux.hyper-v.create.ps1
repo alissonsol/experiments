@@ -18,8 +18,12 @@
 # Script parameters
 param(
 	[Parameter(Position=0)]
-	[string]$vmName = "amazonlinux"
+	[string]$vmName = "amznlinux01"
 )
+
+$global:InformationPreference = "Continue"
+$global:DebugPreference = "SilentlyContinue"
+$global:VerbosePreference = "SilentlyContinue"
 
 # Inform and check for elevation
 Write-Output "This script requires elevation (Run as Administrator)."
@@ -57,26 +61,33 @@ if ($existingVM) {
 $localVhdxPath = (Get-VMHost).VirtualHardDiskPath
 Write-Output "Hyper-V default VHDX folder: $localVhdxPath"
 if (!(Test-Path -Path $localVhdxPath)) {
-    Write-Output "The Hyper-V default VHDX folder does not exist: $localVhdxPath"
-    exit 1
+	Write-Output "The Hyper-V default VHDX folder does not exist: $localVhdxPath"
+	exit 1
 }
 $defaultVmName = "amazonlinux"
-$defaultVhdxName = "$defaultVmName.vhdx"
-$vhdxName = "$vmName.vhdx"
-$vhdxFile = Join-Path $localVhdxPath $vhdxName
-$defaultVhdxFile = Join-Path $localVhdxPath $defaultVhdxName
+$defaultVhdxName = "$defaultVmName"
+$vhdxName = "$vmName"
+$vhdxFile = Join-Path $localVhdxPath "$vhdxName/$vhdxName.vhdx"
+$defaultVhdxFile = Join-Path $localVhdxPath "$defaultVhdxName.vhdx"
 
 # If the vmName parameter was provided and differs from the default, ensure the VHDX is a copy
-if ($PSBoundParameters.ContainsKey('vmName') -and $vmName -ne $defaultVmName) {
+if ($vmName -ne $defaultVmName) {
 	if (Test-Path -Path $defaultVhdxFile) {
 		if (!(Test-Path -Path $vhdxFile)) {
 			Write-Output "Creating VHDX for '$vmName' by copying default VHDX..."
+			# Ensure destination folder exists
+			$destDir = Split-Path -Path $vhdxFile -Parent
+			if ($destDir -and -not (Test-Path -Path $destDir)) {
+				New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+			}
 			Copy-Item -Path $defaultVhdxFile -Destination $vhdxFile -Force
 			Write-Output "Copied '$defaultVhdxFile' -> '$vhdxFile'."
-		} else {
+		}
+		else {
 			Write-Output "Target VHDX already exists: $vhdxFile -- leaving as is."
 		}
-	} else {
+	}
+ else {
 		Write-Output "Default VHDX not found: $defaultVhdxFile. Cannot create '$vhdxFile'. Please ensure default VHDX exists."
 		exit 1
 	}
@@ -88,11 +99,15 @@ if (!(Test-Path -Path $vhdxFile)) {
 	exit 1
 }
 
-$seedIsoFile = Join-Path $localVhdxPath "seed.iso"
+$seedIsoFile = Join-Path $localVhdxPath "$vmName/seed.iso"
+$souceSeedIsoFile = Join-Path $PSScriptRoot "seed.iso"
 if (!(Test-Path -Path $seedIsoFile)) {
-	Write-Output "The seed ISO file does not exist: $seedIsoFile"
-	Write-Output "Please run the download script first."
-	exit 1
+	Copy-Item -Path $souceSeedIsoFile -Destination $seedIsoFile -Force
+	Write-Output "Copied '$souceSeedIsoFile' -> '$seedIsoFile'."
+	if (!(Test-Path -Path $seedIsoFile)) {
+		Write-Output "Failed to copy '$souceSeedIsoFile' -> '$seedIsoFile'."
+		exit 1
+	}
 }
 
 # Create new Generation 2 Hyper-V VM
