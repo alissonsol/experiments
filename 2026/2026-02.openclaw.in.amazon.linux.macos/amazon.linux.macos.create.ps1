@@ -1,0 +1,118 @@
+<#
+.SYNOPSIS
+Creates a UTM Virtual Machine bundle ("openclaw01.utm") using the downloaded image.
+#>
+
+$VmName = "openclaw01"
+$UtmDir = "$HOME/Desktop/$VmName.utm" # Creates directly on Desktop for easy access
+$DataDir = "$UtmDir/Data"
+$ImagesDir = "$UtmDir/Images" # standard UTM structure might vary, but flat is often okay. We'll use Data.
+
+# 1. Locate the Image
+$PathFile = "$HOME/Downloads/latest_al2023_path.txt"
+if (Test-Path $PathFile) {
+    $SourceImage = Get-Content $PathFile
+} else {
+    Write-Error "Could not find latest image path file. Run the download script first."
+    exit 1
+}
+
+Write-Host "Creating VM '$VmName' using image: $SourceImage" -ForegroundColor Cyan
+
+# 2. Create Bundle Structure
+if (Test-Path $UtmDir) { Remove-Item -Recurse -Force $UtmDir }
+New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
+
+# 3. Copy Disk Image
+$DestImage = "$DataDir/disk.qcow2"
+Copy-Item -Path $SourceImage -Destination $DestImage
+
+# 4. Generate Cloud-Init Seed ISO
+$SeedDir = "$HOME/Downloads/openclaw_seed_temp"
+New-Item -ItemType Directory -Force -Path $SeedDir | Out-Null
+
+# User-Data (Default user: ec2-user / password: password)
+$UserData = @"
+#cloud-config
+password: password
+chpasswd: { expire: False }
+ssh_pwauth: True
+runcmd:
+  - echo "Setup Complete."
+"@
+Set-Content -Path "$SeedDir/user-data" -Value $UserData
+Set-Content -Path "$SeedDir/meta-data" -Value "instance-id: $VmName" -NoNewline
+
+$SeedIso = "$DataDir/seed.iso"
+Write-Host "Generating seed.iso..."
+Start-Process "hdiutil" -ArgumentList "makehybrid -o `"$SeedIso`" -hfs -joliet -iso -default-volume-name cidata `"$SeedDir`"" -Wait -NoNewWindow
+Remove-Item -Recurse -Force $SeedDir
+
+# 5. Generate config.plist
+# This is a minimal QEMU ARM64 configuration for UTM
+$PlistContent = @"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Backend</key>
+    <string>QEMU</string>
+    <key>ConfigurationVersion</key>
+    <integer>4</integer>
+    <key>Information</key>
+    <dict>
+        <key>Name</key>
+        <string>$VmName</string>
+        <key>Notes</key>
+        <string>Amazon Linux 2023 for OpenClaw</string>
+    </dict>
+    <key>System</key>
+    <dict>
+        <key>Architecture</key>
+        <string>aarch64</string>
+        <key>CPUCount</key>
+        <integer>2</integer>
+        <key>MemorySize</key>
+        <integer>4096</integer>
+    </dict>
+    <key>Drive</key>
+    <array>
+        <dict>
+            <key>ImageType</key>
+            <string>Disk</string>
+            <key>Interface</key>
+            <string>VirtIO</string>
+            <key>ImagePath</key>
+            <string>disk.qcow2</string>
+        </dict>
+        <dict>
+            <key>ImageType</key>
+            <string>CD</string>
+            <key>Interface</key>
+            <string>USB</string>
+            <key>ImagePath</key>
+            <string>seed.iso</string>
+        </dict>
+    </array>
+    <key>Display</key>
+    <array>
+        <dict>
+            <key>Hardware</key>
+            <string>virtio-ramfb</string>
+        </dict>
+    </array>
+    <key>Network</key>
+    <array>
+        <dict>
+            <key>Mode</key>
+            <string>Shared</string>
+        </dict>
+    </array>
+</dict>
+</plist>
+"@
+
+Set-Content -Path "$UtmDir/config.plist" -Value $PlistContent
+
+Write-Host "VM Bundle Created: $UtmDir" -ForegroundColor Green
+Write-Host "Double-click '$VmName.utm' on your Desktop to import it into UTM."
