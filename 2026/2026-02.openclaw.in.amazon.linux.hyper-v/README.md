@@ -33,7 +33,7 @@ Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data
 
 ```bash
 cd /
-sudo bash amazon.linux.tools.bash
+sudo bash amazon.linux.openclaw.bash
 sudo reboot now
 ```
 **On the VM (after reboot in the Gragphical UX):**
