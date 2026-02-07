@@ -29,7 +29,7 @@ $qcow2File = ($html.Links | Where-Object { $_.href -match "\.qcow2$" })[0].href
 $url = $sourceFolder + $qcow2File
 
 # Destination file
-$destFile = Join-Path $DownloadDir  "amazonlinux.qcow2"
+$destFile = Join-Path $DownloadDir "amazonlinux.qcow2"
 Remove-Item $destFile -Force -ErrorAction SilentlyContinue
 Invoke-WebRequest -Uri $url -OutFile $destFile
 

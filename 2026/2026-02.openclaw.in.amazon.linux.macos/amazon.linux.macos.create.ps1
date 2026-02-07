@@ -1,7 +1,20 @@
-<#
-.SYNOPSIS
-Creates a UTM Virtual Machine bundle ("openclaw01.utm") using the downloaded image.
+<#PSScriptInfo
+.VERSION 0.1
+.GUID 42b1ed80-851e-4624-a6a3-ca7980b54893
+.AUTHOR Alisson Sol
+.COMPANYNAME None
+.COPYRIGHT (c) 2026 Alisson Sol et al.
+.TAGS
+.LICENSEURI http://www.yuruna.com
+.PROJECTURI http://www.yuruna.com
+.ICONURI
+.EXTERNALMODULEDEPENDENCIES
+.REQUIREDSCRIPTS
+.EXTERNALSCRIPTDEPENDENCIES
+.RELEASENOTES
+.PRIVATEDATA
 #>
+
 
 $VmName = "openclaw01"
 $UtmDir = "$HOME/Desktop/$VmName.utm" # Creates directly on Desktop for easy access
@@ -9,7 +22,8 @@ $DataDir = "$UtmDir/Data"
 $ImagesDir = "$UtmDir/Images" # standard UTM structure might vary, but flat is often okay. We'll use Data.
 
 # 1. Locate the Image
-$PathFile = "$HOME/Downloads/latest_al2023_path.txt"
+$DownloadDir = "$HOME/Downloads/AmazonLinux2023-KVM"
+$PathFile = Join-Path $DownloadDir "amazonlinux.qcow2"
 if (Test-Path $PathFile) {
     $SourceImage = Get-Content $PathFile
 } else {
@@ -24,11 +38,11 @@ if (Test-Path $UtmDir) { Remove-Item -Recurse -Force $UtmDir }
 New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 
 # 3. Copy Disk Image
-$DestImage = "$DataDir/disk.qcow2"
+$DestImage = "$DataDir/$VmName.qcow2"
 Copy-Item -Path $SourceImage -Destination $DestImage
 
 # 4. Generate Cloud-Init Seed ISO
-$SeedDir = "$HOME/Downloads/openclaw_seed_temp"
+$SeedDir = "$HOME/Downloads/$VmName/seed_temp"
 New-Item -ItemType Directory -Force -Path $SeedDir | Out-Null
 
 # User-Data (Default user: ec2-user / password: password)
