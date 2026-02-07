@@ -31,8 +31,6 @@ if (Test-Path $PathFile) {
 }
 
 Write-Output "Creating VM '$VmName' using image: $PathFile"
-$SourceImage = Get-Content $PathFile -Raw -Verbose
-Write-Output "Content from $PathFile copied"
 
 # 2. Create Bundle Structure
 if (Test-Path $UtmDir) { Remove-Item -Recurse -Force $UtmDir }
@@ -40,7 +38,7 @@ New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 
 # 3. Copy Disk Image
 $DestImage = "$DataDir/$VmName.qcow2"
-Copy-Item -Path $SourceImage -Destination $DestImage
+Copy-Item -Path $PathFile -Destination $DestImage
 
 # 4. Generate Cloud-Init Seed ISO
 $SeedDir = "$HOME/Downloads/$VmName/seed_temp"
