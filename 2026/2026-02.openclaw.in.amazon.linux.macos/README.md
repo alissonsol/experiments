@@ -24,7 +24,6 @@ brew install powershell
 
 **Getting only the needed folder**
 ```bash
-pwsh
 git clone --filter=blob:none --sparse https://github.com/alissonsol/experiments.git
 cd experiments
 git sparse-checkout add 2026/2026-02.openclaw.in.amazon.linux.macos

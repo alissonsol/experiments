@@ -1,9 +1,21 @@
-<#
-.SYNOPSIS
-Finds and downloads the latest Amazon Linux 2023 KVM Image (ARM64) for macOS (Apple Silicon).
+<#PSScriptInfo
+.VERSION 0.1
+.GUID 42b1ed80-851e-4624-a6a3-ca7980b54893
+.AUTHOR Alisson Sol
+.COMPANYNAME None
+.COPYRIGHT (c) 2026 Alisson Sol et al.
+.TAGS
+.LICENSEURI http://www.yuruna.com
+.PROJECTURI http://www.yuruna.com
+.ICONURI
+.EXTERNALMODULEDEPENDENCIES
+.REQUIREDSCRIPTS
+.EXTERNALSCRIPTDEPENDENCIES
+.RELEASENOTES
+.PRIVATEDATA
 #>
 
-$BaseUrl = "https://cdn.amazonlinux.com/al2023/os-images"
+$sourceFolder = "https://cdn.amazonlinux.com/al2023/os-images/latest/kvm/"
 $DownloadDir = "$HOME/Downloads/AmazonLinux2023-KVM"
 
 # Ensure download directory exists
@@ -11,55 +23,14 @@ New-Item -ItemType Directory -Force -Path $DownloadDir | Out-Null
 
 Write-Host "Fetching release list from Amazon Linux CDN..." -ForegroundColor Cyan
 
-# 1. Get the list of version folders
-try {
-    $response = Invoke-WebRequest -Uri $BaseUrl -UseBasicParsing
-    # Parse HTML links to find version numbers (e.g., "2023.6.20250218.0/")
-    # We sort descending to get the "latest" version.
-    $latestVersion = $response.Links.href | 
-        Where-Object { $_ -match '^\d{4}\.\d+\.\d+\.\d+/$' } | 
-        Sort-Object -Descending | 
-        Select-Object -First 1
-    
-    if (-not $latestVersion) { throw "Could not find any version folders." }
+# Find the first .qcow2 file link to download
+$html = Invoke-WebRequest -Uri $sourceFolder
+$qcow2File = ($html.Links | Where-Object { $_.href -match "\.qcow2$" })[0].href
+$url = $sourceFolder + $qcow2File
 
-    $latestVersion = $latestVersion.TrimEnd('/')
-    Write-Host "Latest Version Found: $latestVersion" -ForegroundColor Green
-}
-catch {
-    Write-Error "Failed to fetch version list. Check internet connection."
-    exit 1
-}
+# Destination file
+$destFile = Join-Path $DownloadDir  "amazonlinux.qcow2"
+Remove-Item $destFile -Force -ErrorAction SilentlyContinue
+Invoke-WebRequest -Uri $url -OutFile $destFile
 
-# 2. Construct the Image URL
-# Pattern: <base>/<ver>/kvm/al2023-kvm-<ver>-kernel-<kernel_ver>-arm64.x86_64.qcow2
-# Note: We need to find the specific filename inside the version folder because kernel version varies.
-
-$VersionUrl = "$BaseUrl/$latestVersion/kvm/"
-try {
-    $verResponse = Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing
-    $imageFile = $verResponse.Links.href | 
-        Where-Object { $_ -match "al2023-kvm-.*-arm64.x86_64.qcow2$" } | 
-        Select-Object -First 1
-
-    if (-not $imageFile) { throw "Could not find ARM64 qcow2 image in $VersionUrl" }
-}
-catch {
-    Write-Error "Failed to find image file listing."
-    exit 1
-}
-
-$FullUrl = "$BaseUrl/$latestVersion/kvm/$imageFile"
-$OutputPath = Join-Path $DownloadDir $imageFile
-
-# 3. Download
-if (Test-Path $OutputPath) {
-    Write-Host "File already exists: $OutputPath" -ForegroundColor Yellow
-} else {
-    Write-Host "Downloading $imageFile..." -ForegroundColor Cyan
-    Invoke-WebRequest -Uri $FullUrl -OutFile $OutputPath
-}
-
-Write-Host "Download Complete: $OutputPath" -ForegroundColor Green
-# Save path for the next script to pick up (optional technique, or just rely on filename)
-$OutputPath | Out-File -FilePath "$HOME/Downloads/latest_al2023_path.txt" -Encoding ascii
+Write-Host "Download Complete: $destFile" -ForegroundColor Green
