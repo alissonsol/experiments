@@ -30,9 +30,9 @@ if (Test-Path $PathFile) {
     exit 1
 }
 
-Write-Output "Creating VM '$VmName' using image: $SourceImage" -ForegroundColor Cyan
-$SourceImage = Get-Content $PathFile
-Write-Output "Content from $PathFile copied" -ForegroundColor Cyan
+Write-Output "Creating VM '$VmName' using image: $PathFile"
+$SourceImage = Get-Content $PathFile -Raw -Verbose
+Write-Output "Content from $PathFile copied"
 
 # 2. Create Bundle Structure
 if (Test-Path $UtmDir) { Remove-Item -Recurse -Force $UtmDir }
@@ -129,5 +129,5 @@ $PlistContent = @"
 
 Set-Content -Path "$UtmDir/config.plist" -Value $PlistContent
 
-Write-Output "VM Bundle Created: $UtmDir" -ForegroundColor Green
+Write-Output "VM Bundle Created: $UtmDir"
 Write-Output "Double-click '$VmName.utm' on your Desktop to import it into UTM."
