@@ -15,7 +15,7 @@
 .PRIVATEDATA
 #>
 
-$sourceFolder = "https://cdn.amazonlinux.com/al2023/os-images/latest/kvm/"
+$sourceFolder = "https://cdn.amazonlinux.com/al2023/os-images/latest/kvm-arm64/"
 $DownloadDir = "$HOME/Downloads/AmazonLinux2023-KVM"
 
 # Ensure download directory exists
