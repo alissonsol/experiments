@@ -44,6 +44,10 @@ Open terminal and configure OpenClaw. This is past the install step in the OpenC
 openclaw onboard --install-daemon
 ```
 
+Careful: you are about to give AI some precious access to your accounts!
+
+![](images/001.openclaw.config.png)
+
 ## 1) Get all in!
 
 What can you do during [The Long Dark Tea-Time of the Soul](https://en.wikipedia.org/wiki/The_Long_Dark_Tea-Time_of_the_Soul)?
@@ -105,10 +109,6 @@ Test VM connectivity.
   - `Get-VM | Where-Object {$_.State -eq "Running"} | Get-VMNetworkAdapter | Select-Object VMName, IPAddresses`
 
 <mark>Technicall, that is all folks!</mark> You should now be able to follow the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started). You have the requirements installed, and can start by running the onboarding wizard: `openclaw onboard --install-daemon`. Note: you may benefit from installing and configuring other required software ahead of time, like AI connectors, email clients, messaging clients, etc.
-
-Careful: you are about to give AI some precious access to your accounts!
-
-![](images/001.openclaw.config.png)
 
 ## 3) Optional
 
