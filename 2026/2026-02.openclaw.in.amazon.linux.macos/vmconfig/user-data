@@ -1,0 +1,6 @@
+#cloud-config
+password: amazonlinux
+chpasswd: { expire: False }
+ssh_pwauth: True
+runcmd:
+  - echo "Setup Complete."
