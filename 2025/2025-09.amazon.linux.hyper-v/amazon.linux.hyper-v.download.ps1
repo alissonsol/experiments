@@ -24,7 +24,7 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # Source URL
-$sourceFolder = "https://cdn.amazonlinux.com/al2023/os-images/2023.8.20250915.0/hyperv/"
+$sourceFolder = "https://cdn.amazonlinux.com/al2023/os-images/latest/hyperv/"
 $localVhdxPath = (Get-VMHost).VirtualHardDiskPath
 Write-Output "Hyper-V default VHDX folder: $localVhdxPath"
 if (!(Test-Path -Path $localVhdxPath)) {
