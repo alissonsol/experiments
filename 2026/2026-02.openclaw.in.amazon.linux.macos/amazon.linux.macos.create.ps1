@@ -42,7 +42,7 @@ Copy-Item -Path $PathFile -Destination $DestImage
 
 # 4. Generate Cloud-Init Seed ISO
 $SeedDir = "$HOME/Downloads/seed_temp/$VmName"
-Remove-Item -Recurse -Force $SeedDir
+Remove-Item -Recurse -Force $SeedDir | Out-Null
 New-Item -ItemType Directory -Force -Path $SeedDir | Out-Null
 
 # User-Data (Default user: ec2-user / password: password)
