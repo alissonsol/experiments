@@ -42,6 +42,7 @@ Copy-Item -Path $PathFile -Destination $DestImage
 
 # 4. Generate Cloud-Init Seed ISO
 $SeedDir = "$HOME/Downloads/seed_temp/$VmName"
+Remove-Item -Recurse -Force $SeedDir
 New-Item -ItemType Directory -Force -Path $SeedDir | Out-Null
 
 # User-Data (Default user: ec2-user / password: password)
@@ -59,7 +60,7 @@ Set-Content -Path "$SeedDir/meta-data" -Value "instance-id: $VmName" -NoNewline
 $SeedIso = "$DataDir/seed.iso"
 Write-Output "Generating seed.iso..."
 Start-Process "hdiutil" -ArgumentList "makehybrid -o `"$SeedIso`" -hfs -joliet -iso -default-volume-name cidata `"$SeedDir`"" -Wait -NoNewWindow
-Remove-Item -Recurse -Force $SeedDir
+Write-Output "Created '$SeedIso' with data from: $SeedDir"
 
 # 5. Generate config.plist
 # This is a minimal QEMU ARM64 configuration for UTM
