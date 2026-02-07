@@ -6,19 +6,29 @@ Copyright (c) 2019-2026 by Alisson Sol
 
 Minimal commands for creating the `openclaw01` VM. See sections below for details.
 
+**On the macOS host (one-time setup):**
+
+Check latest instructions for `brew` from [brew.sh](https://brew.sh/)
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+After installing `brew`, you may need to open another terminal.
+
+```bash
+brew install --cask utm
+brew install git
+brew install powershell
+```
+
 **Getting only the needed folder**
 ```bash
+pwsh
 git clone --filter=blob:none --sparse https://github.com/alissonsol/experiments.git
 cd experiments
 git sparse-checkout add 2026/2026-02.openclaw.in.amazon.linux.macos
 cd 2026/2026-02.openclaw.in.amazon.linux.macos/
-```
-
-**On the macOS host (one-time setup, install UTM and PowerShell):**
-
-```bash
-brew install --cask utm
-brew install powershell/tap/powershell
 ```
 
 **On the macOS host (download the Amazon Linux image):**
