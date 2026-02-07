@@ -19,19 +19,20 @@
 $VmName = "openclaw01"
 $UtmDir = "$HOME/Desktop/$VmName.utm" # Creates directly on Desktop for easy access
 $DataDir = "$UtmDir/Data"
-$ImagesDir = "$UtmDir/Images" # standard UTM structure might vary, but flat is often okay. We'll use Data.
+# $ImagesDir = "$UtmDir/Images" # standard UTM structure might vary, but flat is often okay. We'll use Data.
 
 # 1. Locate the Image
 $DownloadDir = "$HOME/Downloads/AmazonLinux2023-KVM"
 $PathFile = Join-Path $DownloadDir "amazonlinux.qcow2"
 if (Test-Path $PathFile) {
-    $SourceImage = Get-Content $PathFile
 } else {
     Write-Error "Could not find latest image path file. Run the download script first."
     exit 1
 }
 
-Write-Host "Creating VM '$VmName' using image: $SourceImage" -ForegroundColor Cyan
+Write-Output "Creating VM '$VmName' using image: $SourceImage" -ForegroundColor Cyan
+$SourceImage = Get-Content $PathFile
+Write-Output "Content from $PathFile copied" -ForegroundColor Cyan
 
 # 2. Create Bundle Structure
 if (Test-Path $UtmDir) { Remove-Item -Recurse -Force $UtmDir }
@@ -58,7 +59,7 @@ Set-Content -Path "$SeedDir/user-data" -Value $UserData
 Set-Content -Path "$SeedDir/meta-data" -Value "instance-id: $VmName" -NoNewline
 
 $SeedIso = "$DataDir/seed.iso"
-Write-Host "Generating seed.iso..."
+Write-Output "Generating seed.iso..."
 Start-Process "hdiutil" -ArgumentList "makehybrid -o `"$SeedIso`" -hfs -joliet -iso -default-volume-name cidata `"$SeedDir`"" -Wait -NoNewWindow
 Remove-Item -Recurse -Force $SeedDir
 
@@ -128,5 +129,5 @@ $PlistContent = @"
 
 Set-Content -Path "$UtmDir/config.plist" -Value $PlistContent
 
-Write-Host "VM Bundle Created: $UtmDir" -ForegroundColor Green
-Write-Host "Double-click '$VmName.utm' on your Desktop to import it into UTM."
+Write-Output "VM Bundle Created: $UtmDir" -ForegroundColor Green
+Write-Output "Double-click '$VmName.utm' on your Desktop to import it into UTM."

@@ -21,7 +21,7 @@ $DownloadDir = "$HOME/Downloads/AmazonLinux2023-KVM"
 # Ensure download directory exists
 New-Item -ItemType Directory -Force -Path $DownloadDir | Out-Null
 
-Write-Host "Fetching release list from Amazon Linux CDN..." -ForegroundColor Cyan
+Write-Output "Fetching release list from Amazon Linux CDN..." -ForegroundColor Cyan
 
 # Find the first .qcow2 file link to download
 $html = Invoke-WebRequest -Uri $sourceFolder
@@ -33,4 +33,4 @@ $destFile = Join-Path $DownloadDir "amazonlinux.qcow2"
 Remove-Item $destFile -Force -ErrorAction SilentlyContinue
 Invoke-WebRequest -Uri $url -OutFile $destFile
 
-Write-Host "Download Complete: $destFile" -ForegroundColor Green
+Write-Output "Download Complete: $destFile" -ForegroundColor Green
