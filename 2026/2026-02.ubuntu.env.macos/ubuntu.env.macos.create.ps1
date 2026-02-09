@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 0.5
+.VERSION 0.11
 .GUID 42676eba-fcd4-4bbf-b453-af7eb7dcdbfd
 .AUTHOR Alisson Sol
 .COMPANYNAME None
@@ -19,6 +19,7 @@ param(
     [string]$VmName = "openclaw01"
 )
 
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $UtmDir = "$HOME/Desktop/$VmName.utm"
 $DataDir = "$UtmDir/Data"
 $DownloadDir = "$HOME/virtual/ubuntu.env"
@@ -72,33 +73,20 @@ if (Test-Path $SeedDir) { Remove-Item -Recurse -Force $SeedDir }
 New-Item -ItemType Directory -Force -Path $SeedDir | Out-Null
 
 # Autoinstall user-data (username: ubuntu, password: password)
-$UserData = @'
-#cloud-config
-autoinstall:
-  version: 1
-  locale: en_US.UTF-8
-  keyboard:
-    layout: us
-  identity:
-    hostname: HOSTNAME_PLACEHOLDER
-    username: ubuntu
-    password: "HASH_PLACEHOLDER"
-  storage:
-    layout:
-      name: lvm
-  ssh:
-    install-server: true
-    allow-pw: true
-  late-commands:
-    - curtin in-target --target=/target -- passwd --expire ubuntu
-    - wget -O /target/ubuntu.env.openclaw.bash "https://raw.githubusercontent.com/alissonsol/experiments/main/2026/2026-02.ubuntu.env.macos/ubuntu.env.openclaw.bash"
-    - curtin in-target --target=/target -- chmod +x /ubuntu.env.openclaw.bash
-'@
-$UserData = $UserData.Replace('HOSTNAME_PLACEHOLDER', $VmName)
-$UserData = $UserData.Replace('HASH_PLACEHOLDER', $PasswordHash)
+$VmConfigDir = Join-Path $ScriptDir "vmconfig"
+$UserDataTemplate = Join-Path $VmConfigDir "user-data"
+$MetaDataTemplate = Join-Path $VmConfigDir "meta-data"
+if (-not (Test-Path $UserDataTemplate)) {
+    Write-Error "user-data template not found at '$UserDataTemplate'."
+    exit 1
+}
+
+$UserData = (Get-Content -Raw $UserDataTemplate) `
+    -replace 'HOSTNAME_PLACEHOLDER', $VmName `
+    -replace 'HASH_PLACEHOLDER', $PasswordHash
 
 Set-Content -Path "$SeedDir/user-data" -Value $UserData
-Set-Content -Path "$SeedDir/meta-data" -Value "" -NoNewline
+Copy-Item -Path $MetaDataTemplate -Destination "$SeedDir/meta-data"
 
 $SeedIso = "$DataDir/seed.iso"
 Write-Output "Generating seed.iso with autoinstall configuration..."
@@ -109,7 +97,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 7. Generate UTM config.plist from template
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $TemplatePath = Join-Path $ScriptDir "config.plist.template"
 if (-not (Test-Path $TemplatePath)) {
     Write-Error "Template not found at '$TemplatePath'."
