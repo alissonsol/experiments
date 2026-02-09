@@ -35,12 +35,13 @@ if (!(Test-Path -Path $localVhdxPath)) {
 # Find the first .zip file link to download
 $html = Invoke-WebRequest -Uri $sourceFolder
 $zipFile = ($html.Links | Where-Object { $_.href -match "\.zip$" })[0].href
-$url = $sourceFolder + $zipFile
+$sourceFile = $sourceFolder + $zipFile
 
 # Destination file
 $destFile = Join-Path $localVhdxPath "amazonlinux.zip"
 Remove-Item $destFile -Force -ErrorAction SilentlyContinue
-Invoke-WebRequest -Uri $url -OutFile $destFile
+Write-Output "Downloading $sourceFile to $destFile"
+Invoke-WebRequest -Uri $sourceFile -OutFile $destFile
 
 # Extract the .vhdx file from the zip and save as amazonlinux.vhdx
 $vhdxName = "amazonlinux.vhdx"

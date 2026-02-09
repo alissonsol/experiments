@@ -24,6 +24,7 @@ New-Item -ItemType Directory -Force -Path $destDir | Out-Null
 
 # Destination file
 Remove-Item $destFile -Force -ErrorAction SilentlyContinue
+Write-Output "Downloading $sourceFile to $destFile"
 Invoke-WebRequest -Uri $sourceFile -OutFile $destFile
 
 Write-Output "Download Complete: $destFile"

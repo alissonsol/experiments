@@ -10,8 +10,8 @@ Minimal commands for creating the `openclaw01` VM. See sections below for detail
 ```powershell
 git clone --filter=blob:none --sparse https://github.com/alissonsol/experiments.git
 cd experiments
-git sparse-checkout add 2026/2026-02.openclaw.in.amazon.linux.hyper-v
-cd 2026\2026-02.openclaw.in.amazon.linux.hyper-v\
+git sparse-checkout add 2026/2026-02.amazon.linux/windows.hyper-v
+cd 2026\2026-02.amazon.linux\windows.hyper-v
 ```
 
 **On the Windows host (Administrator PowerShell, one-time setup):**
