@@ -49,9 +49,31 @@ pwsh ./New-VM.ps1 -VmName myhostname
 
 Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall.
 
-**After installation completes:**
+**On the VM (after setup):**
 
-The default user is `ubuntu` and the initial password is `password`. You will be prompted to change it on first login.
+Open a terminal and enter the commands. If needed, the default user is `ubuntu` and the initial password is `password`. You should be prompted to change it on first login. You can change the password at any time with the `passwd` command.
+
+```bash
+curl -o updateAll https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/util/updateAll
+chmod a+x updateAll
+sudo ./updateAll
+sudo reboot now
+```
+
+**On the VM (after reboot in the Graphical UX):**
+
+```bash
+curl -o ubuntu.env.openclaw.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.ubuntu.desktop/macos.utm/ubuntu.env.openclaw.bash
+chmod a+x ubuntu.env.openclaw.bash
+```bash
+
+Open terminal and configure OpenClaw. This is past the install step in the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started).
+
+```bash
+openclaw onboard --install-daemon
+```
+
+Careful: you are about to give AI some precious access to your accounts!
 
 ## 1) Get all in!
 
@@ -86,7 +108,7 @@ pwsh ./Get-Image.ps1
 The script [`New-VM.ps1`](./New-VM.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VmName` parameter (default: `openclaw01`) and:
 
 - Copies the downloaded Ubuntu ISO into the bundle (named `<hostname>.iso`).
-- Creates a 64GB blank qcow2 disk for installation.
+- Creates a 512GB blank qcow2 disk for installation.
 - Generates an autoinstall `seed.iso` that automatically configures the Ubuntu installation with the given hostname.
 - Generates a `config.plist` from [`config.plist.template`](./config.plist.template) for a QEMU ARM64 VM (4 CPUs, 8 GB RAM, VirtIO disk, UEFI boot, shared networking, sound, clipboard sharing).
 
@@ -103,4 +125,3 @@ After the script completes, double-click `<hostname>.utm` on your Desktop to imp
 - Default credentials: username `ubuntu`, password `password`. You will be required to change the password on first login.
 - The autoinstall sets the hostname, locale (`en_US.UTF-8`), keyboard (`us`), LVM storage layout, and enables SSH.
 - After installation, the VM boots from the hard disk by default (the disk drive is first in the UEFI boot order).
-- The script `ubuntu.openclaw.bash` is downloaded to `/` on the installed system. Run it with `sudo bash /ubuntu.openclaw.bash`.
