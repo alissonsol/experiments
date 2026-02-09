@@ -52,50 +52,10 @@ Write-Output "Creating VM '$VmName' using ISO: $IsoSource"
 if (Test-Path $UtmDir) { Remove-Item -Recurse -Force $UtmDir }
 New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 
-# 4. Create modified ISO with autoinstall kernel parameter (bypasses confirmation prompt)
+# 4. Copy Ubuntu ISO into the bundle (named after hostname)
 $DestIso = "$DataDir/$VmName.iso"
-$XorrisoAvailable = $false
-try {
-    & xorriso -version 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { $XorrisoAvailable = $true }
-} catch {}
-
-if ($XorrisoAvailable) {
-    $TempGrubDir = Join-Path $DownloadDir "grub_temp"
-    if (Test-Path $TempGrubDir) { Remove-Item -Recurse -Force $TempGrubDir }
-    New-Item -ItemType Directory -Force -Path $TempGrubDir | Out-Null
-
-    Write-Output "Extracting GRUB config from ISO..."
-    & xorriso -osirrox on -indev "$IsoSource" -extract /boot/grub/grub.cfg "$TempGrubDir/grub.cfg" 2>$null
-
-    if ($LASTEXITCODE -eq 0 -and (Test-Path "$TempGrubDir/grub.cfg")) {
-        $GrubCfg = Get-Content -Raw "$TempGrubDir/grub.cfg"
-        $GrubCfg = $GrubCfg -replace '(linux\s+/casper/vmlinuz)', '$1 autoinstall'
-        Set-Content -Path "$TempGrubDir/grub.cfg" -Value $GrubCfg -NoNewline
-
-        Write-Output "Creating modified ISO with autoinstall kernel parameter..."
-        & xorriso -indev "$IsoSource" -outdev "$DestIso" -boot_image any replay -overwrite on -map "$TempGrubDir/grub.cfg" /boot/grub/grub.cfg --
-
-        if ($LASTEXITCODE -eq 0) {
-            Write-Output "Modified installer ISO created as: $VmName.iso"
-        } else {
-            Write-Warning "xorriso modification failed. Falling back to plain copy (manual confirmation required)."
-            Copy-Item -Path $IsoSource -Destination $DestIso
-            Write-Output "Copied installer ISO as: $VmName.iso"
-        }
-    } else {
-        Write-Warning "Could not extract GRUB config. Falling back to plain copy (manual confirmation required)."
-        Copy-Item -Path $IsoSource -Destination $DestIso
-        Write-Output "Copied installer ISO as: $VmName.iso"
-    }
-
-    if (Test-Path $TempGrubDir) { Remove-Item -Recurse -Force $TempGrubDir }
-} else {
-    Write-Warning "xorriso not found. Install with: brew install xorriso"
-    Write-Warning "Without xorriso, the installer will show a confirmation prompt before proceeding."
-    Copy-Item -Path $IsoSource -Destination $DestIso
-    Write-Output "Copied installer ISO as: $VmName.iso"
-}
+Copy-Item -Path $IsoSource -Destination $DestIso
+Write-Output "Copied installer ISO as: $VmName.iso"
 
 # 5. Create blank disk for installation (64GB, thin-provisioned qcow2)
 $DiskImage = "$DataDir/disk.qcow2"

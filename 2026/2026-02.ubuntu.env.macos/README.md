@@ -20,7 +20,7 @@ After installing `brew`, you may need to open another terminal.
 brew install --cask utm
 brew install git
 brew install powershell
-brew install openssl qemu xorriso
+brew install openssl qemu
 ```
 
 **Getting only the needed folder**
@@ -85,7 +85,7 @@ pwsh ./ubuntu.env.macos.download.ps1
 
 The script [`ubuntu.env.macos.create.ps1`](./ubuntu.env.macos.create.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VmName` parameter (default: `openclaw01`) and:
 
-- Creates a modified copy of the Ubuntu ISO with the `autoinstall` kernel parameter (bypasses the installer confirmation prompt). Requires `xorriso`; falls back to a plain copy if unavailable.
+- Copies the downloaded Ubuntu ISO into the bundle (named `<hostname>.iso`).
 - Creates a 64GB blank qcow2 disk for installation.
 - Generates an autoinstall `seed.iso` that automatically configures the Ubuntu installation with the given hostname.
 - Generates a `config.plist` from [`config.plist.template`](./config.plist.template) for a QEMU ARM64 VM (4 CPUs, 8 GB RAM, VirtIO disk, UEFI boot, shared networking, sound, clipboard sharing).
@@ -96,7 +96,7 @@ pwsh ./ubuntu.env.macos.create.ps1
 pwsh ./ubuntu.env.macos.create.ps1 -VmName myhostname
 ```
 
-**Prerequisites:** `brew install openssl qemu xorriso` (for password hashing, disk image creation, and ISO modification).
+**Prerequisites:** `brew install openssl qemu` (for password hashing and disk image creation).
 
 After the script completes, double-click `<hostname>.utm` on your Desktop to import it into UTM. Start the VM and the Ubuntu installer will run automatically via autoinstall.
 
