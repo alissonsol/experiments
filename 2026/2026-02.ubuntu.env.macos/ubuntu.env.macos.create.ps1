@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 0.2
+.VERSION 0.3
 .GUID 42676eba-fcd4-4bbf-b453-af7eb7dcdbfd
 .AUTHOR Alisson Sol
 .COMPANYNAME None
@@ -104,76 +104,36 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# 7. Generate UTM config.plist
-$PlistContent = @"
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Backend</key>
-    <string>QEMU</string>
-    <key>ConfigurationVersion</key>
-    <integer>4</integer>
-    <key>Information</key>
-    <dict>
-        <key>Name</key>
-        <string>$VmName</string>
-        <key>Notes</key>
-        <string>Ubuntu Desktop 25.10 - $VmName</string>
-    </dict>
-    <key>System</key>
-    <dict>
-        <key>Architecture</key>
-        <string>aarch64</string>
-        <key>CPUCount</key>
-        <integer>4</integer>
-        <key>MemorySize</key>
-        <integer>8192</integer>
-    </dict>
-    <key>Drive</key>
-    <array>
-        <dict>
-            <key>ImageType</key>
-            <string>Disk</string>
-            <key>Interface</key>
-            <string>VirtIO</string>
-            <key>ImagePath</key>
-            <string>disk.qcow2</string>
-        </dict>
-        <dict>
-            <key>ImageType</key>
-            <string>CD</string>
-            <key>Interface</key>
-            <string>USB</string>
-            <key>ImagePath</key>
-            <string>$VmName.iso</string>
-        </dict>
-        <dict>
-            <key>ImageType</key>
-            <string>CD</string>
-            <key>Interface</key>
-            <string>USB</string>
-            <key>ImagePath</key>
-            <string>seed.iso</string>
-        </dict>
-    </array>
-    <key>Display</key>
-    <array>
-        <dict>
-            <key>Hardware</key>
-            <string>virtio-ramfb</string>
-        </dict>
-    </array>
-    <key>Network</key>
-    <array>
-        <dict>
-            <key>Mode</key>
-            <string>Shared</string>
-        </dict>
-    </array>
-</dict>
-</plist>
-"@
+# 7. Generate UTM config.plist from template
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$TemplatePath = Join-Path $ScriptDir "config.plist.template"
+if (-not (Test-Path $TemplatePath)) {
+    Write-Error "Template not found at '$TemplatePath'."
+    exit 1
+}
+
+# Generate UUIDs and MAC address for this VM
+$VmUuid = [guid]::NewGuid().ToString().ToUpper()
+$DiskId = [guid]::NewGuid().ToString().ToUpper()
+$IsoId = [guid]::NewGuid().ToString().ToUpper()
+$SeedId = [guid]::NewGuid().ToString().ToUpper()
+$MacBytes = [byte[]]::new(6)
+[System.Random]::new().NextBytes($MacBytes)
+$MacBytes[0] = ($MacBytes[0] -bor 0x02) -band 0xFE  # locally administered unicast
+$MacAddress = ($MacBytes | ForEach-Object { $_.ToString("X2") }) -join ":"
+
+$PlistContent = (Get-Content -Raw $TemplatePath) `
+    -replace '__VM_NAME__',        $VmName `
+    -replace '__VM_UUID__',        $VmUuid `
+    -replace '__MAC_ADDRESS__',    $MacAddress `
+    -replace '__DISK_IDENTIFIER__', $DiskId `
+    -replace '__DISK_IMAGE_NAME__', 'disk.qcow2' `
+    -replace '__ISO_IDENTIFIER__',  $IsoId `
+    -replace '__ISO_IMAGE_NAME__',  "$VmName.iso" `
+    -replace '__SEED_IDENTIFIER__', $SeedId `
+    -replace '__SEED_IMAGE_NAME__', 'seed.iso' `
+    -replace '__CPU_COUNT__',       '4' `
+    -replace '__MEMORY_SIZE__',     '8192'
 
 Set-Content -Path "$UtmDir/config.plist" -Value $PlistContent
 

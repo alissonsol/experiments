@@ -88,7 +88,7 @@ The script [`ubuntu.env.macos.create.ps1`](./ubuntu.env.macos.create.ps1) create
 - Copies the downloaded Ubuntu ISO into the bundle (named `<hostname>.iso`).
 - Creates a 64GB blank qcow2 disk for installation.
 - Generates an autoinstall `seed.iso` that automatically configures the Ubuntu installation with the given hostname.
-- Creates a `config.plist` for a QEMU ARM64 VM (4 CPUs, 8 GB RAM, VirtIO disk, shared networking).
+- Generates a `config.plist` from [`config.plist.template`](./config.plist.template) for a QEMU ARM64 VM (4 CPUs, 8 GB RAM, VirtIO disk, UEFI boot, shared networking, sound, clipboard sharing).
 
 ```bash
 pwsh ./ubuntu.env.macos.create.ps1
