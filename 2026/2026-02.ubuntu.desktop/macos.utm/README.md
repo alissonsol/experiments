@@ -27,8 +27,8 @@ brew install openssl qemu
 ```bash
 git clone --filter=blob:none --sparse https://github.com/alissonsol/experiments.git
 cd experiments
-git sparse-checkout add 2026/2026-02.ubuntu.env.macos
-cd 2026/2026-02.ubuntu.env.macos/
+git sparse-checkout add 2026/2026-02.ubuntu.desktop/macos.utm
+cd 2026/2026-02.ubuntu.desktop/macos.utm/
 ```
 
 **On the macOS host (download the Ubuntu image):**
@@ -57,7 +57,7 @@ The default user is `ubuntu` and the initial password is `password`. You will be
 
 What can you do during [The Long Dark Tea-Time of the Soul](https://en.wikipedia.org/wiki/The_Long_Dark_Tea-Time_of_the_Soul)?
 
-This is the macOS counterpart of the [Hyper-V version](../2026-02.ubuntu.env.hyper-v/). It uses [UTM](https://mac.getutm.app/) to run an Ubuntu ARM64 VM on Apple Silicon Macs.
+This is the macOS counterpart of the [Hyper-V version](../2026-02.ubuntu.desktop/windows.hyper-v/). It uses [UTM](https://mac.getutm.app/) to run an Ubuntu ARM64 VM on Apple Silicon Macs.
 
 ### 1.1) Installing UTM
 
@@ -103,4 +103,4 @@ After the script completes, double-click `<hostname>.utm` on your Desktop to imp
 - Default credentials: username `ubuntu`, password `password`. You will be required to change the password on first login.
 - The autoinstall sets the hostname, locale (`en_US.UTF-8`), keyboard (`us`), LVM storage layout, and enables SSH.
 - After installation, the VM boots from the hard disk by default (the disk drive is first in the UEFI boot order).
-- The script `ubuntu.env.openclaw.bash` is downloaded to `/` on the installed system. Run it with `sudo bash /ubuntu.env.openclaw.bash`.
+- The script `ubuntu.openclaw.bash` is downloaded to `/` on the installed system. Run it with `sudo bash /ubuntu.openclaw.bash`.

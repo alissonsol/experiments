@@ -19,5 +19,5 @@ autoinstall:
     allow-pw: true
   late-commands:
     - curtin in-target --target=/target -- passwd --expire ubuntu
-    - wget -O /target/ubuntu.env.openclaw.bash "https://raw.githubusercontent.com/alissonsol/experiments/main/2026/2026-02.ubuntu.env.macos/ubuntu.env.openclaw.bash"
-    - curtin in-target --target=/target -- chmod +x /ubuntu.env.openclaw.bash
+    - wget -O /target/ubuntu.openclaw.bash "https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.ubuntu.desktop/macos.utm/ubuntu.openclaw.bash"
+    - curtin in-target --target=/target -- chmod +x /ubuntu.openclaw.bash
