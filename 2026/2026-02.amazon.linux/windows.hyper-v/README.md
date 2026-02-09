@@ -36,7 +36,7 @@ cd /
 sudo bash amazon.linux.openclaw.bash
 sudo reboot now
 ```
-**On the VM (after reboot in the Gragphical UX):**
+**On the VM (after reboot in the Graphical UX):**
 
 Open terminal and configure OpenClaw. This is past the install step in the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started).
 
@@ -54,7 +54,7 @@ What can you do during [The Long Dark Tea-Time of the Soul](https://en.wikipedia
 
 This is an update of a previous effort to get Amazon Linux working with Hyper-v locally [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v). That was already an update from another effort that was based on [Amazon WorkSpaces](https://github.com/alissonsol/archive/tree/main/WorkSpaces/2019-03.WorkSpaces.AmazonLinux.setup). See [requirements and limitations](https://docs.aws.amazon.com/linux/al2023/ug/hyperv-supported-configurations.html). Instructions here were tested using Amazon Linux 2023 (not Amazon Linux 1 or Amazon Linux 2). Unless instructions indicate it differently, commands and environment variables used are from [PowerShell](https://github.com/powershell/powershell).
 
-This version uses all the "shortcuts" from the previous effort. If you need more customization, you need to go back [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v) and following the more detailed instructions.
+This version uses all the "shortcuts" from the previous effort. If you need more customization, you need to go back [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v) and follow the more detailed instructions.
 
 ### 1) Downloading the latest files
 
@@ -108,7 +108,7 @@ Test VM connectivity.
 - For convenience, you can find the IP addresses for the running guests from the Hyper-V host with this PowerShell command:
   - `Get-VM | Where-Object {$_.State -eq "Running"} | Get-VMNetworkAdapter | Select-Object VMName, IPAddresses`
 
-<mark>Technicall, that is all folks!</mark> You should now be able to follow the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started). You have the requirements installed, and can start by running the onboarding wizard: `openclaw onboard --install-daemon`. Note: you may benefit from installing and configuring other required software ahead of time, like AI connectors, email clients, messaging clients, etc.
+<mark>Technically, that is all folks!</mark> You should now be able to follow the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started). You have the requirements installed, and can start by running the onboarding wizard: `openclaw onboard --install-daemon`. Note: you may benefit from installing and configuring other required software ahead of time, like AI connectors, email clients, messaging clients, etc.
 
 ## 3) Optional
 
