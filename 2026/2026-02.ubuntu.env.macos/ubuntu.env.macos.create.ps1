@@ -1,5 +1,5 @@
 <#PSScriptInfo
-.VERSION 0.3
+.VERSION 0.4
 .GUID 42676eba-fcd4-4bbf-b453-af7eb7dcdbfd
 .AUTHOR Alisson Sol
 .COMPANYNAME None
@@ -89,6 +89,10 @@ autoinstall:
   ssh:
     install-server: true
     allow-pw: true
+  late-commands:
+    - curtin in-target --target=/target -- passwd --expire ubuntu
+    - wget -O /target/ubuntu.env.openclaw.bash "https://raw.githubusercontent.com/alissonsol/experiments/main/2026/2026-02.ubuntu.env.macos/ubuntu.env.openclaw.bash"
+    - curtin in-target --target=/target -- chmod +x /ubuntu.env.openclaw.bash
 '@
 $UserData = $UserData.Replace('HOSTNAME_PLACEHOLDER', $VmName)
 $UserData = $UserData.Replace('HASH_PLACEHOLDER', $PasswordHash)
@@ -141,4 +145,4 @@ Write-Output ""
 Write-Output "VM bundle created: $UtmDir"
 Write-Output "Double-click '$VmName.utm' on your Desktop to import it into UTM."
 Write-Output "The Ubuntu installer will start automatically with autoinstall."
-Write-Output "Default credentials - username: ubuntu, password: password"
+Write-Output "Default credentials - username: ubuntu, password: password (must be changed on first login)"

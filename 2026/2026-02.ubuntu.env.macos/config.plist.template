@@ -25,6 +25,20 @@
 	<array>
 		<dict>
 			<key>Identifier</key>
+			<string>__DISK_IDENTIFIER__</string>
+			<key>ImageName</key>
+			<string>__DISK_IMAGE_NAME__</string>
+			<key>ImageType</key>
+			<string>Disk</string>
+			<key>Interface</key>
+			<string>VirtIO</string>
+			<key>InterfaceVersion</key>
+			<integer>1</integer>
+			<key>ReadOnly</key>
+			<false/>
+		</dict>
+		<dict>
+			<key>Identifier</key>
 			<string>__ISO_IDENTIFIER__</string>
 			<key>ImageName</key>
 			<string>__ISO_IMAGE_NAME__</string>
@@ -50,20 +64,6 @@
 			<integer>1</integer>
 			<key>ReadOnly</key>
 			<true/>
-		</dict>
-		<dict>
-			<key>Identifier</key>
-			<string>__DISK_IDENTIFIER__</string>
-			<key>ImageName</key>
-			<string>__DISK_IMAGE_NAME__</string>
-			<key>ImageType</key>
-			<string>Disk</string>
-			<key>Interface</key>
-			<string>VirtIO</string>
-			<key>InterfaceVersion</key>
-			<integer>1</integer>
-			<key>ReadOnly</key>
-			<false/>
 		</dict>
 	</array>
 	<key>Information</key>

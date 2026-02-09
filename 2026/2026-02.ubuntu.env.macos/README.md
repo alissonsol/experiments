@@ -51,7 +51,7 @@ Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it
 
 **After installation completes:**
 
-The default user is `ubuntu` and the password is `password`.
+The default user is `ubuntu` and the initial password is `password`. You will be prompted to change it on first login.
 
 ## 1) Get all in!
 
@@ -100,5 +100,7 @@ pwsh ./ubuntu.env.macos.create.ps1 -VmName myhostname
 
 After the script completes, double-click `<hostname>.utm` on your Desktop to import it into UTM. Start the VM and the Ubuntu installer will run automatically via autoinstall.
 
-- Default credentials: username `ubuntu`, password `password`.
+- Default credentials: username `ubuntu`, password `password`. You will be required to change the password on first login.
 - The autoinstall sets the hostname, locale (`en_US.UTF-8`), keyboard (`us`), LVM storage layout, and enables SSH.
+- After installation, the VM boots from the hard disk by default (the disk drive is first in the UEFI boot order).
+- The script `ubuntu.env.openclaw.bash` is downloaded to `/` on the installed system. Run it with `sudo bash /ubuntu.env.openclaw.bash`.
