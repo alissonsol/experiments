@@ -384,6 +384,9 @@ MigrationBackup/
 *.tmproj
 .vscode/
 
+# Claude Code
+**/.claude/
+
 # yuruna
 **/.yuruna/*
 **/resources.output.yml

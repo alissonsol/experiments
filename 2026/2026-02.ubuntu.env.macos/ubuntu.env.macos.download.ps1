@@ -1,0 +1,29 @@
+<#PSScriptInfo
+.VERSION 0.1
+.GUID 42676eba-fcd4-4bbf-b453-af7eb7dcdbfd
+.AUTHOR Alisson Sol
+.COMPANYNAME None
+.COPYRIGHT (c) 2026 Alisson Sol et al.
+.TAGS
+.LICENSEURI http://www.yuruna.com
+.PROJECTURI http://www.yuruna.com
+.ICONURI
+.EXTERNALMODULEDEPENDENCIES
+.REQUIREDSCRIPTS
+.EXTERNALSCRIPTDEPENDENCIES
+.RELEASENOTES
+.PRIVATEDATA
+#>
+
+$sourceFile = "https://cdimage.ubuntu.com/releases/25.10/release/ubuntu-25.10-desktop-arm64.iso"
+$destDir = "$HOME/virtual/ubuntu.env"
+$destFile = Join-Path $destDir "ubuntu.desktop.arm64.downloaded.iso"
+
+# Ensure download directory exists
+New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+
+# Destination file
+Remove-Item $destFile -Force -ErrorAction SilentlyContinue
+Invoke-WebRequest -Uri $sourceFile -OutFile $destFile
+
+Write-Output "Download Complete: $destFile"
