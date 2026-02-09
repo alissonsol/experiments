@@ -27,7 +27,7 @@ $DownloadDir = "$HOME/virtual/ubuntu.env"
 # 1. Locate the downloaded Ubuntu ISO
 $IsoSource = Join-Path $DownloadDir "ubuntu.desktop.arm64.downloaded.iso"
 if (-not (Test-Path $IsoSource)) {
-    Write-Error "Ubuntu ISO not found at '$IsoSource'. Run ubuntu.env.macos.download.ps1 first."
+    Write-Error "Ubuntu ISO not found at '$IsoSource'. Run Get-Image.ps1 first."
     exit 1
 }
 

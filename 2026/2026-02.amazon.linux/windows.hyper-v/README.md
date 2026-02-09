@@ -19,12 +19,12 @@ cd 2026\2026-02.openclaw.in.amazon.linux.hyper-v\
 Assuming you are in the `experiments\2026\2026-02.openclaw.in.amazon.linux.hyper-v` folder.
 
 ```powershell
-.\amazon.linux.hyper-v.download.ps1
+.\Get-Image.ps1
 ```
 
 **On the Windows host (Administrator PowerShell, create VM):**
 ```powershell
-.\amazon.linux.hyper-v.create.ps1
+.\New-OpenClawVM.ps1
 ```
 
 **On the VM (after first login and password change):**
@@ -68,7 +68,7 @@ Major  Minor  Patch  PreReleaseLabel BuildLabel
 7      5      4
 ```
 
-<mark>Run the PowerShell script [`amazon.linux.hyper-v.download.ps1`](./amazon.linux.hyper-v.download.ps1).</mark>
+<mark>Run the PowerShell script [`Get-Image.ps1`](./Get-Image.ps1).</mark>
 
 The folder [`seedconfig`](./seedconfig/) in this repository has examples for the `-data` files. The repository also has a ready to use binary [`seed.iso`](./seed.iso) file. See the default password for the default user `ec2-user` in the [`user-data`](./seedconfig/user-data) file. You will be asked to change the default password for the default user after the first login. This is likely not the big security risk you will face today!
 
@@ -78,15 +78,15 @@ One VM is good. Many VMs: far better.
 
 This is how to quickly create VMs with specific configuration. First, the steps that needed to be executed just one time per host machine.
 - In order to automate the process of creating the `seed.iso` files, download an install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install).
-- Confirm that the path to the executable `oscdimg.exe` is correct at the top of the `vmcreate-common.psm1` PowerShell module.
-- The PowerShell script `amazon.linux.hyper-v.download.ps1` needs to be executed at least once per host machine.
+- Confirm that the path to the executable `oscdimg.exe` is correct at the top of the `VM.common.psm1` PowerShell module.
+- The PowerShell script `Get-Image.ps1` needs to be executed at least once per host machine.
 
 <mark>Now, for each VM to be created.</mark>
 - Configure the files in the `vmconfig` folder.
   - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
   - See the instructions [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v) to recreate the `seed.iso` file.
-- Execute the PowerShell script `vmcreate.ps1 <vmname>`.
-  - For example, `vmcreate.ps1 openclaw01`
+- Execute the PowerShell script `New-VM.ps1 <vmname>`.
+  - For example, `New-VM.ps1 openclaw01`
     - This will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
 - From the Hyper-V Manager, start the new virtual machine.
 - Login and change the password.

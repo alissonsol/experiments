@@ -34,17 +34,17 @@ cd 2026/2026-02.ubuntu.env.macos/
 **On the macOS host (download the Ubuntu image):**
 
 ```bash
-pwsh ./ubuntu.env.macos.download.ps1
+pwsh ./Get-Image.ps1
 ```
 
 **On the macOS host (create the VM with default hostname "openclaw01"):**
 ```bash
-pwsh ./ubuntu.env.macos.create.ps1
+pwsh ./New-VM.ps1
 ```
 
 Or with a custom hostname:
 ```bash
-pwsh ./ubuntu.env.macos.create.ps1 -VmName myhostname
+pwsh ./New-VM.ps1 -VmName myhostname
 ```
 
 Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall.
@@ -75,15 +75,15 @@ brew install powershell/tap/powershell
 
 ### 1.2) Downloading the Ubuntu image
 
-The script [`ubuntu.env.macos.download.ps1`](./ubuntu.env.macos.download.ps1) fetches the Ubuntu Desktop 25.10 ARM64 ISO. The image is saved to `~/virtual/ubuntu.env/`.
+The script [`Get-Image.ps1`](./Get-Image.ps1) fetches the Ubuntu Desktop 25.10 ARM64 ISO. The image is saved to `~/virtual/ubuntu.env/`.
 
 ```bash
-pwsh ./ubuntu.env.macos.download.ps1
+pwsh ./Get-Image.ps1
 ```
 
 ## 2) Creating the VM
 
-The script [`ubuntu.env.macos.create.ps1`](./ubuntu.env.macos.create.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VmName` parameter (default: `openclaw01`) and:
+The script [`New-VM.ps1`](./New-VM.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VmName` parameter (default: `openclaw01`) and:
 
 - Copies the downloaded Ubuntu ISO into the bundle (named `<hostname>.iso`).
 - Creates a 64GB blank qcow2 disk for installation.
@@ -91,9 +91,9 @@ The script [`ubuntu.env.macos.create.ps1`](./ubuntu.env.macos.create.ps1) create
 - Generates a `config.plist` from [`config.plist.template`](./config.plist.template) for a QEMU ARM64 VM (4 CPUs, 8 GB RAM, VirtIO disk, UEFI boot, shared networking, sound, clipboard sharing).
 
 ```bash
-pwsh ./ubuntu.env.macos.create.ps1
+pwsh ./New-VM.ps1
 # Or with a custom hostname:
-pwsh ./ubuntu.env.macos.create.ps1 -VmName myhostname
+pwsh ./New-VM.ps1 -VmName myhostname
 ```
 
 **Prerequisites:** `brew install openssl qemu` (for password hashing and disk image creation).

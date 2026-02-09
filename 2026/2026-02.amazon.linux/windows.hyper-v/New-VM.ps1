@@ -25,7 +25,7 @@ $global:InformationPreference = "Continue"
 $global:DebugPreference = "SilentlyContinue"
 $global:VerbosePreference = "SilentlyContinue"
 
-$commonModulePath = Join-Path -Path $PSScriptRoot -ChildPath "vmcreate-common"
+$commonModulePath = Join-Path -Path $PSScriptRoot -ChildPath "VM.common"
 Import-Module -Name $commonModulePath -Force
 
 # Inform and check for elevation
