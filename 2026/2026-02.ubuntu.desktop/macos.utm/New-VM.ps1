@@ -58,10 +58,10 @@ $DestIso = "$DataDir/$VmName.iso"
 Copy-Item -Path $IsoSource -Destination $DestIso
 Write-Output "Copied installer ISO as: $VmName.iso"
 
-# 5. Create blank disk for installation (64GB, thin-provisioned qcow2)
+# 5. Create blank disk for installation (512GB, thin-provisioned qcow2)
 $DiskImage = "$DataDir/disk.qcow2"
-Write-Output "Creating 64GB disk image..."
-& qemu-img create -f qcow2 "$DiskImage" 64G
+Write-Output "Creating 512GB disk image..."
+& qemu-img create -f qcow2 "$DiskImage" 512G
 if ($LASTEXITCODE -ne 0) {
     Write-Error "qemu-img failed. Install QEMU tools with: brew install qemu"
     exit 1
