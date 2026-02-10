@@ -56,7 +56,7 @@ After the script completes, start the VM from Hyper-V Manager. The Ubuntu instal
 Once the VM is running, you can find its IP address:
 
 ```powershell
-Get-VM -Name "ubuntu-deskop01" | Select-Object -ExpandProperty NetworkAdapters | Select-Object IPAddresses
+Get-VM -Name "ubuntu-desktop01" | Select-Object -ExpandProperty NetworkAdapters | Select-Object IPAddresses
 ```
 
 Then SSH into the VM:

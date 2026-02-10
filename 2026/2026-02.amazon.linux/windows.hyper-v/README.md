@@ -1,4 +1,4 @@
-# Amazon Linux running in Windows Hyper-v
+# Amazon Linux running in Windows Hyper-V
 
 Copyright (c) 2019-2026 by Alisson Sol
 

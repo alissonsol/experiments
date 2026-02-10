@@ -6,7 +6,7 @@ Copyright (c) 2019-2026 by Alisson Sol
 
 What can you do during [The Long Dark Tea-Time of the Soul](https://en.wikipedia.org/wiki/The_Long_Dark_Tea-Time_of_the_Soul)?
 
-This is the macOS counterpart of the [Hyper-V version](../2026-02.ubuntu.desktop/windows.hyper-v/). It uses [UTM](https://mac.getutm.app/) to run an Ubuntu ARM64 VM on Apple Silicon Macs.
+This is the macOS counterpart of the [Hyper-V version](../windows.hyper-v/). It uses [UTM](https://mac.getutm.app/) to run an Ubuntu ARM64 VM on Apple Silicon Macs.
 
 ### 1.1) Installing UTM
 

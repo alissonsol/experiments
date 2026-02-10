@@ -1,4 +1,4 @@
-# Amazon Linux running in Windows Hyper-v - Nerd-Level Details
+# Amazon Linux running in Windows Hyper-V - Nerd-Level Details
 
 Copyright (c) 2019-2026 by Alisson Sol
 
@@ -31,7 +31,7 @@ The folder [`seedconfig`](./seedconfig/) in this repository has examples for the
 One VM is good. Many VMs: far better.
 
 This is how to quickly create VMs with specific configuration. First, the steps that needed to be executed just one time per host machine.
-- In order to automate the process of creating the `seed.iso` files, download an install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install).
+- In order to automate the process of creating the `seed.iso` files, download and install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install).
 - Confirm that the path to the executable `oscdimg.exe` is correct at the top of the `VM.common.psm1` PowerShell module.
 - The PowerShell script `Get-Image.ps1` needs to be executed at least once per host machine.
 
@@ -48,7 +48,7 @@ This is how to quickly create VMs with specific configuration. First, the steps 
   - Having to type the password again to confirm you want to change it is as annoying as it gets!
   - At this point, if there is any update since the Amazon Linux image was last downloaded, you will be asked to execute the command `/usr/bin/dnf check-release-update`. Proceed as per the instructions to upgrade the operating system binaries before proceeding.
 - Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.openclaw.bash`.
-  - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.openclaw.bash` to the root of the target VM. After execution the Bash script, the Graphical User Interface and the tools from section 2 are installed.
+  - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.openclaw.bash` to the root of the target VM. After executing the Bash script, the Graphical User Interface and the tools from section 2 are installed.
 - Execute `sudo reboot now` and the VM reboots already in the GUI mode with the tools.
 
 <mark>CHECKPOINT: This is a great time to create a checkpoint `VM Configured` for each VM.</mark>
@@ -66,7 +66,7 @@ Test VM connectivity.
 
 ## 3) Optional
 
-This assumes that the user has already executed the "tools" installation, and so Visual Studio Code is available to edit any files, the Firefox Browser is available to visit sites, etc. These are all optional. The commands below are "hacks" for x86_x64 architectures and locked to versions of the keys and packages. Update as needed.
+This assumes that the user has already executed the "tools" installation, and so Visual Studio Code is available to edit any files, the Firefox Browser is available to visit sites, etc. These are all optional. The commands below are "hacks" for x86_64 architectures and locked to versions of the keys and packages. Update as needed.
 
 - Install PowerShell
   - `sudo dnf install powershell -y`

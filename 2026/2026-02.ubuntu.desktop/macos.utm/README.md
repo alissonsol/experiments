@@ -68,7 +68,7 @@ Confirm all installations finished correctly, and then reboot.
 sudo reboot now
 ```
 
-The machine is now ready! You should be prompted to change it on first login. You can change the password at any time with the `passwd` command.
+The machine is now ready! You should be prompted to change the password on first login. You can change the password at any time with the `passwd` command.
 
 ## Optional install of OpenClaw
 
