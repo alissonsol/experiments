@@ -40,7 +40,9 @@ foreach ($path in @("/opt/homebrew/opt/openssl@3/bin/openssl", "/opt/homebrew/op
             $PasswordHash = $result.Trim()
             break
         }
-    } catch {}
+    } catch {
+        Write-Warning "Not found: $path"
+    }
 }
 if (-not $PasswordHash) {
     Write-Error "OpenSSL with SHA-512 password support is required. Install with: brew install openssl"

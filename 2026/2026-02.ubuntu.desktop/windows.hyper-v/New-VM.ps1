@@ -101,7 +101,9 @@ foreach ($path in $opensslPaths) {
 			$PasswordHash = $result.Trim()
 			break
 		}
-	} catch {}
+	} catch {
+        Write-Warning "Not found: $path"
+	}
 }
 if (-not $PasswordHash) {
 	Write-Output "OpenSSL with SHA-512 password support is required."
