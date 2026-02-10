@@ -28,10 +28,12 @@ openclaw onboard --install-daemon --non-interactive --workspace ~/openclaw
 openclaw doctor --non-interactive
 EOF
 
-# Make openclaw available to all users by symlinking to /usr/local/bin
-OPENCLAW_PATH=$(sudo -u "$REAL_USER" bash -c 'export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; which openclaw')
-if [ -n "$OPENCLAW_PATH" ]; then
-    sudo ln -sf "$OPENCLAW_PATH" /usr/local/bin/openclaw
+# Make node, npm, and openclaw available to all users by symlinking to /usr/local/bin
+NVM_BIN=$(sudo -u "$REAL_USER" bash -c 'export NVM_DIR="$HOME/.nvm"; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; dirname "$(which node)"')
+if [ -n "$NVM_BIN" ]; then
+    sudo ln -sf "$NVM_BIN/node" /usr/local/bin/node
+    sudo ln -sf "$NVM_BIN/npm" /usr/local/bin/npm
+    sudo ln -sf "$NVM_BIN/openclaw" /usr/local/bin/openclaw
 fi
 
 # Show installed versions
