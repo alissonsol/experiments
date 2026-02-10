@@ -15,7 +15,8 @@
 .PRIVATEDATA
 #>
 
-$sourceFile = "https://cdimage.ubuntu.com/releases/25.10/release/ubuntu-25.10-desktop-arm64.iso"
+# $sourceFile = "https://cdimage.ubuntu.com/releases/24.04/release/ubuntu-24.04.3-desktop-arm64.iso
+$sourceFile = "https://cdimage.ubuntu.com/noble/daily-live/current/noble-desktop-arm64.iso"  
 $destDir = "$HOME/virtual/ubuntu.env"
 $destFile = Join-Path $destDir "ubuntu.desktop.arm64.downloaded.iso"
 

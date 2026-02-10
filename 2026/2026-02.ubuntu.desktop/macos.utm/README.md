@@ -54,9 +54,15 @@ Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it
 Open a terminal and enter the commands. If needed, the default user is `ubuntu` and the initial password is `password`. You should be prompted to change it on first login. You can change the password at any time with the `passwd` command.
 
 ```bash
+sudo apt-get install curl -y
 curl -o updateAll https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/util/updateAll
 chmod a+x updateAll
 sudo ./updateAll
+```
+
+Confirm all installations finished correctly, and then reboot.
+
+```bash
 sudo reboot now
 ```
 
