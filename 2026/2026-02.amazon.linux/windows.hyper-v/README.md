@@ -50,11 +50,22 @@ Or with a custom hostname:
 .\New-VM.ps1 -vmName myhostname
 ```
 
+**On the VM: Install Graphical User Interface**
+
+Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data) file, at this point the user is `ec2-user` and the password is `amazonlinux`.
+
+```bash
+sudo dnf update -y
+sudo dnf upgrade -y
+sudo dnf groupinstall "Desktop" -y
+sudo reboot now
+```
+
+The machine is now ready!
+
 ## Optional install of OpenClaw
 
 **On the VM: OpenClaw install**
-
-Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data) file, at this point the user is `ec2-user` and the password is `amazonlinux`.
 
 ```bash
 cd /
