@@ -4,7 +4,6 @@ set -e
 echo ">>> 1. Installing dependencies..."
 sudo apt update
 sudo apt install -y cmake git g++ libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-gfx-dev
-curl -fsSL https://deb.nodesource.com | sudo -E bash -
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings

@@ -68,10 +68,18 @@ sudo reboot now
 
 **On the VM (after reboot in the Graphical UX):**
 
+Script download
+
 ```bash
 curl -o ubuntu.env.openclaw.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.ubuntu.desktop/macos.utm/ubuntu.env.openclaw.bash
 chmod a+x ubuntu.env.openclaw.bash
+```
+
+OpenClaw installation
+
 ```bash
+sudo bash ./ubuntu.env.openclaw.bash
+```
 
 Open terminal and configure OpenClaw. This is past the install step in the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started).
 
