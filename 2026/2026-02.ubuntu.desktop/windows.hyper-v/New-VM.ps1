@@ -18,7 +18,7 @@
 # Script parameters
 param(
 	[Parameter(Position = 0)]
-	[string]$vmName = "openclaw01"
+	[string]$vmName = "ubuntu-desktop01"
 )
 
 $global:InformationPreference = "Continue"

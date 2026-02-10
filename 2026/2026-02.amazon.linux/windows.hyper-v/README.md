@@ -4,7 +4,7 @@ Copyright (c) 2019-2026 by Alisson Sol
 
 ## 0) Too long. Don't want to read the details. Only the needed commands
 
-Minimal commands for creating the `openclaw01` VM. See sections below for details.
+Minimal commands for creating the VM. See sections below for details.
 
 **Getting only the needed folder**
 ```powershell
@@ -85,8 +85,8 @@ This is how to quickly create VMs with specific configuration. First, the steps 
   - A minimal change that is suggested: change the `local-hostname` in the `meta-data` file.
   - See the instructions [here](https://github.com/alissonsol/experiments/tree/main/2025/2025-09.amazon.linux.hyper-v) to recreate the `seed.iso` file.
 - Execute the PowerShell script `New-VM.ps1 <vmname>`.
-  - For example, `New-VM.ps1 openclaw01`
-    - This will create a VM named `openclaw01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
+  - For example, `New-VM.ps1 amznlinux01`
+    - This will create a VM named `amznlinux01`. It reads configuration from the `seed.iso` file created with the information from the `vmconfig` folder at that point in time. This generated `seed.iso` is placed in a folder with `<vmname>` under the `$localVhdxPath` (since the file name needs to be `seed.iso` for every VM).
 - From the Hyper-V Manager, start the new virtual machine.
 - Login and change the password.
   - Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data) file, at this point the user is `ec2-user` and the password is `amazonlinux`.

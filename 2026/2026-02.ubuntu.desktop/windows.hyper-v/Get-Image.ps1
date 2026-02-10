@@ -24,7 +24,6 @@ if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdent
 }
 
 # Source URL
-# $sourceFile = "https://releases.ubuntu.com/noble/ubuntu-24.04.2-desktop-amd64.iso"
 $sourceFile = "https://cdimage.ubuntu.com/noble/daily-live/current/noble-desktop-amd64.iso"
 $localVhdxPath = (Get-VMHost).VirtualHardDiskPath
 Write-Output "Hyper-V default VHDX folder: $localVhdxPath"

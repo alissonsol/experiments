@@ -16,7 +16,7 @@
 #>
 
 param(
-    [string]$VmName = "openclaw01"
+    [string]$VmName = "ubuntu-desktop01"
 )
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

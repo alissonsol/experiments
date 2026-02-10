@@ -4,7 +4,7 @@ Copyright (c) 2019-2026 by Alisson Sol
 
 ## 0) Too long. Don't want to read the details. Only the needed commands
 
-Minimal commands for creating the `openclaw01` VM. See sections below for details.
+Minimal commands for creating the VM. See sections below for details.
 
 **On the macOS host (one-time setup):**
 
@@ -37,7 +37,7 @@ cd 2026/2026-02.ubuntu.desktop/macos.utm/
 pwsh ./Get-Image.ps1
 ```
 
-**On the macOS host (create the VM with default hostname "openclaw01"):**
+**On the macOS host (create the VM with default hostname):**
 ```bash
 pwsh ./New-VM.ps1
 ```
@@ -47,7 +47,7 @@ Or with a custom hostname:
 pwsh ./New-VM.ps1 -VmName myhostname
 ```
 
-Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall. <mark>This step may take a few minutes (~15)</mark>. The screen may not be shown. If not shown after ~15 minutes, stop and restart the VM.
+Double-click `HOSTNAME.utm` on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall. <mark>This step may take a few minutes (~15)</mark>. The screen may not be shown. If not shown after ~15 minutes, stop and restart the VM.
 
 **On the VM (after setup): Updating**
 
@@ -115,7 +115,7 @@ pwsh ./Get-Image.ps1
 
 ## 2) Creating the VM
 
-The script [`New-VM.ps1`](./New-VM.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VmName` parameter (default: `openclaw01`) and:
+The script [`New-VM.ps1`](./New-VM.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VmName` parameter (default: `ubuntu-desktop01`) and:
 
 - Copies the downloaded Ubuntu ISO into the bundle (named `<hostname>.iso`).
 - Creates a 512GB blank qcow2 disk for installation.

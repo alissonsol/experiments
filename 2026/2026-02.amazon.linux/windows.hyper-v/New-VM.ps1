@@ -15,10 +15,10 @@
 .PRIVATEDATA
 #>
 
-# Script parameters
+# Script parameters. Default vmName should not be "amazonlinux" (same name as downloaded VHDX).
 param(
 	[Parameter(Position = 0)]
-	[string]$vmName = "amazonlinux"
+	[string]$vmName = "amznlinux01"
 )
 
 $global:InformationPreference = "Continue"

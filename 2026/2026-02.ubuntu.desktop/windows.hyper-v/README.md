@@ -4,7 +4,7 @@ Copyright (c) 2019-2026 by Alisson Sol
 
 ## 0) Too long. Don't want to read the details. Only the needed commands
 
-Minimal commands for creating the `openclaw01` VM. See sections below for details.
+Minimal commands for creating the VM. See sections below for details.
 
 **On the Windows host (one-time setup):**
 
@@ -35,7 +35,7 @@ cd 2026\2026-02.ubuntu.desktop\windows.hyper-v\
 .\Get-Image.ps1
 ```
 
-**On the Windows host (create the VM with default hostname "openclaw01"):**
+**On the Windows host (create the VM with default hostname):**
 
 ```powershell
 .\New-VM.ps1
@@ -48,13 +48,6 @@ Or with a custom hostname:
 ```
 
 Start the VM from Hyper-V Manager. The Ubuntu installer will run automatically using autoinstall. <mark>This step may take a few minutes (~15)</mark>. The screen may not be shown. If not shown after ~15 minutes, stop and restart the VM.
-
-**After installation completes**, remove the DVD drives and restart:
-
-```powershell
-Get-VMDvdDrive -VMName "openclaw01" | Remove-VMDvdDrive
-Restart-VM -Name "openclaw01" -Force
-```
 
 **On the VM (after setup): Updating**
 
@@ -122,7 +115,7 @@ The script [`Get-Image.ps1`](./Get-Image.ps1) fetches the Ubuntu Desktop amd64 I
 
 ## 2) Creating the VM
 
-The script [`New-VM.ps1`](./New-VM.ps1) creates a Hyper-V Generation 2 VM. It accepts an optional `-vmName` parameter (default: `openclaw01`) and:
+The script [`New-VM.ps1`](./New-VM.ps1) creates a Hyper-V Generation 2 VM. It accepts an optional `-vmName` parameter (default: `ubuntu-desktop01`) and:
 
 - Creates a 512GB dynamically expanding VHDX for installation.
 - Generates an autoinstall `seed.iso` that automatically configures the Ubuntu installation with the given hostname.
@@ -141,21 +134,12 @@ After the script completes, start the VM from Hyper-V Manager. The Ubuntu instal
 - Default credentials: username `ubuntu`, password `password`. You will be required to change the password on first login.
 - The autoinstall sets the hostname, locale (`en_US.UTF-8`), keyboard (`us`), LVM storage layout, and enables SSH.
 
-### 2.1) After installation
-
-After Ubuntu finishes installing, remove the DVD drives so the VM boots from the hard disk:
-
-```powershell
-Get-VMDvdDrive -VMName "openclaw01" | Remove-VMDvdDrive
-Restart-VM -Name "openclaw01" -Force
-```
-
-### 2.2) Testing connectivity
+### 2.1) Testing connectivity
 
 Once the VM is running, you can find its IP address:
 
 ```powershell
-Get-VM -Name "openclaw01" | Select-Object -ExpandProperty NetworkAdapters | Select-Object IPAddresses
+Get-VM -Name "ubuntu-deskop01" | Select-Object -ExpandProperty NetworkAdapters | Select-Object IPAddresses
 ```
 
 Then SSH into the VM:

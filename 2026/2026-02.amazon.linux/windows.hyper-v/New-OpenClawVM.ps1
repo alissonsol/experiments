@@ -15,7 +15,7 @@
 .PRIVATEDATA
 #>
 
-# Script parameters
+# Script parameters. Default vmName should not be "amazonlinux" (same name as downloaded VHDX).
 param(
 	[Parameter(Position=0)]
 	[string]$vmName = "openclaw01"
