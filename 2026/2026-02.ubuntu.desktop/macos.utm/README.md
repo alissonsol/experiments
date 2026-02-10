@@ -1,4 +1,4 @@
-Ubuntu Desktop running in macOS UTM
+# Ubuntu Desktop running in macOS UTM
 
 Copyright (c) 2019-2026 by Alisson Sol
 
@@ -70,7 +70,9 @@ sudo reboot now
 
 The machine is now ready! You should be prompted to change it on first login. You can change the password at any time with the `passwd` command.
 
-**On the VM (after reboot): Optional install of OpenClaw**
+## Optional install of OpenClaw
+
+**On the VM (after reboot): OpenClaw install**
 
 Open a terminal and enter the commands.
 

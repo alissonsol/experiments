@@ -73,7 +73,9 @@ sudo reboot now
 
 The machine is now ready!
 
-**On the VM (after reboot): Optional install of OpenClaw**
+## Optional install of OpenClaw
+
+**On the VM (after reboot): OpenClaw install**
 
 Open a terminal and enter the commands.
 

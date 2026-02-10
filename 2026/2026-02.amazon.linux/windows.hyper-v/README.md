@@ -50,7 +50,9 @@ Or with a custom hostname:
 .\New-VM.ps1 -vmName myhostname
 ```
 
-**On the VM (after first login and password change): Optional install of OpenClaw**
+## Optional install of OpenClaw
+
+**On the VM: OpenClaw install**
 
 Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data) file, at this point the user is `ec2-user` and the password is `amazonlinux`.
 
