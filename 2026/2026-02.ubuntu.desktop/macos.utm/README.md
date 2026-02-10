@@ -47,7 +47,7 @@ Or with a custom hostname:
 pwsh ./New-VM.ps1 -VmName myhostname
 ```
 
-Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall.
+Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall. <mark>This step may take a few minutes (~15)</mark>
 
 **On the VM (after setup):**
 
