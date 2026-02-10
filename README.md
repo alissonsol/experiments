@@ -4,8 +4,8 @@ The random experiments by Alisson Sol
 
 ## 2026
 
-- 2026-02 - Scripts to quickly setup [OpenClaw](2026/2026-02.amazon.linux/windows.hyper-v/) in Amazon Linux using Windows Hyper-v
-- 2026-02 - Scripts to quickly setup [OpenClaw](2026/2026-02.ubuntu.desktop/macos.utm/) in Ubuntu Desktop using macOS UTM
+- 2026-02 - Scripts to quickly setup OpenClaw in [Amazon Linux](2026/2026-02.amazon.linux/windows.hyper-v/) running in Windows Hyper-v
+- 2026-02 - Scripts to quickly setup OpenClaw in [Ubuntu Desktop](2026/2026-02.ubuntu.desktop/macos.utm/) running in macOS UTM (ARM64)
 
 ## 2025
 
