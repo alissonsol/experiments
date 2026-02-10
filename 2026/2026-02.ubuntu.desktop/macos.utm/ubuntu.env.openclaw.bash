@@ -1,25 +1,26 @@
 #!/bin/bash
-set -e
 
-echo ">>> 1. Installing dependencies..."
-sudo apt update
-sudo apt install -y cmake git g++ libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev libsdl2-gfx-dev
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl gnupg
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-NODE_MAJOR=22
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-sudo apt-get update
-sudo apt-get install nodejs -y
+# Install Git
+sudo apt-get install git -y
 
-echo ">>> 2. Building OpenClaw..."
-rm -rf ~/OpenClaw
-git clone https://github.com/pjasicek/OpenClaw.git ~/OpenClaw
-mkdir -p ~/OpenClaw/build && cd ~/OpenClaw/build
-cmake ..
-make -j$(nproc)
+# Install NVM and node
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+nvm install 22
 
-echo ">>> SETUP COMPLETE."
-echo "To play, copy CLAW.REZ from the original game to ~/OpenClaw/build/ and run:"
-echo "  cd ~/OpenClaw/build && ./openclaw"
+# Install OpenClaw
+npm install -g openclaw@latest
+
+# Run OpenClaw onboarding (installs daemon with defaults, no interactive prompts)
+openclaw onboard --install-daemon --non-interactive --workspace ~/openclaw
+
+# Verify OpenClaw installation (non-interactive to skip prompts)
+openclaw doctor --non-interactive
+
+# Show installed versions
+echo "Git: `git --version`"
+echo "Node.js: `node --version`"
+echo "npm: `npm --version`"
+echo "OpenClaw: `openclaw --version`"
