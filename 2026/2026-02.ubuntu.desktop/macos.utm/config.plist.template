@@ -14,7 +14,7 @@
 			<key>DynamicResolution</key>
 			<false/>
 			<key>Hardware</key>
-			<string>virtio-ramfb</string>
+			<string>virtio-ramfb-gl</string>
 			<key>NativeResolution</key>
 			<false/>
 			<key>UpscalingFilter</key>
