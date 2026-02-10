@@ -11,7 +11,7 @@ Minimal commands for creating the VM. Link to details at the end.
 Check latest instructions for `brew` from [brew.sh](https://brew.sh/)
 
 ```bash
-/bin/bash -c "$(wget -qO- https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 After installing `brew`, you may need to open another terminal.
@@ -21,6 +21,7 @@ brew install --cask utm
 brew install git
 brew install powershell
 brew install openssl qemu
+brew install wget
 ```
 
 **Getting only the needed folder**
