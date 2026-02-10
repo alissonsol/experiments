@@ -1,12 +1,12 @@
-# OpenClaw in Ubuntu Desktop using Windows Hyper-V
+# Ubuntu Desktop running in Windows Hyper-V
 
 Copyright (c) 2019-2026 by Alisson Sol
 
-## 0) Too long. Don't want to read the details. Only the needed commands
+Minimal commands for creating the VM. Link to details at the end.
 
-Minimal commands for creating the VM. See sections below for details.
+## One-time setup
 
-**On the Windows host (one-time setup):**
+**On the Windows host (one-time setup): Requirements**
 
 Enable Hyper-V from Windows Features or run in an elevated PowerShell:
 
@@ -29,13 +29,17 @@ git sparse-checkout add 2026/2026-02.ubuntu.desktop/windows.hyper-v
 cd 2026\2026-02.ubuntu.desktop\windows.hyper-v\
 ```
 
-**On the Windows host (download the Ubuntu image):**
+**On the Windows host (Administrator PowerShell): Getting the base image**
+
+Assuming you are in the `experiments\2026\2026-02.ubuntu.desktop\windows.hyper-v` folder.
 
 ```powershell
 .\Get-Image.ps1
 ```
 
-**On the Windows host (create the VM with default hostname):**
+## For each VM
+
+**On the Windows host (Administrator PowerShell): Create VM**
 
 ```powershell
 .\New-VM.ps1
@@ -51,7 +55,9 @@ Start the VM from Hyper-V Manager. The Ubuntu installer will run automatically u
 
 **On the VM (after setup): Updating**
 
-Open a terminal and enter the commands. If needed, the default user is `ubuntu` and the initial password is `password`.
+You should be prompted to change the password on first login. You can change the password at any time with the `passwd` command. The default user is `ubuntu` and the initial password is `password`.
+
+Open a terminal and enter the commands.
 
 ```bash
 wget -O updateAll https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/util/updateAll
@@ -65,7 +71,7 @@ Confirm all installations finished correctly, and then reboot.
 sudo reboot now
 ```
 
-The machine is now ready! You should be prompted to change the password on first login. You can change the password at any time with the `passwd` command.
+The machine is now ready!
 
 **On the VM (after reboot): Optional install of OpenClaw**
 
@@ -83,6 +89,6 @@ Open terminal and configure OpenClaw. This is past the install step in the OpenC
 openclaw onboard --install-daemon
 ```
 
-Careful: you are about to give AI some precious access to your accounts!
+<mark>Careful: you are about to give AI some precious access to your accounts!</mark>
 
 Read more [here](READ.MORE.md) about the details of the VM creation process.

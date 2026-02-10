@@ -1,4 +1,4 @@
-# OpenClaw in Ubuntu Desktop using Windows Hyper-V - Nerd-Level Details
+# Ubuntu Desktop running in Windows Hyper-V - Nerd-Level Details
 
 Copyright (c) 2019-2026 by Alisson Sol
 

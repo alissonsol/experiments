@@ -1,4 +1,4 @@
-# OpenClaw in Amazon Linux using Windows Hyper-v - Nerd-Level Details
+# Amazon Linux running in Windows Hyper-v - Nerd-Level Details
 
 Copyright (c) 2019-2026 by Alisson Sol
 

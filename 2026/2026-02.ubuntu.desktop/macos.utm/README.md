@@ -1,12 +1,12 @@
-# OpenClaw in Ubuntu using macOS UTM
+Ubuntu Desktop running in macOS UTM
 
 Copyright (c) 2019-2026 by Alisson Sol
 
-## 0) Too long. Don't want to read the details. Only the needed commands
+Minimal commands for creating the VM. Link to details at the end.
 
-Minimal commands for creating the VM. See sections below for details.
+## One-time setup
 
-**On the macOS host (one-time setup):**
+**On the macOS host (one-time setup): Requirements**
 
 Check latest instructions for `brew` from [brew.sh](https://brew.sh/)
 
@@ -31,13 +31,16 @@ git sparse-checkout add 2026/2026-02.ubuntu.desktop/macos.utm
 cd 2026/2026-02.ubuntu.desktop/macos.utm/
 ```
 
-**On the macOS host (download the Ubuntu image):**
+**On the macOS host: Getting the base image**
 
 ```bash
 pwsh ./Get-Image.ps1
 ```
 
-**On the macOS host (create the VM with default hostname):**
+## For each VM
+
+**On the macOS host (Bash terminal): Create VM**
+
 ```bash
 pwsh ./New-VM.ps1
 ```
@@ -83,7 +86,7 @@ Open terminal and configure OpenClaw. This is past the install step in the OpenC
 openclaw onboard --install-daemon
 ```
 
-Careful: you are about to give AI some precious access to your accounts!
+<mark>Careful: you are about to give AI some precious access to your accounts!</mark>
 
 Read more [here](READ.MORE.md) about the details of the VM creation process.
 

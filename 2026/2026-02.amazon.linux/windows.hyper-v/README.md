@@ -1,10 +1,24 @@
-# OpenClaw in Amazon Linux using Windows Hyper-v
+# Amazon Linux running in Windows Hyper-v
 
 Copyright (c) 2019-2026 by Alisson Sol
 
-## 0) Too long. Don't want to read the details. Only the needed commands
+Minimal commands for creating the VM. Link to details at the end.
 
-Minimal commands for creating the VM. See sections below for details.
+## One-time setup
+
+**On the Windows host (one-time setup): Requirements**
+
+Enable Hyper-V from Windows Features or run in an elevated PowerShell:
+
+```powershell
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -NoRestart
+```
+
+Restart Windows after enabling Hyper-V.
+
+Install [Windows ADK Deployment Tools](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install) for `Oscdimg.exe` (needed to create seed ISO). During installation, select only "Deployment Tools".
+
+Install [Git for Windows](https://git-scm.com/download/win) (includes OpenSSL needed for password hashing).
 
 **Getting only the needed folder**
 ```powershell
@@ -14,17 +28,26 @@ git sparse-checkout add 2026/2026-02.amazon.linux/windows.hyper-v
 cd 2026\2026-02.amazon.linux\windows.hyper-v
 ```
 
-**On the Windows host (Administrator PowerShell, one-time setup):**
+**On the Windows host (Administrator PowerShell): Getting the base image**
 
-Assuming you are in the `experiments\2026\2026-02.openclaw.in.amazon.linux.hyper-v` folder.
+Assuming you are in the `experiments\2026\2026-02.amazon.linux\windows.hyper-v` folder.
 
 ```powershell
 .\Get-Image.ps1
 ```
 
-**On the Windows host (Administrator PowerShell, create VM):**
+## For each VM
+
+**On the Windows host (Administrator PowerShell): Create VM**
+
 ```powershell
 .\New-OpenClawVM.ps1
+```
+
+Or with a custom hostname:
+
+```powershell
+.\New-VM.ps1 -vmName myhostname
 ```
 
 **On the VM (after first login and password change): Optional install of OpenClaw**
@@ -43,7 +66,7 @@ After reboot, open a terminal and configure OpenClaw. This is past the install s
 openclaw onboard --install-daemon
 ```
 
-Careful: you are about to give AI some precious access to your accounts!
+<mark>Careful: you are about to give AI some precious access to your accounts!</mark>
 
 ![](images/001.openclaw.config.png)
 

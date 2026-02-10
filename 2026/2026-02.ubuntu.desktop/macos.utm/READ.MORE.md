@@ -1,4 +1,4 @@
-# OpenClaw in Ubuntu Desktop using macOS UTM - Nerd-Level Details
+# Ubuntu Desktop running in macOS UTM - Nerd-Level Details
 
 Copyright (c) 2019-2026 by Alisson Sol
 
