@@ -9,7 +9,7 @@ dnf groupinstall "Desktop" -y
 dnf -y install git
 
 # Install Node.js 22+ (required for OpenClaw)
-curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+wget -qO- https://rpm.nodesource.com/setup_22.x | bash -
 dnf -y install nodejs
 
 # Install OpenClaw

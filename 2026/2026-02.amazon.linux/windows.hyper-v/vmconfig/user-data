@@ -9,5 +9,5 @@ chpasswd:
 # In the above line, do not add any spaces after 'ec2-user:'.
 
 runcmd:
-  - curl -o amazon.linux.openclaw.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.amazon.linux/windows.hyper-v/amazon.linux.openclaw.bash
+  - wget -O amazon.linux.openclaw.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.amazon.linux/windows.hyper-v/amazon.linux.openclaw.bash
   - chmod a+x amazon.linux.openclaw.bash

@@ -72,7 +72,7 @@ ping 8.8.8.8
 After the first login after the OS is installed, execute the commands below and jump to 2.f.
 
 ```
-curl -o amazon.linux.tools.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.tools.bash
+wget -O amazon.linux.tools.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.tools.bash
 chmod a+x amazon.linux.tools.bash
 sudo bash amazon.linux.tools.bash
 ```

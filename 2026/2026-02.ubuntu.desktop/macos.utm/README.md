@@ -11,7 +11,7 @@ Minimal commands for creating the `openclaw01` VM. See sections below for detail
 Check latest instructions for `brew` from [brew.sh](https://brew.sh/)
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+/bin/bash -c "$(wget -qO- https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 After installing `brew`, you may need to open another terminal.
@@ -49,13 +49,12 @@ pwsh ./New-VM.ps1 -VmName myhostname
 
 Double-click `openclaw01.utm` (or your custom name) on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall. <mark>This step may take a few minutes (~15)</mark>. The screen may not be shown. If not shown after ~15 minutes, stop and restart the VM.
 
-**On the VM (after setup):**
+**On the VM (after setup): Updating**
 
-Open a terminal and enter the commands. If needed, the default user is `ubuntu` and the initial password is `password`. You should be prompted to change it on first login. You can change the password at any time with the `passwd` command.
+Open a terminal and enter the commands. If needed, the default user is `ubuntu` and the initial password is `password`.
 
 ```bash
-sudo apt-get install curl -y
-curl -o updateAll https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/util/updateAll
+wget -O updateAll https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/util/updateAll
 chmod a+x updateAll
 sudo ./updateAll
 ```
@@ -66,18 +65,15 @@ Confirm all installations finished correctly, and then reboot.
 sudo reboot now
 ```
 
-**On the VM (after reboot in the Graphical UX):**
+The machine is now ready! You should be prompted to change it on first login. You can change the password at any time with the `passwd` command.
 
-Script download
+**On the VM (after reboot): Optional install of OpenClaw**
+
+Open a terminal and enter the commands.
 
 ```bash
-curl -o ubuntu.env.openclaw.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.ubuntu.desktop/macos.utm/ubuntu.env.openclaw.bash
+wget -O ubuntu.env.openclaw.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2026/2026-02.ubuntu.desktop/macos.utm/ubuntu.env.openclaw.bash
 chmod a+x ubuntu.env.openclaw.bash
-```
-
-OpenClaw installation
-
-```bash
 sudo bash ./ubuntu.env.openclaw.bash
 ```
 

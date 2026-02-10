@@ -9,5 +9,5 @@ chpasswd:
 # In the above line, do not add any spaces after 'ec2-user:'.
 
 runcmd:
-  - curl -o amazon.linux.tools.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.tools.bash
+  - wget -O amazon.linux.tools.bash https://raw.githubusercontent.com/alissonsol/experiments/refs/heads/main/2025/2025-09.amazon.linux.hyper-v/amazon.linux.tools.bash
   - chmod a+x amazon.linux.tools.bash

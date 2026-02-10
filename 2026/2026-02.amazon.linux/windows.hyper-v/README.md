@@ -27,7 +27,7 @@ Assuming you are in the `experiments\2026\2026-02.openclaw.in.amazon.linux.hyper
 .\New-OpenClawVM.ps1
 ```
 
-**On the VM (after first login and password change):**
+**On the VM (after first login and password change): Optional install of OpenClaw**
 
 Unless you changed the defaults in the [vmconfig/user-data](./vmconfig/user-data) file, at this point the user is `ec2-user` and the password is `amazonlinux`.
 
@@ -36,9 +36,8 @@ cd /
 sudo bash amazon.linux.openclaw.bash
 sudo reboot now
 ```
-**On the VM (after reboot in the Graphical UX):**
 
-Open terminal and configure OpenClaw. This is past the install step in the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started).
+After reboot, open a terminal and configure OpenClaw. This is past the install step in the OpenClaw [Getting Started](https://docs.openclaw.ai/start/getting-started).
 
 ```bash
 openclaw onboard --install-daemon
