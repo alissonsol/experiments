@@ -16,11 +16,11 @@
 #>
 
 param(
-    [string]$VmName = "ubuntu-desktop01"
+    [string]$VMName = "ubuntu-desktop01"
 )
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$UtmDir = "$HOME/Desktop/$VmName.utm"
+$UtmDir = "$HOME/Desktop/$VMName.utm"
 $DataDir = "$UtmDir/Data"
 $DownloadDir = "$HOME/virtual/ubuntu.env"
 
@@ -49,16 +49,16 @@ if (-not $PasswordHash) {
     exit 1
 }
 
-Write-Output "Creating VM '$VmName' using ISO: $IsoSource"
+Write-Output "Creating VM '$VMName' using ISO: $IsoSource"
 
 # 3. Create UTM Bundle Structure
 if (Test-Path $UtmDir) { Remove-Item -Recurse -Force $UtmDir }
 New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
 
 # 4. Copy Ubuntu ISO into the bundle (named after hostname)
-$DestIso = "$DataDir/$VmName.iso"
+$DestIso = "$DataDir/$VMName.iso"
 Copy-Item -Path $IsoSource -Destination $DestIso
-Write-Output "Copied installer ISO as: $VmName.iso"
+Write-Output "Copied installer ISO as: $VMName.iso"
 
 # 5. Create blank disk for installation (512GB, thin-provisioned qcow2)
 $DiskImage = "$DataDir/disk.qcow2"
@@ -70,7 +70,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 6. Generate autoinstall seed ISO
-$SeedDir = Join-Path $DownloadDir "seed_temp/$VmName"
+$SeedDir = Join-Path $DownloadDir "seed_temp/$VMName"
 if (Test-Path $SeedDir) { Remove-Item -Recurse -Force $SeedDir }
 New-Item -ItemType Directory -Force -Path $SeedDir | Out-Null
 
@@ -84,7 +84,7 @@ if (-not (Test-Path $UserDataTemplate)) {
 }
 
 $UserData = (Get-Content -Raw $UserDataTemplate) `
-    -replace 'HOSTNAME_PLACEHOLDER', $VmName `
+    -replace 'HOSTNAME_PLACEHOLDER', $VMName `
     -replace 'HASH_PLACEHOLDER', $PasswordHash
 
 Set-Content -Path "$SeedDir/user-data" -Value $UserData
@@ -116,13 +116,13 @@ $MacBytes[0] = ($MacBytes[0] -bor 0x02) -band 0xFE  # locally administered unica
 $MacAddress = ($MacBytes | ForEach-Object { $_.ToString("X2") }) -join ":"
 
 $PlistContent = (Get-Content -Raw $TemplatePath) `
-    -replace '__VM_NAME__',        $VmName `
+    -replace '__VM_NAME__',        $VMName `
     -replace '__VM_UUID__',        $VmUuid `
     -replace '__MAC_ADDRESS__',    $MacAddress `
     -replace '__DISK_IDENTIFIER__', $DiskId `
     -replace '__DISK_IMAGE_NAME__', 'disk.qcow2' `
     -replace '__ISO_IDENTIFIER__',  $IsoId `
-    -replace '__ISO_IMAGE_NAME__',  "$VmName.iso" `
+    -replace '__ISO_IMAGE_NAME__',  "$VMName.iso" `
     -replace '__SEED_IDENTIFIER__', $SeedId `
     -replace '__SEED_IMAGE_NAME__', 'seed.iso' `
     -replace '__CPU_COUNT__',       '4' `
@@ -132,6 +132,6 @@ Set-Content -Path "$UtmDir/config.plist" -Value $PlistContent
 
 Write-Output ""
 Write-Output "VM bundle created: $UtmDir"
-Write-Output "Double-click '$VmName.utm' on your Desktop to import it into UTM."
+Write-Output "Double-click '$VMName.utm' on your Desktop to import it into UTM."
 Write-Output "The Ubuntu installer will start automatically with autoinstall."
 Write-Output "Default credentials - username: ubuntu, password: password (must be changed on first login)"

@@ -32,7 +32,7 @@ pwsh ./Get-Image.ps1
 
 ## 2) Creating the VM
 
-The script [`New-VM.ps1`](./New-VM.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VmName` parameter (default: `ubuntu-desktop01`) and:
+The script [`New-VM.ps1`](./New-VM.ps1) creates a UTM VM bundle on your Desktop. It accepts an optional `-VMName` parameter (default: `ubuntu-desktop01`) and:
 
 - Copies the downloaded Ubuntu ISO into the bundle (named `<hostname>.iso`).
 - Creates a 512GB blank qcow2 disk for installation.
@@ -42,7 +42,7 @@ The script [`New-VM.ps1`](./New-VM.ps1) creates a UTM VM bundle on your Desktop.
 ```bash
 pwsh ./New-VM.ps1
 # Or with a custom hostname:
-pwsh ./New-VM.ps1 -VmName myhostname
+pwsh ./New-VM.ps1 -VMName myhostname
 ```
 
 **Prerequisites:** `brew install openssl qemu` (for password hashing and disk image creation).

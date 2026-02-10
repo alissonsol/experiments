@@ -39,7 +39,7 @@ pwsh ./Get-Image.ps1
 
 ## For each VM
 
-**On the macOS host (Bash terminal): Create VM**
+**On the macOS host (Terminal): Create VM**
 
 ```bash
 pwsh ./New-VM.ps1
@@ -47,7 +47,7 @@ pwsh ./New-VM.ps1
 
 Or with a custom hostname:
 ```bash
-pwsh ./New-VM.ps1 -VmName myhostname
+pwsh ./New-VM.ps1 -VMName myhostname
 ```
 
 Double-click `HOSTNAME.utm` on your Desktop to import it into UTM and start the VM. The Ubuntu installer will run automatically using autoinstall. <mark>This step may take a few minutes (~15)</mark>. The screen may not be shown. If not shown after ~15 minutes, stop and restart the VM.

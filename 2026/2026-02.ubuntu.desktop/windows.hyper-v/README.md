@@ -48,7 +48,7 @@ Assuming you are in the `experiments\2026\2026-02.ubuntu.desktop\windows.hyper-v
 Or with a custom hostname:
 
 ```powershell
-.\New-VM.ps1 -vmName myhostname
+.\New-VM.ps1 -VMName myhostname
 ```
 
 Start the VM from Hyper-V Manager. The Ubuntu installer will run automatically using autoinstall. <mark>This step may take a few minutes (~15)</mark>. The screen may not be shown. If not shown after ~15 minutes, stop and restart the VM.

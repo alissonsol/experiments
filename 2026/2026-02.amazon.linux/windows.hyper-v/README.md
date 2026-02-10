@@ -41,13 +41,13 @@ Assuming you are in the `experiments\2026\2026-02.amazon.linux\windows.hyper-v` 
 **On the Windows host (Administrator PowerShell): Create VM**
 
 ```powershell
-.\New-OpenClawVM.ps1
+.\New-VM.ps1
 ```
 
 Or with a custom hostname:
 
 ```powershell
-.\New-VM.ps1 -vmName myhostname
+.\New-VM.ps1 -VMName myhostname
 ```
 
 **On the VM: Install Graphical User Interface**

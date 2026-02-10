@@ -15,10 +15,10 @@
 .PRIVATEDATA
 #>
 
-# Script parameters. Default vmName should not be "amazonlinux" (same name as downloaded VHDX).
+# Script parameters. Default VMName should not be "amazonlinux" (same name as downloaded VHDX).
 param(
 	[Parameter(Position = 0)]
-	[string]$vmName = "amznlinux01"
+	[string]$VMName = "amznlinux01"
 )
 
 $global:InformationPreference = "Continue"
@@ -52,12 +52,12 @@ if (!$service -or $service.Status -ne 'Running') {
 }
 
 # Check if VM exists and force delete it
-$existingVM = Get-VM -Name $vmName -ErrorAction SilentlyContinue
+$existingVM = Get-VM -Name $VMName -ErrorAction SilentlyContinue
 if ($existingVM) {
-	Write-Output "VM '$vmName' exists. Deleting..."
-	Stop-VM -Name $vmName -Force -ErrorAction SilentlyContinue
-	Remove-VM -Name $vmName -Force
-	Write-Output "VM '$vmName' deleted."
+	Write-Output "VM '$VMName' exists. Deleting..."
+	Stop-VM -Name $VMName -Force -ErrorAction SilentlyContinue
+	Remove-VM -Name $VMName -Force
+	Write-Output "VM '$VMName' deleted."
 }
 
 # Files
@@ -67,17 +67,17 @@ if (!(Test-Path -Path $localVhdxPath)) {
 	Write-Output "The Hyper-V default VHDX folder does not exist: $localVhdxPath"
 	exit 1
 }
-$defaultVmName = "amazonlinux"
-$defaultVhdxName = "$defaultVmName"
-$vhdxName = "$vmName"
+$defaultVMName = "amazonlinux"
+$defaultVhdxName = "$defaultVMName"
+$vhdxName = "$VMName"
 $vhdxFile = Join-Path $localVhdxPath "$vhdxName/$vhdxName.vhdx"
 $defaultVhdxFile = Join-Path $localVhdxPath "$defaultVhdxName.vhdx"
 
-# If the vmName parameter was provided and differs from the default, ensure the VHDX is a copy
-if ($vmName -ne $defaultVmName) {
+# If the VMName parameter was provided and differs from the default, ensure the VHDX is a copy
+if ($VMName -ne $defaultVMName) {
 	if (Test-Path -Path $defaultVhdxFile) {
 		if (!(Test-Path -Path $vhdxFile)) {
-			Write-Output "Creating VHDX for '$vmName' by copying default VHDX..."
+			Write-Output "Creating VHDX for '$VMName' by copying default VHDX..."
 			# Ensure destination folder exists
 			$destDir = Split-Path -Path $vhdxFile -Parent
 			if ($destDir -and -not (Test-Path -Path $destDir)) {
@@ -103,19 +103,19 @@ if (!(Test-Path -Path $vhdxFile)) {
 }
 
 $vmConfig = Join-Path $PSScriptRoot "vmconfig"
-$seedIsoFile = Join-Path $localVhdxPath "$vmName/seed.iso"
+$seedIsoFile = Join-Path $localVhdxPath "$VMName/seed.iso"
 $VolumeId = "cidata"
 CreateIso -SourceDir $vmConfig -OutputFile $seedIsoFile -VolumeId $VolumeId
 
 # Create new Generation 2 Hyper-V VM
-Write-Output "Creating new VM '$vmName'..."
-New-VM -Name $vmName -Generation 2 -MemoryStartupBytes 8192MB -SwitchName "Default Switch" -VHDPath $vhdxFile | Out-Null
-Set-VM -Name $vmName -MemoryStartupBytes 8192MB -MemoryMinimumBytes 8192MB -MemoryMaximumBytes 8192MB | Out-Null
-Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
-Set-VMFirmware -VMName $vmName -EnableSecureBoot Off | Out-Null
-Add-VMDvdDrive -VMName $vmName -Path $seedIsoFile | Out-Null
+Write-Output "Creating new VM '$VMName'..."
+New-VM -Name $VMName -Generation 2 -MemoryStartupBytes 8192MB -SwitchName "Default Switch" -VHDPath $vhdxFile | Out-Null
+Set-VM -Name $VMName -MemoryStartupBytes 8192MB -MemoryMinimumBytes 8192MB -MemoryMaximumBytes 8192MB | Out-Null
+Set-VMMemory -VMName $VMName -DynamicMemoryEnabled $false
+Set-VMFirmware -VMName $VMName -EnableSecureBoot Off | Out-Null
+Add-VMDvdDrive -VMName $VMName -Path $seedIsoFile | Out-Null
 $Cores = (Get-CimInstance -ClassName Win32_Processor).NumberOfCores | Measure-Object -Sum
 $CoreCount = $Cores.Sum
 $vmCores = [math]::Floor($CoreCount / 2)
-Set-VMProcessor -VMName $vmName -Count $vmCores | Out-Null
-Write-Output "VM '$vmName' created and configured."
+Set-VMProcessor -VMName $VMName -Count $vmCores | Out-Null
+Write-Output "VM '$VMName' created and configured."

@@ -18,7 +18,7 @@
 # Script parameters
 param(
 	[Parameter(Position = 0)]
-	[string]$vmName = "ubuntu-desktop01"
+	[string]$VMName = "ubuntu-desktop01"
 )
 
 $global:InformationPreference = "Continue"
@@ -52,12 +52,12 @@ if (!$service -or $service.Status -ne 'Running') {
 }
 
 # Check if VM exists and force delete it
-$existingVM = Get-VM -Name $vmName -ErrorAction SilentlyContinue
+$existingVM = Get-VM -Name $VMName -ErrorAction SilentlyContinue
 if ($existingVM) {
-	Write-Output "VM '$vmName' exists. Deleting..."
-	Stop-VM -Name $vmName -Force -ErrorAction SilentlyContinue
-	Remove-VM -Name $vmName -Force
-	Write-Output "VM '$vmName' deleted."
+	Write-Output "VM '$VMName' exists. Deleting..."
+	Stop-VM -Name $VMName -Force -ErrorAction SilentlyContinue
+	Remove-VM -Name $VMName -Force
+	Write-Output "VM '$VMName' deleted."
 }
 
 # Files
@@ -76,11 +76,11 @@ if (!(Test-Path -Path $ubuntuIsoFile)) {
 }
 
 # Create blank VHDX for installation (512GB, dynamically expanding)
-$vmDir = Join-Path $localVhdxPath $vmName
+$vmDir = Join-Path $localVhdxPath $VMName
 if (!(Test-Path -Path $vmDir)) {
 	New-Item -ItemType Directory -Path $vmDir -Force | Out-Null
 }
-$vhdxFile = Join-Path $vmDir "$vmName.vhdx"
+$vhdxFile = Join-Path $vmDir "$VMName.vhdx"
 if (Test-Path -Path $vhdxFile) {
 	Remove-Item -Path $vhdxFile -Force
 }
@@ -117,13 +117,13 @@ $UserDataTemplate = Join-Path $vmConfig "user-data"
 $MetaDataTemplate = Join-Path $vmConfig "meta-data"
 
 # Create temp directory for seed ISO content
-$seedTempDir = Join-Path $env:TEMP "seed_$vmName"
+$seedTempDir = Join-Path $env:TEMP "seed_$VMName"
 if (Test-Path $seedTempDir) { Remove-Item -Recurse -Force $seedTempDir }
 New-Item -ItemType Directory -Force -Path $seedTempDir | Out-Null
 
 # Process user-data template with hostname and password hash
 $UserData = (Get-Content -Raw $UserDataTemplate) `
-	-replace 'HOSTNAME_PLACEHOLDER', $vmName `
+	-replace 'HOSTNAME_PLACEHOLDER', $VMName `
 	-replace 'HASH_PLACEHOLDER', $PasswordHash
 Set-Content -Path "$seedTempDir/user-data" -Value $UserData -NoNewline
 Copy-Item -Path $MetaDataTemplate -Destination "$seedTempDir/meta-data"
@@ -136,30 +136,30 @@ CreateIso -SourceDir $seedTempDir -OutputFile $seedIsoFile -VolumeId $VolumeId
 Remove-Item -Recurse -Force $seedTempDir -ErrorAction SilentlyContinue
 
 # Create new Generation 2 Hyper-V VM
-Write-Output "Creating new VM '$vmName'..."
-New-VM -Name $vmName -Generation 2 -MemoryStartupBytes 8192MB -SwitchName "Default Switch" -VHDPath $vhdxFile | Out-Null
-Set-VM -Name $vmName -MemoryStartupBytes 8192MB -MemoryMinimumBytes 8192MB -MemoryMaximumBytes 8192MB | Out-Null
-Set-VMMemory -VMName $vmName -DynamicMemoryEnabled $false
-Set-VMFirmware -VMName $vmName -EnableSecureBoot Off | Out-Null
+Write-Output "Creating new VM '$VMName'..."
+New-VM -Name $VMName -Generation 2 -MemoryStartupBytes 8192MB -SwitchName "Default Switch" -VHDPath $vhdxFile | Out-Null
+Set-VM -Name $VMName -MemoryStartupBytes 8192MB -MemoryMinimumBytes 8192MB -MemoryMaximumBytes 8192MB | Out-Null
+Set-VMMemory -VMName $VMName -DynamicMemoryEnabled $false
+Set-VMFirmware -VMName $VMName -EnableSecureBoot Off | Out-Null
 
 # Add DVD drives for Ubuntu ISO and seed ISO
-Add-VMDvdDrive -VMName $vmName -Path $ubuntuIsoFile | Out-Null
-Add-VMDvdDrive -VMName $vmName -Path $seedIsoFile | Out-Null
+Add-VMDvdDrive -VMName $VMName -Path $ubuntuIsoFile | Out-Null
+Add-VMDvdDrive -VMName $VMName -Path $seedIsoFile | Out-Null
 
 # Set boot order: DVD (Ubuntu ISO) first for installation, then hard drive
-$dvdDrive = Get-VMDvdDrive -VMName $vmName | Where-Object { $_.Path -eq $ubuntuIsoFile }
-Set-VMFirmware -VMName $vmName -FirstBootDevice $dvdDrive
+$dvdDrive = Get-VMDvdDrive -VMName $VMName | Where-Object { $_.Path -eq $ubuntuIsoFile }
+Set-VMFirmware -VMName $VMName -FirstBootDevice $dvdDrive
 
 # Set CPU count to half of host cores
 $Cores = (Get-CimInstance -ClassName Win32_Processor).NumberOfCores | Measure-Object -Sum
 $CoreCount = $Cores.Sum
 $vmCores = [math]::Floor($CoreCount / 2)
-Set-VMProcessor -VMName $vmName -Count $vmCores | Out-Null
+Set-VMProcessor -VMName $VMName -Count $vmCores | Out-Null
 
-Write-Output "VM '$vmName' created and configured."
+Write-Output "VM '$VMName' created and configured."
 Write-Output "Start the VM from Hyper-V Manager to begin Ubuntu Desktop installation."
 Write-Output "The Ubuntu installer will run automatically via autoinstall."
 Write-Output "Default credentials - username: ubuntu, password: password (must be changed on first login)"
 Write-Output ""
 Write-Output "After installation completes, remove the DVD drives:"
-Write-Output "  Get-VMDvdDrive -VMName '$vmName' | Remove-VMDvdDrive"
+Write-Output "  Get-VMDvdDrive -VMName '$VMName' | Remove-VMDvdDrive"

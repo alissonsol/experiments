@@ -32,7 +32,7 @@ The script [`Get-Image.ps1`](./Get-Image.ps1) fetches the Ubuntu Desktop amd64 I
 
 ## 2) Creating the VM
 
-The script [`New-VM.ps1`](./New-VM.ps1) creates a Hyper-V Generation 2 VM. It accepts an optional `-vmName` parameter (default: `ubuntu-desktop01`) and:
+The script [`New-VM.ps1`](./New-VM.ps1) creates a Hyper-V Generation 2 VM. It accepts an optional `-VMName` parameter (default: `ubuntu-desktop01`) and:
 
 - Creates a 512GB dynamically expanding VHDX for installation.
 - Generates an autoinstall `seed.iso` that automatically configures the Ubuntu installation with the given hostname.
@@ -43,7 +43,7 @@ The script [`New-VM.ps1`](./New-VM.ps1) creates a Hyper-V Generation 2 VM. It ac
 ```powershell
 .\New-VM.ps1
 # Or with a custom hostname:
-.\New-VM.ps1 -vmName myhostname
+.\New-VM.ps1 -VMName myhostname
 ```
 
 After the script completes, start the VM from Hyper-V Manager. The Ubuntu installer will run automatically via autoinstall.
