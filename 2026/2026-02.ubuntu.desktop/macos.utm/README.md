@@ -85,4 +85,5 @@ openclaw onboard --install-daemon
 
 Careful: you are about to give AI some precious access to your accounts!
 
-[Read more here about the details of the VM creation process](READ.MORE.md)
+Read more [here](READ.MORE.md) about the details of the VM creation process.
+
