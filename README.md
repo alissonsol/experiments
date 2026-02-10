@@ -6,7 +6,7 @@ The random experiments by Alisson Sol
 
 - 2026-02 - Scripts to quickly setup [Amazon Linux](2026/2026-02.amazon.linux/windows.hyper-v/) running in Windows Hyper-v + bonus OpenClaw setup
 - 2026-02 - Scripts to quickly setup [Ubuntu Desktop](2026/2026-02.ubuntu.desktop/macos.utm/) running in macOS UTM (ARM64) + bonus OpenClaw setup
-- 2026-02 - Scripts to quickly setup [Ubuntu Desktop](2026/2026-02.ubuntu.desktop/windows.hyper-v/) running in Windows Hyper-v (ARM64) + bonus OpenClaw setup
+- 2026-02 - Scripts to quickly setup [Ubuntu Desktop](2026/2026-02.ubuntu.desktop/windows.hyper-v/) running in Windows Hyper-v + bonus OpenClaw setup
 
 ## 2025
 
