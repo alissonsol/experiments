@@ -1,6 +1,6 @@
 # Util
 
-Copyright (c) 2025 by Alisson Sol. All rights reserved.
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 
 Provided "as is" with no guarantees.
 

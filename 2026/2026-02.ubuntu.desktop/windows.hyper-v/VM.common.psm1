@@ -1,6 +1,6 @@
 <#PSScriptInfo
 .VERSION 0.1
-.GUID 42a7b8c9-d0e1-4f23-a456-7b8c9d0e1f23
+.GUID 42c0ffee-a0de-4e1f-a2b3-c4d5e6f7a8b9
 .AUTHOR Alisson Sol
 .COMPANYNAME None
 .COPYRIGHT (c) 2026 Alisson Sol et al.
@@ -52,7 +52,7 @@ function CreateIso {
     }
 
     if (-not (Test-Path -Path $OscdimgPath)) {
-        Throw "Oscdimg.exe not found at path: $OscdimgPath. Install the Windows ADK Deployment Tools or set `-OscdimgPath` to the proper location."
+        Throw "Oscdimg.exe not found at path: $OscdimgPath. Install the Windows ADK Deployment Tools or set ``-OscdimgPath`` to the proper location."
     }
 
     Write-Information "Creating ISO `nfrom '$SourceDir' `nto '$OutputFile' `nwith Volume ID '$VolumeId'..."
