@@ -89,11 +89,10 @@ def main():
             # Grab the first forwarding rule
             forward_url = fwd_resp['forwards'][0].get('location', "None")
 
-        # Get Email Count
+        # Get Email Forwarding Count
+        # NOTE: email/retrieve endpoint returns 404 — not available in the current API.
+        # Porkbun does not expose email forwarding counts via their public API.
         email_count = 0
-        email_resp = get_porkbun_data("email/retrieve", api_key, secret_key, name)
-        if email_resp and email_resp.get('emails'):
-            email_count = len(email_resp['emails'])
 
         # Get Renewal Cost (Lookup by TLD)
         renewal_cost = prices.get(tld, {}).get('renewal', "Unknown")
