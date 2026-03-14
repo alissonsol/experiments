@@ -1,16 +1,27 @@
 import requests
 import dns.resolver
+import json
+import os
+import sys
 import time
 import warnings
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # --- CONFIGURATION ---
-# PORKBUN_API_KEY = "pk1_..." 
-# PORKBUN_SECRET_KEY = "sk1_..."
-PORKBUN_API_KEY = "pk1_..." 
-PORKBUN_SECRET_KEY = "sk1_..."
 DOMAIN = "belohorizonte.com"
+
+# Load Porkbun credentials from porkbun.json
+creds_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "porkbun.json")
+if not os.path.exists(creds_file):
+    print(f"Credentials file not found: {creds_file}")
+    sys.exit(1)
+
+with open(creds_file, 'r') as f:
+    creds = json.load(f)
+
+PORKBUN_API_KEY = creds.get('apikey')
+PORKBUN_SECRET_KEY = creds.get('secretapikey')
 
 def get_porkbun_records():
     url = f"https://api.porkbun.com/api/json/v3/dns/retrieve/{DOMAIN}"
