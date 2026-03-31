@@ -4,10 +4,11 @@ PowerShell module that extracts newly appeared text from sequential screen captu
 
 ## How it works
 
-1. Compares two screenshots (current vs. previous) pixel-by-pixel using compiled C# for performance
-2. Replaces unchanged pixels with a white background, preserving full rows that contain any change
-3. Crops the result to the bounding box of changed rows
-4. Runs Tesseract OCR on the cropped delta image to extract only the new text
+1. Compares two screenshots (current vs. previous) pixel-by-pixel to find changed regions
+2. Crops the current image to the bounding box of changed rows
+3. Runs Tesseract OCR on the cropped delta image to extract only the new text
+
+On Windows, pixel processing uses compiled C# for performance. On macOS/Linux, ImageMagick handles the image diffing and cropping.
 
 When no previous screenshot is provided, the entire current image is treated as new content.
 
@@ -15,7 +16,7 @@ When no previous screenshot is provided, the entire current image is treated as 
 
 - PowerShell 7+
 - [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) installed and available in PATH
-- On macOS: `brew install mono-libgdiplus` (for System.Drawing support)
+- On macOS/Linux: [ImageMagick](https://imagemagick.org/) (`brew install imagemagick`)
 
 ## Usage
 

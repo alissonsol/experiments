@@ -1,30 +1,34 @@
-﻿# Get-NewText.psm1
+# Get-NewText.psm1
 # VERSION: 0.1
 # GUID: 42a2c1d0-e4f5-6789-abcd-ef0123456789
 
-# Load System.Drawing assemblies (cross-platform)
-if ($PSVersionTable.PSEdition -eq 'Core') {
-    # PowerShell 7+ / .NET Core: System.Drawing.Common is needed.
-    # On macOS, also requires: brew install mono-libgdiplus
-    Add-Type -AssemblyName System.Drawing.Common
-} else {
-    Add-Type -AssemblyName System.Drawing
-}
+# --- Platform-specific image processing setup ---
+# System.Drawing.Common on .NET 8+/9 only supports Windows.
+# On macOS/Linux, ImageMagick (magick) is used instead.
 
-# Resolve assembly references for C# compilation.
-# .NET Core splits types across many assemblies; collect all that the C# code needs.
-$referencedAssemblies = @(
-    [System.Drawing.Bitmap],
-    [System.Drawing.Color],
-    [System.Drawing.Rectangle],
-    [System.Drawing.Imaging.PixelFormat],
-    [System.Drawing.Imaging.ImageLockMode],
-    [System.Drawing.Imaging.BitmapData],
-    [System.Runtime.InteropServices.Marshal]
-) | ForEach-Object { $_.Assembly.Location } | Select-Object -Unique
+$script:UseImageMagick = -not $IsWindows
 
-# C# source for pixel processing (runs 100-1000x faster than PowerShell loops)
-$screenDeltaSource = @'
+if (-not $script:UseImageMagick) {
+    # Windows: load System.Drawing and compile C# pixel processor
+    if ($PSVersionTable.PSEdition -eq 'Core') {
+        Add-Type -AssemblyName System.Drawing.Common
+    } else {
+        Add-Type -AssemblyName System.Drawing
+    }
+
+    $referencedAssemblies = @(
+        [System.Drawing.Bitmap],
+        [System.Drawing.Color],
+        [System.Drawing.Rectangle],
+        [System.Drawing.Imaging.PixelFormat],
+        [System.Drawing.Imaging.ImageLockMode],
+        [System.Drawing.Imaging.BitmapData]
+    ) | ForEach-Object { $_.Assembly.Location } |
+        Where-Object { $_ -and (Test-Path $_) } |
+        Select-Object -Unique
+
+    # C# source for pixel processing (runs 100-1000x faster than PowerShell loops)
+    $screenDeltaSource = @'
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -149,11 +153,166 @@ public static class ScreenDelta
 }
 '@
 
-# Only compile if the type is not already loaded in this session.
-# If the C# signature changes, restart the PowerShell session to pick up the new version.
-if (-not ([System.Management.Automation.PSTypeName]'ScreenDelta').Type) {
-    Add-Type -Language CSharp -TypeDefinition $screenDeltaSource -ReferencedAssemblies $referencedAssemblies
+    # Only compile if the type is not already loaded in this session.
+    # If the C# signature changes, restart the PowerShell session to pick up the new version.
+    if (-not ([System.Management.Automation.PSTypeName]'ScreenDelta').Type) {
+        Add-Type -Language CSharp -TypeDefinition $screenDeltaSource -ReferencedAssemblies $referencedAssemblies
+    }
 }
+
+# --- Tesseract helper (shared by both paths) ---
+
+function Find-Tesseract {
+    $tesseractPath = (Get-Command tesseract -ErrorAction SilentlyContinue).Source
+    if (-not $tesseractPath) {
+        $candidates = @(
+            'C:\Program Files\Tesseract-OCR\tesseract.exe'
+            '/usr/local/bin/tesseract'
+            '/opt/homebrew/bin/tesseract'
+        )
+        foreach ($candidate in $candidates) {
+            if (Test-Path $candidate) {
+                $tesseractPath = $candidate
+                break
+            }
+        }
+    }
+    if (-not $tesseractPath) {
+        throw 'Tesseract OCR not found. Install it and add to PATH, or place it in a standard location.'
+    }
+    return $tesseractPath
+}
+
+# --- ImageMagick path (macOS/Linux) ---
+
+function Invoke-ImageMagickDelta {
+    param(
+        [string]$CurrentScreenPath,
+        [string]$PreviousScreenPath,
+        [string]$DebugDir
+    )
+
+    $magickPath = (Get-Command magick -ErrorAction SilentlyContinue).Source
+    if (-not $magickPath) {
+        throw 'ImageMagick not found. Install it (brew install imagemagick) and add to PATH.'
+    }
+
+    Write-Debug "Using ImageMagick at: $magickPath"
+
+    # Copy current screen as debug artifact
+    Copy-Item -Path $CurrentScreenPath -Destination (Join-Path $DebugDir 'CurrentScreen.png') -Force
+
+    if ([string]::IsNullOrEmpty($PreviousScreenPath)) {
+        Write-Debug "No previous screen provided; treating entire image as new."
+        Copy-Item -Path $CurrentScreenPath -Destination (Join-Path $DebugDir 'ocr_input.png') -Force
+        return Join-Path $DebugDir 'ocr_input.png'
+    }
+
+    Copy-Item -Path $PreviousScreenPath -Destination (Join-Path $DebugDir 'PreviousScreen.png') -Force
+
+    # Create pixel-difference image (absolute per-channel difference)
+    $deltaPath = Join-Path $DebugDir 'delta.png'
+    & $magickPath composite $CurrentScreenPath $PreviousScreenPath -compose difference $deltaPath 2>$null
+
+    # Create a binary mask and get bounding box of changed pixels
+    # -format '%@' returns the trim bounding box as WxH+X+Y
+    $trimInfo = & $magickPath convert $deltaPath -threshold 0 -format '%@' info: 2>$null
+    Write-Debug "Trim bounding box: $trimInfo"
+
+    if (-not $trimInfo -or $trimInfo -match '^0x0') {
+        Write-Debug "No pixel changes detected between frames."
+        '' | Set-Content -Path (Join-Path $DebugDir 'OcrResult.txt') -Encoding UTF8
+        return $null
+    }
+
+    # Crop the current image to the bounding box of changed region
+    $croppedPath = Join-Path $DebugDir 'ocr_input.png'
+    & $magickPath convert $CurrentScreenPath -crop $trimInfo +repage $croppedPath 2>$null
+
+    # Save processed text screen debug artifact (delta thresholded)
+    & $magickPath convert $deltaPath -threshold 0 (Join-Path $DebugDir 'ProcessedTextScreen.png') 2>$null
+
+    Write-Debug "Cropped image saved for OCR: $croppedPath"
+    return $croppedPath
+}
+
+# --- System.Drawing path (Windows) ---
+
+function Invoke-DrawingDelta {
+    param(
+        [string]$CurrentScreenPath,
+        [string]$PreviousScreenPath,
+        [string]$DebugDir,
+        [System.Drawing.Color]$BackgroundColor
+    )
+
+    $currentBmp = $null
+    $previousBmp = $null
+    $textBmp = $null
+    $croppedBmp = $null
+    $graphics = $null
+
+    try {
+        Write-Debug "Loading current screen from: $CurrentScreenPath"
+        $currentBmp = [System.Drawing.Bitmap]::new($CurrentScreenPath)
+
+        $width = $currentBmp.Width
+        $height = $currentBmp.Height
+
+        if ([string]::IsNullOrEmpty($PreviousScreenPath)) {
+            Write-Debug "No previous screen provided; creating blank background."
+            $previousBmp = [System.Drawing.Bitmap]::new($width, $height)
+            $graphics = [System.Drawing.Graphics]::FromImage($previousBmp)
+            $graphics.Clear($BackgroundColor)
+            $graphics.Dispose()
+            $graphics = $null
+        } else {
+            Write-Debug "Loading previous screen from: $PreviousScreenPath"
+            $previousBmp = [System.Drawing.Bitmap]::new($PreviousScreenPath)
+        }
+
+        if ($currentBmp.Width -ne $previousBmp.Width -or $currentBmp.Height -ne $previousBmp.Height) {
+            throw "Image dimensions do not match. Current: ${width}x${height}, Previous: $($previousBmp.Width)x$($previousBmp.Height)."
+        }
+
+        Write-Debug "Image dimensions: ${width}x${height}"
+
+        $textBmp = [System.Drawing.Bitmap]::new($width, $height)
+
+        Write-Debug "Running compiled pixel delta extraction..."
+        $delta = [ScreenDelta]::ProcessDelta($currentBmp, $previousBmp, $textBmp, $BackgroundColor)
+
+        # Save debug artifacts
+        $currentBmp.Save((Join-Path $DebugDir 'CurrentScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+        $previousBmp.Save((Join-Path $DebugDir 'PreviousScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+        $textBmp.Save((Join-Path $DebugDir 'ProcessedTextScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+
+        if (-not $delta.HasChanges) {
+            Write-Debug "No pixel changes detected between frames."
+            '' | Set-Content -Path (Join-Path $DebugDir 'OcrResult.txt') -Encoding UTF8
+            return $null
+        }
+
+        Write-Debug "Changes detected in rows $($delta.MinY)..$($delta.MaxY) of $height"
+
+        $croppedBmp = [ScreenDelta]::Crop($textBmp, $delta.MinY, $delta.MaxY)
+        Write-Debug "Cropped to $($croppedBmp.Width)x$($croppedBmp.Height) for OCR"
+
+        $tempImagePath = Join-Path $DebugDir 'ocr_input.png'
+        $croppedBmp.Save($tempImagePath, [System.Drawing.Imaging.ImageFormat]::Png)
+        return $tempImagePath
+    }
+    finally {
+        if ($graphics)    { $graphics.Dispose() }
+        if ($croppedBmp)  { $croppedBmp.Dispose() }
+        if ($textBmp)     { $textBmp.Dispose() }
+        if ($previousBmp) { $previousBmp.Dispose() }
+        if ($currentBmp)  { $currentBmp.Dispose() }
+        Write-Debug "All bitmap resources disposed."
+    }
+}
+
+# --- Public function ---
 
 function Get-NewTextContent {
     <#
@@ -162,14 +321,13 @@ function Get-NewTextContent {
 
     .DESCRIPTION
         Compares two bitmap images pixel-by-pixel to isolate newly appeared content.
-        Unchanged pixels are replaced with the internal background color, and rows
-        containing any change are fully recovered from the current frame to preserve
-        OCR quality. The result is cropped to the bounding box of changed rows before
-        being passed to Tesseract OCR for text extraction.
+        Unchanged pixels are replaced with the background color, and the result is
+        cropped to the bounding box of changed rows before being passed to Tesseract
+        OCR for text extraction.
 
-        Pixel processing is performed in compiled C# for performance.
-        Requires PowerShell 7+. On macOS, also install libgdiplus:
-        brew install mono-libgdiplus.
+        On Windows, pixel processing is performed in compiled C# for performance.
+        On macOS/Linux, ImageMagick is used for image processing.
+        Requires PowerShell 7+.
 
     .PARAMETER CurrentScreenPath
         Path to the current screen capture bitmap file.
@@ -197,8 +355,6 @@ function Get-NewTextContent {
         [string]$PreviousScreenPath
     )
 
-    $BackgroundColor = [System.Drawing.Color]::Black
-
     # Use cross-platform temp directory
     $tempRoot = if ($env:TEMP) { $env:TEMP } elseif ($env:TMPDIR) { $env:TMPDIR } else { '/tmp' }
     $debugDir = Join-Path $tempRoot 'NewText'
@@ -206,104 +362,36 @@ function Get-NewTextContent {
         New-Item -ItemType Directory -Path $debugDir -Force | Out-Null
     }
 
-    $currentBmp = $null
-    $previousBmp = $null
-    $textBmp = $null
-    $croppedBmp = $null
-    $graphics = $null
-
     try {
-        # Load current screen
-        Write-Debug "Loading current screen from: $CurrentScreenPath"
-        $currentBmp = [System.Drawing.Bitmap]::new($CurrentScreenPath)
-
-        $width = $currentBmp.Width
-        $height = $currentBmp.Height
-
-        # Load or create previous screen
-        if ([string]::IsNullOrEmpty($PreviousScreenPath)) {
-            Write-Debug "No previous screen provided; creating blank background."
-            $previousBmp = [System.Drawing.Bitmap]::new($width, $height)
-            $graphics = [System.Drawing.Graphics]::FromImage($previousBmp)
-            $graphics.Clear($BackgroundColor)
-            $graphics.Dispose()
-            $graphics = $null
+        # Run platform-specific image delta processing; returns path to cropped OCR input or $null
+        if ($script:UseImageMagick) {
+            $ocrInputPath = Invoke-ImageMagickDelta -CurrentScreenPath $CurrentScreenPath `
+                -PreviousScreenPath $PreviousScreenPath -DebugDir $debugDir
         } else {
-            Write-Debug "Loading previous screen from: $PreviousScreenPath"
-            $previousBmp = [System.Drawing.Bitmap]::new($PreviousScreenPath)
+            $BackgroundColor = [System.Drawing.Color]::Black
+            $ocrInputPath = Invoke-DrawingDelta -CurrentScreenPath $CurrentScreenPath `
+                -PreviousScreenPath $PreviousScreenPath -DebugDir $debugDir -BackgroundColor $BackgroundColor
         }
 
-        # Dimension validation
-        if ($currentBmp.Width -ne $previousBmp.Width -or $currentBmp.Height -ne $previousBmp.Height) {
-            throw "Image dimensions do not match. Current: ${width}x${height}, Previous: $($previousBmp.Width)x$($previousBmp.Height)."
-        }
-
-        Write-Debug "Image dimensions: ${width}x${height}"
-
-        # Create text screen bitmap and run compiled C# delta processing
-        $textBmp = [System.Drawing.Bitmap]::new($width, $height)
-
-        Write-Debug "Running compiled pixel delta extraction..."
-        $delta = [ScreenDelta]::ProcessDelta($currentBmp, $previousBmp, $textBmp, $BackgroundColor)
-
-        if (-not $delta.HasChanges) {
-            Write-Debug "No pixel changes detected between frames."
-            # Save debug artifacts even when empty
-            $currentBmp.Save((Join-Path $debugDir 'CurrentScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-            $previousBmp.Save((Join-Path $debugDir 'PreviousScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-            $textBmp.Save((Join-Path $debugDir 'ProcessedTextScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-            '' | Set-Content -Path (Join-Path $debugDir 'OcrResult.txt') -Encoding UTF8
+        if (-not $ocrInputPath) {
             return ''
         }
 
-        Write-Debug "Changes detected in rows $($delta.MinY)..$($delta.MaxY) of $height"
-
-        # Crop to bounding box of changed rows (smaller image = faster OCR)
-        $croppedBmp = [ScreenDelta]::Crop($textBmp, $delta.MinY, $delta.MaxY)
-        Write-Debug "Cropped to $($croppedBmp.Width)x$($croppedBmp.Height) for OCR"
-
-        # Save debug artifacts
-        Write-Debug "Saving debug artifacts to: $debugDir"
-        $currentBmp.Save((Join-Path $debugDir 'CurrentScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-        $previousBmp.Save((Join-Path $debugDir 'PreviousScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-        $textBmp.Save((Join-Path $debugDir 'ProcessedTextScreen.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-
-        # Locate Tesseract
-        $tesseractPath = (Get-Command tesseract -ErrorAction SilentlyContinue).Source
-        if (-not $tesseractPath) {
-            # Check common install locations
-            $candidates = @(
-                'C:\Program Files\Tesseract-OCR\tesseract.exe'
-                '/usr/local/bin/tesseract'
-                '/opt/homebrew/bin/tesseract'
-            )
-            foreach ($candidate in $candidates) {
-                if (Test-Path $candidate) {
-                    $tesseractPath = $candidate
-                    break
-                }
-            }
-        }
-        if (-not $tesseractPath) {
-            throw 'Tesseract OCR not found. Install it and add to PATH, or place it in a standard location.'
-        }
+        # Run Tesseract OCR on the cropped image
+        $tesseractPath = Find-Tesseract
         Write-Debug "Using Tesseract at: $tesseractPath"
-
-        # Save cropped image for OCR
-        $tempImagePath = Join-Path $debugDir 'ocr_input.png'
-        $croppedBmp.Save($tempImagePath, [System.Drawing.Imaging.ImageFormat]::Png)
 
         Write-Debug "Running Tesseract OCR..."
         try {
-            $ocrOutput = & $tesseractPath $tempImagePath stdout 2>$null
+            $ocrOutput = & $tesseractPath $ocrInputPath stdout 2>$null
             $ocrText = ($ocrOutput -join "`n").Trim()
         }
         catch {
             throw "Tesseract OCR execution failed: $_"
         }
         finally {
-            if (Test-Path $tempImagePath) {
-                Remove-Item $tempImagePath -Force
+            if (Test-Path $ocrInputPath) {
+                Remove-Item $ocrInputPath -Force
             }
         }
 
@@ -317,14 +405,6 @@ function Get-NewTextContent {
     catch {
         Write-Error "Get-NewTextContent failed: $_"
         throw
-    }
-    finally {
-        if ($graphics)    { $graphics.Dispose() }
-        if ($croppedBmp)  { $croppedBmp.Dispose() }
-        if ($textBmp)     { $textBmp.Dispose() }
-        if ($previousBmp) { $previousBmp.Dispose() }
-        if ($currentBmp)  { $currentBmp.Dispose() }
-        Write-Debug "All bitmap resources disposed."
     }
 }
 
