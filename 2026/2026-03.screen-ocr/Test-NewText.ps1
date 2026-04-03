@@ -13,8 +13,8 @@ $scriptDir = $PSScriptRoot
 Import-Module (Join-Path $scriptDir 'Get-NewText') -Force
 
 # Define input paths
-$currentScreenPath  = Join-Path -Path $scriptDir -ChildPath 'screenshots' -AdditionalChildPath '0002.png'
-$previousScreenPath = Join-Path -Path $scriptDir -ChildPath 'screenshots' -AdditionalChildPath '0001.png'  # Set to $null to test with only the current screen
+$currentScreenPath  = Join-Path -Path $scriptDir -ChildPath 'screenshots' -AdditionalChildPath '0008.png'
+$previousScreenPath = Join-Path -Path $scriptDir -ChildPath 'screenshots' -AdditionalChildPath '0007.png'  # Set to $null to test with only the current screen
 
 Write-Information '=== Get-NewTextContent Test ==='
 Write-Information ''
