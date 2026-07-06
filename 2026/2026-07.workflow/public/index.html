@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Durable Workflows Lab · Restate vs Temporal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>⚙️</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <span class="logo">⚙️</span>
+        <div>
+          <h1>Durable Workflows Lab</h1>
+          <p class="tag">One <code>order-workflow.ts</code> · two engines · side-by-side durable execution</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div id="capabilities" class="caps" title="Engine availability on this machine"></div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- ============ CONTROL RAIL ============ -->
+      <aside class="rail">
+        <section class="panel">
+          <h2>Scenario</h2>
+          <div id="order-summary" class="order-summary"></div>
+          <div class="row">
+            <button id="btn-new" class="btn subtle" title="Discard and create a fresh order">↻ New order</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Guided demos</h2>
+          <p class="hint">Each preset is a scripted sequence. Step through it and watch both columns.</p>
+          <div id="presets" class="presets"></div>
+          <div id="stepper" class="stepper hidden"></div>
+        </section>
+
+        <section class="panel">
+          <h2>Manual controls</h2>
+          <div class="target-select">
+            <span class="lbl">Apply to</span>
+            <div class="segmented" id="target-seg">
+              <button data-target="both" class="active">Both</button>
+              <button data-target="restate">Restate</button>
+              <button data-target="temporal">Temporal</button>
+            </div>
+          </div>
+
+          <div class="controls-grid">
+            <button class="btn primary" data-cmd="start">▶ Start order</button>
+            <button class="btn" data-cmd="signal">📦 Confirm shipment</button>
+            <button class="btn" data-cmd="advance" data-ms="86400000">⏩ +1 day</button>
+            <button class="btn" data-cmd="advance" data-ms="259200000">⏭ Past deadline (3d)</button>
+            <button class="btn warn" data-cmd="restart">♻ Restart worker</button>
+          </div>
+
+          <div class="crash-box">
+            <div class="lbl">Inject a crash</div>
+            <div class="crash-row">
+              <select id="crash-step">
+                <option value="reserveInventory">reserveInventory</option>
+                <option value="chargePayment" selected>chargePayment</option>
+                <option value="sendEmail">sendEmail</option>
+              </select>
+              <select id="crash-when">
+                <option value="before-effect">before side effect (clean)</option>
+                <option value="after-effect" selected>after side effect (at-least-once)</option>
+              </select>
+            </div>
+            <div class="row">
+              <button class="btn danger" data-cmd="arm-crash">💥 Arm crash</button>
+              <button class="btn subtle" data-cmd="clear-crash">Clear</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="real-panel">
+          <h2>Real engines <span class="opt">optional</span></h2>
+          <p class="hint">
+            The live side-by-side above is a <b>faithful simulation</b> — always on, zero setup.
+            The <b>same</b> <code>order-workflow.ts</code> also runs on the <b>real</b> engines when
+            they're installed on this machine:
+          </p>
+          <div id="real-engines"></div>
+          <button id="btn-refresh-caps" class="btn subtle">↻ Re-check availability</button>
+        </section>
+
+        <section class="panel legend">
+          <h2>Legend</h2>
+          <ul>
+            <li><span class="pill s-completed">completed</span> workflow returned a value</li>
+            <li><span class="pill s-suspended">suspended</span> parked on a durable timer / event (free)</li>
+            <li><span class="pill s-crashed">crashed</span> worker died — journal survives</li>
+            <li><span class="pill s-failed">failed</span> terminal error → saga compensated</li>
+            <li><span class="badge replay">replayed</span> returned from the log, <b>not</b> re-run</li>
+            <li><span class="badge attempt">×2</span> at-least-once re-execution</li>
+          </ul>
+        </section>
+      </aside>
+
+      <!-- ============ LANES ============ -->
+      <section class="lanes" id="lanes">
+        <article class="lane" data-engine="restate"></article>
+        <article class="lane" data-engine="temporal"></article>
+      </section>
+    </main>
+
+    <!-- ============ COMPARISON ============ -->
+    <section class="compare">
+      <h2>Same concept, different surface</h2>
+      <p class="hint" id="portable-note"></p>
+      <div class="table-wrap">
+        <table id="concept-table">
+          <thead>
+            <tr><th>Concept</th><th>Restate</th><th>Temporal</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hint faithful" id="faithful-note"></p>
+    </section>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

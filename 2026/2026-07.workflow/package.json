@@ -1,0 +1,26 @@
+{
+  "name": "durable-workflows-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Side-by-side lab for durable workflows: Restate vs Temporal, plus a portable abstraction. Simulated engines run with zero external dependencies; real engines attach when available.",
+  "scripts": {
+    "start": "tsx server/server.ts",
+    "dev": "tsx watch server/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx test/engine.test.ts",
+    "install:real": "npm i @temporalio/worker @temporalio/client @temporalio/workflow @temporalio/activity @restatedev/restate-sdk",
+    "real:temporal:server": "temporal server start-dev",
+    "real:temporal:worker": "tsx real/temporal/worker.ts",
+    "real:temporal:client": "tsx real/temporal/client.ts",
+    "real:restate:server": "restate-server",
+    "real:restate:serve": "tsx real/restate/serve.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "comment": "The dependencies below are OPTIONAL and only needed for real-engine mode. The simulated engines and the whole UI run without them. Install with: npm run install:real (see README).",
+  "optionalDependencies": {}
+}

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"],
+    "strict": true,
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "core/**/*.ts",
+    "sim/**/*.ts",
+    "server/**/*.ts",
+    "test/**/*.ts",
+    "order-workflow.ts"
+  ],
+  "comment": "adapters/, temporal-native/, restate-native/ are excluded from the default typecheck because they import the OPTIONAL real-engine SDKs (@restatedev/*, @temporalio/*). They typecheck once you install those deps for real-engine mode.",
+  "exclude": [
+    "node_modules",
+    "adapters",
+    "temporal-native",
+    "restate-native"
+  ]
+}
