@@ -20,23 +20,35 @@ const ws = require('./workspace');
 const PANEL_TYPE = 'localCodeAI.chatPanel';
 
 // ---------------------------------------------------------------------------
-// Progress words. The "Thinking" indicator (chat webview and the refactor
-// progress notification) cycles through the words in progress.txt, one per
-// line. Falls back to a built-in list if the file is missing or empty.
+// Status lines, one per line in cli\*.txt. The "Thinking" indicator (chat
+// webview and the refactor progress notification) cycles through the words in
+// cli/progress.txt; every finished chat turn signs off with the next line from
+// cli/done.txt, round-robin. Both fall back to built-in lists if the file is
+// missing or empty.
 // ---------------------------------------------------------------------------
 const FALLBACK_PROGRESS_WORDS = [
   'Thinking', 'Pondering', 'Reasoning', 'Reflecting', 'Contemplating',
   'Analyzing', 'Processing', 'Considering', 'Deliberating', 'Evaluating'
 ];
+const FALLBACK_DONE_LINES = [
+  'Done! Ready for more.', 'All set - send the next one.',
+  'Finished! What else can I look at?', 'That one is done - keep them coming.',
+  'Wrapped up. Ready when you are.', 'Done here. What is next?',
+  'Complete! Awaiting your next prompt.', 'Task finished - your move.',
+  'Done! Point me at the next thing.', 'All done. Fire away.'
+];
 
-function loadProgressWords() {
+function loadLineFile(name, fallback) {
   try {
-    const lines = fs.readFileSync(path.join(__dirname, 'progress.txt'), 'utf8')
+    const lines = fs.readFileSync(path.join(__dirname, 'cli', name), 'utf8')
       .split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     if (lines.length) return lines;
   } catch { /* fall through to the built-in list */ }
-  return FALLBACK_PROGRESS_WORDS;
+  return fallback;
 }
+
+function loadProgressWords() { return loadLineFile('progress.txt', FALLBACK_PROGRESS_WORDS); }
+function loadDoneLines() { return loadLineFile('done.txt', FALLBACK_DONE_LINES); }
 
 // ---------------------------------------------------------------------------
 // Session: history + Ollama round trips + the tool loop. Surface-agnostic.
@@ -64,6 +76,7 @@ class ChatSession {
       else if (m.type === 'stop') { if (this.abort) this.abort.abort(); }
       else if (m.type === 'reset') { this.reset(); }
       else if (m.type === 'attach') this.pickAttachments().catch(e => this.fail(e.message || String(e)));
+      else if (m.type === 'openEditor') vscode.commands.executeCommand('localCodeAI.openChatInEditor');
     });
   }
 
@@ -129,6 +142,21 @@ class ChatSession {
         const turn = await this.stream(messages, useTools && round < cfg.chatMaxToolRounds, cfg);
         lastReply = turn.content;
 
+        // Small models routinely write the tool call as JSON text (fenced,
+        // <tool_call>-wrapped, or bare) instead of using the native mechanism;
+        // Ollama cannot parse those into tool_calls, so the raw JSON would end
+        // the turn as the visible "answer". Lift such calls out of the text and
+        // feed them to the normal tool loop.
+        if (!turn.toolCalls.length && useTools && round < cfg.chatMaxToolRounds) {
+          const rescued = extractTextToolCalls(turn.content);
+          if (rescued.calls.length) {
+            this.log(`[chat] rescued ${rescued.calls.length} tool call(s) written as text`);
+            turn.toolCalls = rescued.calls;
+            turn.content = rescued.content;
+            this.post({ type: 'replace', text: turn.content });
+          }
+        }
+
         if (!turn.toolCalls.length) {
           if (turn.content) this.history.push({ role: 'assistant', content: turn.content });
           break;
@@ -153,7 +181,19 @@ class ChatSession {
         if (lastReply) this.history.push({ role: 'assistant', content: lastReply });
       } else {
         this.history.length = historyMark;   // let the user resend after fixing it
-        this.fail(`Ollama not reachable or failed at ${cfg.endpoint}: ${e.message || e}. Is 'ollama serve' running?`);
+        const msg = String(e.message || e);
+        this.fail(`Ollama not reachable or failed at ${cfg.endpoint}: ${msg}. Is 'ollama serve' running?`);
+        // Connection-level failures (refused, or the server died mid-stream)
+        // mean the server is down - offer the one-click fix. Anything else is
+        // the server rejecting the request (broken model, OOM) - point at the
+        // diagnosis command instead.
+        if (/fetch failed|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|socket hang up|terminated|other side closed|ECONNRESET/i.test(msg)) {
+          vscode.window.showErrorMessage(`Local Code AI: cannot reach Ollama at ${cfg.endpoint}.`, 'Start Model')
+            .then(pick => { if (pick === 'Start Model') vscode.commands.executeCommand('localCodeAI.startModel'); });
+        } else {
+          vscode.window.showErrorMessage(`Local Code AI: the model request failed (${msg.slice(0, 140)}).`, 'Check Setup')
+            .then(pick => { if (pick === 'Check Setup') vscode.commands.executeCommand('localCodeAI.checkSetup'); });
+        }
       }
     } finally {
       this.abort = null;
@@ -223,18 +263,150 @@ function parseArgs(raw) {
   try { return JSON.parse(raw); } catch { return {}; }
 }
 
+// Names the model may call; JSON in the reply naming anything else stays prose.
+const TOOL_NAMES = new Set(ws.TOOL_SPECS.map(t => t.function.name));
+
+// Index just past the JSON object starting at text[start] ('{'), honoring
+// strings and escapes; -1 if the braces never balance.
+function scanJsonObject(text, start) {
+  let depth = 0, inString = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inString) {
+      if (c === '\\') i++;
+      else if (c === '"') inString = false;
+    }
+    else if (c === '"') inString = true;
+    else if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) return i + 1; }
+  }
+  return -1;
+}
+
+// Recover tool calls a model wrote as reply text instead of emitting through
+// the native mechanism. Any {"name": ..., "arguments"|"parameters": ...} object
+// naming a real tool counts, wherever it sits (``` fence, <tool_call> tag, or
+// bare). Returns the calls in native tool_calls shape plus the reply text with
+// the JSON (and the wrappers it left empty) removed.
+function extractTextToolCalls(text) {
+  const calls = [];
+  let kept = '', i = 0;
+  while (i < text.length) {
+    if (text[i] !== '{') { kept += text[i++]; continue; }
+    const end = scanJsonObject(text, i);
+    let obj = null;
+    if (end !== -1) {
+      try { obj = JSON.parse(text.slice(i, end)); } catch { /* not JSON - keep as prose */ }
+    }
+    if (obj && typeof obj.name === 'string' && TOOL_NAMES.has(obj.name)) {
+      calls.push({ function: { name: obj.name, arguments: obj.arguments || obj.parameters || {} } });
+      i = end;
+    } else {
+      kept += text[i++];
+    }
+  }
+  if (!calls.length) return { calls, content: text };
+  const content = kept
+    .replace(/```(?:json)?\s*```/g, '')
+    .replace(/<tool_call>\s*<\/tool_call>/g, '')
+    .trim();
+  return { calls, content };
+}
+
 // ---------------------------------------------------------------------------
-// Surface 1: side bar view
+// Surface 1: side bar view. The chat's home is an editor tab, so by default
+// this view is only a LAUNCHER page (no chat session behind it): when it first
+// materializes (the activity-bar click), it closes the side bar and opens the
+// editor-tab chat; if it becomes visible again later, it opens the tab but
+// leaves the side bar alone - the view may have been dragged to the panel or
+// the secondary side bar, where 'closeSidebar' would slam an unrelated view.
+// It becomes a real chat only on request: the "Open Chat in Side Bar" command
+// (one-shot allow flag) or the chatOpenIn=sidebar setting.
 // ---------------------------------------------------------------------------
 class ChatViewProvider {
   constructor(getConfig, log) {
     this.session = new ChatSession(getConfig, log);
+    this.getConfig = getConfig;
+    this.allowSidebar = false;
+    this.view = null;
+    this.showingChat = false;
+    this.resolvedBefore = false;
   }
+
+  allowSidebarOnce() {
+    this.allowSidebar = true;
+    // Consumed when the view resolves; if it is already resolved, swap it to a
+    // chat right now. Either way the flag must not linger into the next
+    // activity-bar click.
+    this.showChat();
+    setTimeout(() => { this.allowSidebar = false; }, 2000);
+  }
+
+  showChat() {
+    if (!this.view || this.showingChat) return;
+    this.showingChat = true;
+    this.view.webview.html = chatHtml('sidebar');
+  }
+
   resolveWebviewView(view) {
+    this.view = view;
     view.webview.options = { enableScripts: true };
-    view.webview.html = chatHtml('sidebar');
     this.session.attach(view.webview);
+    view.onDidDispose(() => {
+      if (this.view === view) { this.view = null; this.showingChat = false; }
+    });
+    // A re-resolve means a fresh webview DOM (view dragged to another
+    // container, sidebar-mode restore): the transcript is gone, so the session
+    // history must go too or the model would answer from invisible context.
+    if (this.resolvedBefore && this.session.history.length) this.session.reset();
+    this.resolvedBefore = true;
+
+    if (this.getConfig().chatOpenIn === 'sidebar' || this.allowSidebar) {
+      this.allowSidebar = false;
+      this.showingChat = true;
+      view.webview.html = chatHtml('sidebar');
+      return;
+    }
+    this.showingChat = false;
+    view.webview.html = launcherHtml();
+    vscode.commands.executeCommand('workbench.action.closeSidebar');
+    vscode.commands.executeCommand('localCodeAI.openChatInEditor');
+    view.onDidChangeVisibility(() => {
+      // Re-shown launcher: open the tab, do not touch the side bar (above).
+      if (view.visible && !this.showingChat) vscode.commands.executeCommand('localCodeAI.openChatInEditor');
+    });
   }
+}
+
+// The launcher page the activity-bar icon lands on when the chat lives in an
+// editor tab. Kept trivial: one message, one button.
+function launcherHtml() {
+  return /* html */ `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+<style>
+  body { font-family: var(--vscode-font-family); color: var(--vscode-foreground); padding: 12px 10px; }
+  p { opacity: 0.85; line-height: 1.5; }
+  button {
+    color: var(--vscode-button-foreground); background: var(--vscode-button-background);
+    border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer;
+  }
+  button:hover { background: var(--vscode-button-hoverBackground); }
+</style>
+</head>
+<body>
+  <p>The chat opens as an <b>editor tab</b>.</p>
+  <button id="open">Open Chat</button>
+  <p>Prefer it here? Run <i>"Local Code AI: Open Chat in Side Bar"</i> or set
+  <i>localCodeAI.chatOpenIn</i> to <i>sidebar</i>.</p>
+<script>
+  const vscodeApi = acquireVsCodeApi();
+  document.getElementById('open').addEventListener('click', () => vscodeApi.postMessage({ type: 'openEditor' }));
+</script>
+</body>
+</html>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -259,6 +431,13 @@ class ChatPanel {
   }
 
   static adopt(panel, getConfig, log) {
+    // Lazy deserialization can hand us a restored tab after 'Open Chat'
+    // already created a live one; keep the live panel, drop the stale tab -
+    // silently swapping the 'current' pointer would strand two chats.
+    if (ChatPanel.current) {
+      panel.dispose();
+      return ChatPanel.current;
+    }
     ChatPanel.current = new ChatPanel(panel, getConfig, log);
     return ChatPanel.current;
   }
@@ -363,6 +542,9 @@ function chatHtml(surface) {
   // tokens arriving. Show a status line that grows a dot per second (up to 6),
   // then moves to the next word from progress.txt, so long waits look alive.
   const PROGRESS_WORDS = ${JSON.stringify(loadProgressWords()).replace(/</g, '\\u003c')};
+  // Sign-off shown when a reply finishes, cycling through cli/done.txt.
+  const DONE_LINES = ${JSON.stringify(loadDoneLines()).replace(/</g, '\\u003c')};
+  let doneCount = 0;
   function renderThinking() {
     thinkingEl.textContent = PROGRESS_WORDS[thinkingWord % PROGRESS_WORDS.length] + '.'.repeat(thinkingDots);
   }
@@ -452,8 +634,14 @@ function chatHtml(surface) {
       hideThinking();
       if (streamEl && !streamEl.textContent) streamEl.remove();
       streamEl = null;
+      addLine('note', DONE_LINES[doneCount++ % DONE_LINES.length]);
       setBusy(false);
       inputEl.focus();
+    }
+    else if (m.type === 'replace') {
+      // A text-form tool call was lifted out of the reply; show what remains.
+      if (!streamEl && m.text) streamEl = addBubble('assistant', '');
+      if (streamEl) streamEl.textContent = m.text;
     }
     else if (m.type === 'tool') {
       // A tool ran mid-reply: close the current bubble so later text starts a new one.
@@ -481,4 +669,4 @@ function chatHtml(surface) {
 </html>`;
 }
 
-module.exports = { ChatViewProvider, ChatPanel, ChatSession, PANEL_TYPE, loadProgressWords };
+module.exports = { ChatViewProvider, ChatPanel, ChatSession, PANEL_TYPE, loadProgressWords, loadDoneLines, extractTextToolCalls };

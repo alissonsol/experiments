@@ -12,19 +12,23 @@ Edits are **auto-applied and saved**. Nothing is ever committed to git.
 
 Ctrl/Cmd+Shift+P → **Local Code AI: Open Chat** opens the chat as a normal
 **editor tab**, so you can move it between groups, split it, or drag it wherever
-you like. The **Local Code AI** icon in the activity bar opens a chat docked in
-the side bar; its title bar has an ↗ button that opens the editor-tab chat. The
-two surfaces keep separate conversations — moving between them does not carry
-the transcript over. Set `localCodeAI.chatOpenIn` to `sidebar` to make
-**Open Chat** prefer the side bar.
+you like. The **Local Code AI** icon in the activity bar is a launcher for the
+same tab: clicking it opens the editor-tab chat and closes the side bar, so the
+chat never squats where the Explorer lives. A chat docked in the side bar is
+still available on request — run **Open Chat in Side Bar**, or set
+`localCodeAI.chatOpenIn` to `sidebar` to make every surface (icon included)
+prefer the side bar. The two surfaces keep separate conversations — moving
+between them does not carry the transcript over.
 
 Type a prompt and press **Enter** (Shift+Enter for a new line). Replies stream
 from the local model. While the model works — before the first token and between
 tool calls — the transcript shows a pulsing status line that cycles through the
-words in `progress.txt` (*Thinking*, *Pondering*, *Reasoning*, ...), growing a
-dot per second (up to 6) before moving to the next word, so long waits (e.g.
-CPU-only inference) are visibly alive. Edit `progress.txt` (one word per line,
-next to `extension.js`) to change the words.
+words in `cli/progress.txt` (*Thinking*, *Pondering*, *Reasoning*, ...), growing
+a dot per second (up to 6) before moving to the next word, so long waits (e.g.
+CPU-only inference) are visibly alive. When the reply finishes, the chat signs
+off with the next line from `cli/done.txt` (*Done! Ready for more.*, ...),
+round-robin, so the end of a long answer is unmistakable. Edit either file (one
+entry per line, in the `cli` folder next to `extension.js`) to change the lines.
 
 ### It knows about your project
 
@@ -47,9 +51,13 @@ what was consulted. Tools are **read-only** and confined to the open workspace
 folders — paths outside them are refused, and the chat never writes files. To
 have the model actually change code, use the refactor commands below.
 
-Tool use needs a tool-capable model (`qwen3-coder`, `qwen2.5-coder`, ...). If the
+Tool use needs a tool-capable model (`qwen3-coder`, `qwen3`, ...). If the
 model rejects tools the chat says so once and carries on with the workspace
-summary alone. Set `localCodeAI.chatTools` to `false` to turn tools off.
+summary alone. Small models often *accept* tools but then write the call as a
+JSON snippet in the reply instead of invoking it; the chat recognizes those
+(fenced, `<tool_call>`-tagged, or bare JSON naming a real tool), runs the tool,
+and keeps the conversation going instead of showing you raw JSON. Set
+`localCodeAI.chatTools` to `false` to turn tools off.
 
 ### Toolbar
 
@@ -75,11 +83,33 @@ The chat uses the `localCodeAI.endpoint`, `localCodeAI.model`,
   the open workspace, writing changes to disk. Shows a confirmation dialog first when
   more than `localCodeAI.maxFilesBeforeWarning` files (default **50**) would be touched.
   The run is cancellable; a summary appears when it finishes.
-- **Local Code AI: Check Setup (Ollama + tools)** - verifies the Ollama endpoint, the
-  model, and each formatter, and prints a report to the *Local Code AI* output channel.
+- **Local Code AI: Check Setup (Ollama + tools)** - verifies the Ollama endpoint, that
+  the model exists **and actually loads**, which models are in memory, and each
+  formatter; prints a report (with fix instructions on failure) to the *Local Code AI*
+  output channel.
+- **Local Code AI: Start Model** - starts the Ollama server if it is down (as a
+  detached external process) and loads the model into memory, so the first prompt
+  answers immediately.
+- **Local Code AI: Stop Model** - asks how far to go: *unload the model* (frees
+  GPU/RAM, server keeps running) or *stop the Ollama server* (frees everything,
+  affects every window using it).
+
+## Model lifecycle
+
+The Ollama server is an **external process**, not part of the extension: one
+instance at `localCodeAI.endpoint` serves every VS Code window (and your
+terminal), and it keeps running when VS Code closes. The extension checks at
+startup that the server is up and the model exists, and shows an actionable
+error if not (with a **Start Model** button). Ollama evicts an idle model from
+memory after ~5 minutes by default, so memory is not held forever even without
+intervention; **Stop Model** frees it immediately, and **Start Model** brings
+everything back (auto-detects the `ollama` binary; override with
+`localCodeAI.ollamaPath`). Both commands manage the server **on this machine**:
+with a remote `localCodeAI.endpoint` they refuse and tell you to act on that
+host instead.
 
 Both refactor commands show a progress notification that cycles through the words
-in `progress.txt` with a growing trail of dots while the model works.
+in `cli/progress.txt` with a growing trail of dots while the model works.
 
 ## Key settings
 
@@ -87,6 +117,7 @@ in `progress.txt` with a growing trail of dots while the model works.
 |---|---|---|
 | `localCodeAI.endpoint` | `http://127.0.0.1:11434` | Ollama server |
 | `localCodeAI.model` | `localcoder` | Model or alias used for chat and refactoring |
+| `localCodeAI.ollamaPath` | (auto-detect) | `ollama` executable used by **Start Model** |
 | `localCodeAI.chatSystemPrompt` | (project-aware local assistant) | System prompt; the workspace snapshot is appended to it |
 | `localCodeAI.chatOpenIn` | `editor` | Where **Open Chat** opens: `editor` tab or `sidebar` |
 | `localCodeAI.chatTools` | `true` | Let the chat read/search the workspace via tools |
@@ -101,8 +132,12 @@ in `progress.txt` with a growing trail of dots while the model works.
 
 ## Troubleshooting
 
-- **"Ollama not reachable"** - start it (`ollama serve`) or re-run the setup script
-  (`local.code.ai.ps1`).
+- **"Ollama not reachable"** - run **Local Code AI: Start Model** (also offered as a
+  button on the error), start it yourself (`ollama serve`), or re-run the setup
+  script (`local.code.ai.ps1`).
+- **"Model not found"** - the store at the endpoint has no `localCodeAI.model`;
+  re-run the setup script to (re)create the alias, or point the setting at an
+  existing model. **Check Setup** lists what is available.
 - **A formatter shows MISSING in Check Setup** - re-run the setup script (it re-fetches
   missing tools), or install the tool yourself; PATH is used as a fallback. Tool
   locations are read from `<root>/tools/paths.json`, where root is the

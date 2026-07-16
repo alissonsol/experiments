@@ -43,7 +43,9 @@ Then reload VS Code and run **Ctrl/Cmd+Shift+P → "Local Code AI: Check Setup (
    Without sudo, the system service and its default model store are kept.
 3. **Downloads a coder model sized to your hardware** — ≥ 20 GB VRAM or ≥ 32 GB
    unified memory → `qwen3-coder:30b` (~19 GB download); ≥ 11 GB VRAM or ≥ 18 GB
-   unified memory → `qwen2.5-coder:14b`; ≥ 7 GB VRAM → `qwen2.5-coder:7b`; below
+   unified memory → `qwen2.5-coder:14b`; ≥ 7 GB VRAM → `qwen3:8b` (the 7B coder
+   fumbles native tool calls, so this tier trades a little coding depth for a
+   chat that can actually read the project); below
    that → `qwen2.5-coder:7b` with an 8k context — and creates the Ollama alias
    **`localcoder`** with an enlarged context window (override with `-ModelTag` /
    `-ContextTokens`).
@@ -57,11 +59,14 @@ Then reload VS Code and run **Ctrl/Cmd+Shift+P → "Local Code AI: Check Setup (
 
 ## Using it in VS Code
 
-**Chat:** Ctrl/Cmd+Shift+P → "Local Code AI: Open Chat" (an editor tab by default),
-or click the **Local Code AI** icon in the activity bar for the side-bar version.
+**Chat:** Ctrl/Cmd+Shift+P → "Local Code AI: Open Chat" (an editor tab by default);
+the **Local Code AI** icon in the activity bar opens the same tab. (A side-bar
+chat is still there on request: "Open Chat in Side Bar", or set
+`localCodeAI.chatOpenIn` to `sidebar`.)
 Enter sends, Shift+Enter adds a newline, replies stream from the local model, and
 **Send** turns into **Stop** mid-reply. While the model works, a pulsing
-*Thinking...* line refreshes every 15 seconds so long waits stay visibly alive.
+*Thinking...* line grows a dot per second so long waits stay visibly alive,
+and each finished reply signs off with a rotating *Done! Ready for more.* line.
 With **Project context** on (the default) each message carries a live workspace
 snapshot and the model can read project files through read-only tools;
 **Active file**, **Selection** and **Attach...** add specific content, and
@@ -71,11 +76,19 @@ snapshot and the model can read project files through read-only tools;
 
 | Command | What it does |
 |---|---|
-| **Open Chat** | opens the chat (editor tab by default; `localCodeAI.chatOpenIn`) |
+| **Open Chat** | opens the chat (editor tab by default; `localCodeAI.chatOpenIn`) — the activity-bar icon opens the same tab |
 | **Open Chat in Editor Tab** / **in Side Bar** | pick a chat surface explicitly |
 | **Refactor & Format Current File** | formatter → LLM refactor + comment cleanup → formatter; applied as an editor edit (undo works) and saved |
 | **Refactor & Format Workspace** | same pipeline over every supported file in the open project; cancellable, with a summary at the end |
-| **Check Setup (Ollama + tools)** | verifies Ollama, the model, and every formatter |
+| **Check Setup (Ollama + tools)** | verifies Ollama, that the model exists and loads, and every formatter — failures come with fix instructions |
+| **Start Model** | starts the Ollama server if down (detached external process, shared by all windows) and loads the model |
+| **Stop Model** | unload the model (free GPU/RAM) or stop the Ollama server entirely |
+
+The Ollama server runs as an **external process**: one instance serves every
+VS Code window and survives closing them; the extension checks it at startup
+and complains (with a Start Model button) when it is missing. Idle models are
+evicted from memory after ~5 minutes by default — Stop Model frees them
+immediately, Start Model warms them back up.
 
 Edits are **auto-applied and saved — never committed**. Review with your normal
 `git diff` and commit when happy.
@@ -95,6 +108,8 @@ files**. Change the threshold in Settings → `localCodeAI.maxFilesBeforeWarning
     ├── extension.js               refactor/format pipeline + activation
     ├── chat.js                    chat: side-bar view + editor tab (webview ↔ Ollama /api/chat)
     ├── workspace.js               workspace snapshot + read-only chat tools (list/read/search, diagnostics)
+    ├── model.js                   Ollama server/model lifecycle (probe, start detached, unload, stop)
+    ├── cli\                       status lines: progress.txt (thinking words), done.txt (sign-offs)
     ├── media\local-code.svg       activity bar icon (talk bubble from a house)
     ├── README.md                  extension README (shipped in the .vsix)
     └── LICENSE                    MIT
@@ -134,7 +149,8 @@ To rebuild just the extension after editing its source:
   fetched per-architecture; if none exists for your platform (e.g. rustfmt on
   some arm64 setups) that language is skipped and everything else keeps working.
 - `ollama serve` is started in the background for the session; after a reboot,
-  start it again (`ollama serve`) or just re-run the script.
+  bring it back with the **Local Code AI: Start Model** command in VS Code,
+  `ollama serve` in a terminal, or by re-running the script.
 
 ## Notes & caveats
 

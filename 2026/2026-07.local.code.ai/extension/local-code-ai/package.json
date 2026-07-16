@@ -2,14 +2,14 @@
   "name": "local-code-ai",
   "displayName": "Local Code AI",
   "description": "Chat with a local Ollama model, plus refactor and format Go, PowerShell, Rust and JavaScript using local formatters. Auto-applies and saves (no git commits).",
-  "version": "0.3.1",
+  "version": "0.5.0",
   "publisher": "localcodeai",
   "author": "Alisson Sol et al.",
   "license": "SEE LICENSE IN LICENSE",
   "homepage": "https://yuruna.com",
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Formatters", "Programming Languages", "Other"],
-  "activationEvents": [],
+  "activationEvents": ["onStartupFinished", "onWebviewPanel:localCodeAI.chatPanel"],
   "main": "./extension.js",
   "contributes": {
     "commands": [
@@ -42,6 +42,16 @@
       {
         "command": "localCodeAI.checkSetup",
         "title": "Check Setup (Ollama + tools)",
+        "category": "Local Code AI"
+      },
+      {
+        "command": "localCodeAI.startModel",
+        "title": "Start Model (Ollama server + load)",
+        "category": "Local Code AI"
+      },
+      {
+        "command": "localCodeAI.stopModel",
+        "title": "Stop Model (free memory / stop server)",
         "category": "Local Code AI"
       }
     ],
@@ -109,7 +119,7 @@
           "type": "string",
           "enum": ["editor", "sidebar"],
           "default": "editor",
-          "description": "Where 'Local Code AI: Open Chat' opens the chat: as an editor tab (movable to any group) or in the activity-bar side bar."
+          "description": "Where the chat opens - from 'Local Code AI: Open Chat' and from the activity-bar icon: as an editor tab (movable to any group) or in the side bar. With 'editor', clicking the activity-bar icon opens the tab and closes the side bar."
         },
         "localCodeAI.chatTools": {
           "type": "boolean",
@@ -160,6 +170,11 @@
           "type": "string",
           "default": "",
           "description": "Root folder created by local.code.ai.ps1 (contains tools/paths.json). Empty = use LOCALCODEAI_HOME env var or the platform default."
+        },
+        "localCodeAI.ollamaPath": {
+          "type": "string",
+          "default": "",
+          "description": "Full path to the ollama executable, used by 'Start Model'. Empty = auto-detect (known install locations, then PATH)."
         },
         "localCodeAI.excludeGlobs": {
           "type": "array",

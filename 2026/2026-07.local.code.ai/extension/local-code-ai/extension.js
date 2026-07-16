@@ -13,6 +13,7 @@ const fsp = require('fs/promises');
 const path = require('path');
 const os = require('os');
 const { ChatViewProvider, ChatPanel, PANEL_TYPE, loadProgressWords } = require('./chat');
+const model = require('./model');
 
 // ---------------------------------------------------------------------------
 // Language registry
@@ -67,6 +68,7 @@ function getConfig() {
     timeoutSeconds: c.get('timeoutSeconds') || 300,
     maxFileKB: c.get('maxFileKB') || 128,
     toolsRoot: c.get('toolsRoot') || '',
+    ollamaPath: c.get('ollamaPath') || '',
     excludeGlobs: c.get('excludeGlobs') || [],
     // Chat workspace awareness
     chatTools: c.get('chatTools') !== false,
@@ -475,15 +477,43 @@ async function cmdCheckSetup(log, channel) {
   channel.show(true);
   log('--- Local Code AI setup check ---');
   log(`Tools root: ${tools.root}`);
-  try {
-    const r = await fetch(`${cfg.endpoint}/api/version`);
-    log(`Ollama at ${cfg.endpoint}: ${r.ok ? 'OK ' + JSON.stringify(await r.json()) : 'HTTP ' + r.status}`);
-    const tags = await (await fetch(`${cfg.endpoint}/api/tags`)).json();
-    const names = (tags.models || []).map(m => m.name);
-    const found = names.some(n => n === cfg.model || n.startsWith(cfg.model + ':'));
-    log(`Model '${cfg.model}': ${found ? 'available' : 'NOT FOUND. Available: ' + names.join(', ')}`);
-  } catch (e) {
-    log(`Ollama at ${cfg.endpoint}: NOT REACHABLE (${e.message || e}). Run the setup script or start 'ollama serve'.`);
+  const server = await model.probeServer(cfg.endpoint);
+  if (!server.up) {
+    log(`Ollama at ${cfg.endpoint}: NOT RUNNING (${server.error})`);
+    log(model.instructions(cfg));
+  } else {
+    log(`Ollama at ${cfg.endpoint}: OK (v${server.version}, external process shared by all windows)`);
+    try {
+      const m = await model.probeModel(cfg.endpoint, cfg.model);
+      if (!m.found) {
+        log(`Model '${cfg.model}': NOT FOUND. Available: ${m.names.join(', ') || '(none)'}`);
+        log(model.instructions(cfg));
+      } else {
+        log(`Model '${cfg.model}': available`);
+        const loaded = await model.loadedModels(cfg.endpoint).catch(() => []);
+        log(`Loaded in memory: ${loaded.join(', ') || '(none - loads on first use, evicted after ~5 idle minutes)'}`);
+        // "Available" in the store is not "available for use": actually load it
+        // once so a broken alias or an out-of-memory condition surfaces here,
+        // not on the user's first prompt.
+        log(`Loading '${cfg.model}' to verify it answers (first load can take a while)...`);
+        try {
+          const ms = await model.loadModel(cfg.endpoint, cfg.model, cfg.timeoutSeconds * 1000);
+          log(`Model loads: OK (${(ms / 1000).toFixed(1)}s)`);
+        } catch (e) {
+          if (e && (e.name === 'TimeoutError' || /timeout/i.test(String(e.message || e)))) {
+            // The client gave up but the server keeps loading - a slow disk or
+            // CPU-only box is not a broken install.
+            log(`Model loads: still loading after ${cfg.timeoutSeconds}s - it usually finishes shortly. ` +
+              `Try again, or raise 'localCodeAI.timeoutSeconds' on slow machines.`);
+          } else {
+            log(`Model loads: FAILED (${e.message || e})`);
+            log(model.instructions(cfg));
+          }
+        }
+      }
+    } catch (e) {
+      log(`Model '${cfg.model}': check failed (${e.message || e})`);
+    }
   }
   const probes = [
     ['gofumpt', tools.gofumpt, ['--version'], null],
@@ -508,6 +538,155 @@ async function cmdCheckSetup(log, channel) {
 }
 
 // ---------------------------------------------------------------------------
+// Model lifecycle commands
+// ---------------------------------------------------------------------------
+function showModelError(message, cfg, log) {
+  log(`[model] ${message}`);
+  log(model.instructions(cfg));
+  vscode.window.showErrorMessage(`Local Code AI: ${message}`, 'Instructions').then(pick => {
+    if (pick === 'Instructions') vscode.commands.executeCommand('localCodeAI.checkSetup');
+  });
+}
+
+async function cmdStartModel(log) {
+  const cfg = getConfig();
+  await vscode.window.withProgress(
+    { location: vscode.ProgressLocation.Notification, title: 'Local Code AI: starting model', cancellable: false },
+    async progress => {
+      progress.report({ message: `checking ${cfg.endpoint}...` });
+      let server = await model.probeServer(cfg.endpoint);
+      if (!server.up) {
+        if (!model.localHostPort(cfg.endpoint)) {
+          showModelError(`endpoint ${cfg.endpoint} is not on this machine - start Ollama on that host instead.`, cfg, log);
+          return;
+        }
+        progress.report({ message: "starting 'ollama serve' (external, shared by all windows)..." });
+        const spawned = await model.spawnServer(cfg, log);
+        if (!spawned.ok) { showModelError(spawned.error, cfg, log); return; }
+        server = await model.waitForServer(cfg.endpoint, 30);
+        if (!server.up) { showModelError(`Ollama did not come up at ${cfg.endpoint} (${server.error}).`, cfg, log); return; }
+      }
+      let found;
+      try { found = (await model.probeModel(cfg.endpoint, cfg.model)).found; }
+      catch (e) { showModelError(`could not list models: ${e.message || e}`, cfg, log); return; }
+      if (!found) { showModelError(`model '${cfg.model}' is not in the Ollama store.`, cfg, log); return; }
+      progress.report({ message: `loading '${cfg.model}' into memory (first load can take a while)...` });
+      try {
+        const ms = await model.loadModel(cfg.endpoint, cfg.model, cfg.timeoutSeconds * 1000);
+        log(`[model] '${cfg.model}' loaded in ${(ms / 1000).toFixed(1)}s`);
+        vscode.window.showInformationMessage(
+          `Local Code AI: '${cfg.model}' is up at ${cfg.endpoint}. Idle models are evicted after ~5 minutes; use 'Stop Model' to free memory now.`);
+      } catch (e) {
+        if (e && (e.name === 'TimeoutError' || /timeout/i.test(String(e.message || e)))) {
+          log(`[model] '${cfg.model}' still loading after ${cfg.timeoutSeconds}s - the server keeps loading in the background`);
+          vscode.window.showWarningMessage(
+            `Local Code AI: '${cfg.model}' is still loading after ${cfg.timeoutSeconds}s - it usually finishes shortly. ` +
+            `Raise 'localCodeAI.timeoutSeconds' on slow machines.`);
+        } else {
+          showModelError(`model '${cfg.model}' failed to load: ${e.message || e}`, cfg, log);
+        }
+      }
+    });
+}
+
+async function cmdStopModel(log) {
+  const cfg = getConfig();
+  const pick = await vscode.window.showQuickPick([
+    {
+      label: '$(circle-slash) Unload model',
+      description: `frees GPU/RAM now, '${cfg.model}' reloads on the next prompt`,
+      action: 'unload'
+    },
+    {
+      label: '$(debug-stop) Stop Ollama server',
+      description: 'frees everything; affects every window and terminal using it',
+      action: 'stop'
+    }
+  ], { placeHolder: 'Bring the model down - how far?' });
+  if (!pick) return;
+
+  const server = await model.probeServer(cfg.endpoint);
+  if (pick.action === 'unload') {
+    if (!server.up) { vscode.window.showInformationMessage('Local Code AI: Ollama is not running - nothing to unload.'); return; }
+    try {
+      const evicted = await model.unloadModel(cfg.endpoint, cfg.model);
+      log(`[model] unload '${cfg.model}': ${evicted ? 'memory freed' : 'still resident'}`);
+      if (evicted) {
+        vscode.window.showInformationMessage(`Local Code AI: '${cfg.model}' unloaded - memory freed, server still running.`);
+      } else {
+        vscode.window.showWarningMessage(
+          `Local Code AI: '${cfg.model}' is still loaded - another window or terminal is likely using it; it unloads when that finishes.`);
+      }
+    } catch (e) {
+      vscode.window.showErrorMessage(`Local Code AI: unload failed: ${e.message || e}`);
+    }
+    return;
+  }
+  if (!model.localHostPort(cfg.endpoint)) {
+    vscode.window.showWarningMessage(
+      `Local Code AI: endpoint ${cfg.endpoint} is not on this machine - stop Ollama on that host instead.`);
+    return;
+  }
+  if (server.up) {
+    // Best effort: release the big allocation before the process goes away.
+    await model.unloadModel(cfg.endpoint, cfg.model).catch(() => { });
+  }
+  const results = await model.stopServer(log);
+  const after = await model.probeServer(cfg.endpoint);
+  if (after.up) {
+    vscode.window.showWarningMessage(`Local Code AI: a server still answers at ${cfg.endpoint} - it may run under another user or as a service (${results.join('; ')}).`);
+  } else {
+    vscode.window.showInformationMessage(`Local Code AI: Ollama stopped (${results.join('; ')}). Bring it back with 'Start Model'.`);
+  }
+}
+
+// Activation-time availability check: quiet when everything is fine, one
+// actionable notification when it is not.
+async function checkModelAtStartup(log) {
+  const cfg = getConfig();
+  const server = await model.probeServer(cfg.endpoint);
+  if (!server.up) {
+    log(`[model] Ollama not running at ${cfg.endpoint} (${server.error})`);
+    log(model.instructions(cfg));
+    const pick = await vscode.window.showWarningMessage(
+      `Local Code AI: Ollama is not running at ${cfg.endpoint} - chat and refactors need it.`,
+      'Start Model', 'Instructions');
+    if (pick === 'Start Model') vscode.commands.executeCommand('localCodeAI.startModel');
+    else if (pick === 'Instructions') vscode.commands.executeCommand('localCodeAI.checkSetup');
+    return;
+  }
+  try {
+    const m = await model.probeModel(cfg.endpoint, cfg.model);
+    if (!m.found) {
+      log(`[model] '${cfg.model}' missing at ${cfg.endpoint}; available: ${m.names.join(', ') || '(none)'}`);
+      log(model.instructions(cfg));
+      const pick = await vscode.window.showErrorMessage(
+        `Local Code AI: model '${cfg.model}' is not in the Ollama store - re-run the setup script (local.code.ai.ps1).`,
+        'Instructions');
+      if (pick === 'Instructions') vscode.commands.executeCommand('localCodeAI.checkSetup');
+      return;
+    }
+    // Cheap usability check (reads the manifest, no multi-GB load): catches a
+    // broken alias at startup instead of on the first prompt. The full
+    // load-it-and-see verification lives in Check Setup.
+    try {
+      await model.showModel(cfg.endpoint, cfg.model);
+    } catch (e) {
+      log(`[model] '${cfg.model}' is listed but its manifest is unreadable (${e.message || e})`);
+      log(model.instructions(cfg));
+      const pick = await vscode.window.showErrorMessage(
+        `Local Code AI: model '${cfg.model}' exists but looks broken (${e.message || e}) - re-run the setup script.`,
+        'Instructions');
+      if (pick === 'Instructions') vscode.commands.executeCommand('localCodeAI.checkSetup');
+      return;
+    }
+    log(`[model] '${cfg.model}' available at ${cfg.endpoint} (server v${server.version}); run 'Check Setup' for a full load test`);
+  } catch (e) {
+    log(`[model] startup check failed: ${e.message || e}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Activation
 // ---------------------------------------------------------------------------
 function activate(context) {
@@ -519,7 +698,12 @@ function activate(context) {
   }
   const chatProvider = new ChatViewProvider(getConfig, log);
   const openInEditor = () => ChatPanel.createOrShow(getConfig, log);
-  const openInSidebar = () => vscode.commands.executeCommand('localCodeAI.chatView.focus');
+  const openInSidebar = () => {
+    // The sidebar view normally bounces to the editor tab (chat lives in a
+    // tab); an explicit "in Side Bar" request is the one exception.
+    chatProvider.allowSidebarOnce();
+    return vscode.commands.executeCommand('localCodeAI.chatView.focus');
+  };
   context.subscriptions.push(
     channel,
     vscode.window.registerWebviewViewProvider('localCodeAI.chatView', chatProvider,
@@ -534,8 +718,12 @@ function activate(context) {
     vscode.commands.registerCommand('localCodeAI.openChatInSidebar', openInSidebar),
     vscode.commands.registerCommand('localCodeAI.refactorCurrentFile', () => cmdCurrentFile(log).catch(e => { log('[fatal] ' + (e.stack || e)); vscode.window.showErrorMessage('Local Code AI: ' + (e.message || e)); })),
     vscode.commands.registerCommand('localCodeAI.refactorWorkspace', () => cmdWorkspace(log, channel).catch(e => { log('[fatal] ' + (e.stack || e)); vscode.window.showErrorMessage('Local Code AI: ' + (e.message || e)); })),
-    vscode.commands.registerCommand('localCodeAI.checkSetup', () => cmdCheckSetup(log, channel).catch(e => log('[fatal] ' + (e.stack || e))))
+    vscode.commands.registerCommand('localCodeAI.checkSetup', () => cmdCheckSetup(log, channel).catch(e => log('[fatal] ' + (e.stack || e)))),
+    vscode.commands.registerCommand('localCodeAI.startModel', () => cmdStartModel(log).catch(e => { log('[fatal] ' + (e.stack || e)); vscode.window.showErrorMessage('Local Code AI: ' + (e.message || e)); })),
+    vscode.commands.registerCommand('localCodeAI.stopModel', () => cmdStopModel(log).catch(e => { log('[fatal] ' + (e.stack || e)); vscode.window.showErrorMessage('Local Code AI: ' + (e.message || e)); }))
   );
+  // Verify the model is reachable without blocking activation.
+  checkModelAtStartup(log).catch(e => log('[model] startup check crashed: ' + (e.stack || e)));
 }
 
 function deactivate() { }

@@ -330,11 +330,18 @@ function Get-NvidiaInfo {
 function Select-ModelTier {
     param([double]$VramGB, [double]$UnifiedGB)
     # Tiers keyed to what actually fits at Q4 with a real context window.
+    # The ~8 GB GPU tier is qwen3:8b, not qwen2.5-coder:7b: the 7B coder
+    # advertises tool support but writes its tool calls as ```json text instead
+    # of the <tool_call> format its template requires, so Ollama never returns
+    # them as tool_calls and the chat's project tools degrade to raw JSON in
+    # the transcript. qwen3:8b emits native tool calls reliably.
     if ($VramGB -ge 20) { return [pscustomobject]@{ Tag = 'qwen3-coder:30b'; Ctx = 32768; DlGB = 19; Note = 'MoE 30B (3.3B active) - best coder for 24 GB cards' } }
     if ($VramGB -ge 11) { return [pscustomobject]@{ Tag = 'qwen2.5-coder:14b'; Ctx = 16384; DlGB = 9; Note = '14B dense coder' } }
-    if ($VramGB -ge 7) { return [pscustomobject]@{ Tag = 'qwen2.5-coder:7b'; Ctx = 16384; DlGB = 5; Note = '7B dense coder' } }
+    if ($VramGB -ge 7) { return [pscustomobject]@{ Tag = 'qwen3:8b'; Ctx = 16384; DlGB = 6; Note = '8B general model - reliable native tool calling' } }
     if ($UnifiedGB -ge 32) { return [pscustomobject]@{ Tag = 'qwen3-coder:30b'; Ctx = 32768; DlGB = 19; Note = 'Apple unified memory - MoE 30B' } }
     if ($UnifiedGB -ge 18) { return [pscustomobject]@{ Tag = 'qwen2.5-coder:14b'; Ctx = 16384; DlGB = 9; Note = 'Apple unified memory - 14B' } }
+    # CPU tier stays on the 7B coder: it answers faster than a thinking model
+    # on CPU, and the chat recovers its text-form tool calls (see chat.js).
     return [pscustomobject]@{ Tag = 'qwen2.5-coder:7b'; Ctx = 8192; DlGB = 5; Note = 'no/low GPU detected - CPU inference will be SLOW' }
 }
 
@@ -770,6 +777,9 @@ function Copy-ExtensionSource {
     if (-not (Test-Path (Join-Path $sourceDir 'package.json'))) {
         throw "Extension source not found at $sourceDir - it ships alongside this script; restore the 'extension' folder and re-run."
     }
+    # Mirror, don't merge: a plain overwrite-copy keeps files that were deleted
+    # or moved in the source, and vsce would package the strays forever.
+    if (Test-Path $Dirs.ExtSrc) { Remove-Item $Dirs.ExtSrc -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $Dirs.ExtSrc | Out-Null
     Copy-Item -Path (Join-Path $sourceDir '*') -Destination $Dirs.ExtSrc -Recurse -Force
     Write-Ok "extension source $sourceDir -> $($Dirs.ExtSrc)"
