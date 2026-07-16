@@ -95,6 +95,10 @@
 .NOTES
     Requires PowerShell 7+ (pwsh). On Windows: winget install Microsoft.PowerShell
 #>
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', '',
+    Justification = 'False positive: each of these parameters is consumed inside a function defined later in this script.')]
 [CmdletBinding()]
 param(
     [string]$Root = '',
@@ -258,7 +262,7 @@ function Get-GitHubAssetUrl {
     return $null
 }
 
-function Find-Command {
+function Find-CommandPath {
     param([string]$Name)
     $command = Get-Command $Name -ErrorAction SilentlyContinue
     if ($command) { return $command.Source }
@@ -294,12 +298,12 @@ function Get-FreeDiskGB {
             Select-Object -First 1
         if ($drive) { return [math]::Round($drive.AvailableFreeSpace / 1GB, 1) }
     }
-    catch { }
+    catch { Write-Debug "Could not measure free space on '$Path': $_" }
     return -1
 }
 
 function Get-NvidiaInfo {
-    $smi = Find-Command 'nvidia-smi'
+    $smi = Find-CommandPath 'nvidia-smi'
     if (-not $smi) {
         # Default install location is not always on PATH on Windows.
         $path = "$env:SystemRoot\System32\nvidia-smi.exe"
@@ -345,7 +349,7 @@ function Select-ModelTier {
     return [pscustomobject]@{ Tag = 'qwen2.5-coder:7b'; Ctx = 8192; DlGB = 5; Note = 'no/low GPU detected - CPU inference will be SLOW' }
 }
 
-function Test-Prerequisites {
+function Test-Prerequisite {
     Write-Step 'Checking prerequisites (memory / GPU / disk)'
     $ramGB = Get-TotalMemoryGB
     if ($ramGB -ge 32) { Write-Ok  "RAM: $ramGB GB" }
@@ -408,18 +412,18 @@ function Install-OllamaPortable {
     if (-not $bin) { throw "no ollama binary found inside $archive" }
     & chmod +x $bin.FullName | Out-Host
     $env:PATH = "$($bin.DirectoryName):$env:PATH"
-    Persist-UnixPathEntry -Dir $bin.DirectoryName
+    Save-UnixPathEntry -Dir $bin.DirectoryName
     Write-Ok "Ollama (portable): $($bin.FullName)"
     return $bin.FullName
 }
 
-function Ensure-Ollama {
+function Install-Ollama {
     Write-Step 'Ensuring Ollama is installed'
-    $found = Find-Command 'ollama'
+    $found = Find-CommandPath 'ollama'
     if ($found) { Write-Ok "Ollama already installed: $found"; return $found }
 
     if ($script:OS -eq 'windows') {
-        $winget = Find-Command 'winget'
+        $winget = Find-CommandPath 'winget'
         $installed = $false
         if ($winget) {
             Write-Inf 'installing via winget (Ollama.Ollama)...'
@@ -444,12 +448,12 @@ function Ensure-Ollama {
                 return $candidate
             }
         }
-        $found = Find-Command 'ollama'
+        $found = Find-CommandPath 'ollama'
         if ($found) { Write-Ok "Ollama installed: $found"; return $found }
         throw 'Ollama installation did not produce ollama.exe - install manually from https://ollama.com/download'
     }
     elseif ($script:OS -eq 'macos') {
-        $brew = Find-Command 'brew'
+        $brew = Find-CommandPath 'brew'
         if (-not $brew) {
             # Homebrew is often installed but not on pwsh's PATH.
             foreach ($candidate in @('/opt/homebrew/bin/brew', '/usr/local/bin/brew')) {
@@ -461,7 +465,7 @@ function Ensure-Ollama {
             # Out-Host keeps brew's chatter off this function's output stream,
             # which is the ollama path the caller returns.
             & $brew install ollama | Out-Host
-            $found = Find-Command 'ollama'
+            $found = Find-CommandPath 'ollama'
             if (-not $found) {
                 foreach ($candidate in @('/opt/homebrew/bin/ollama', '/usr/local/bin/ollama')) {
                     if (Test-Path $candidate) { $found = $candidate; break }
@@ -473,10 +477,10 @@ function Ensure-Ollama {
         return Install-OllamaPortable -Patterns @('ollama-darwin.tgz', 'Ollama-darwin.zip')
     }
     else {
-        if (Find-Command 'curl') {
+        if (Find-CommandPath 'curl') {
             Write-Inf 'running official install script (may prompt for sudo)...'
             & bash -c 'curl -fsSL https://ollama.com/install.sh | sh' | Out-Host
-            $found = Find-Command 'ollama'
+            $found = Find-CommandPath 'ollama'
             if ($found) { Write-Ok "Ollama installed: $found"; return $found }
             Write-Wrn 'install script did not complete - falling back to a portable build'
         }
@@ -498,7 +502,7 @@ function Wait-OllamaApi {
     return $false
 }
 
-function Configure-OllamaModelStore {
+function Initialize-OllamaModelStore {
     param([string]$OllamaCmd)
     Write-Step 'Configuring Ollama model store + starting server'
     $endpoint = 'http://127.0.0.1:11434'
@@ -518,14 +522,14 @@ function Configure-OllamaModelStore {
             # The packaged ollama.service runs as its own 'ollama' user, which cannot
             # read a model store under this user's home directory. Disable it and let
             # this script run a per-user 'ollama serve' instead.
-            $systemctl = Find-Command 'systemctl'
+            $systemctl = Find-CommandPath 'systemctl'
             $hasService = $false
             if ($systemctl) {
                 $units = & $systemctl list-unit-files ollama.service 2>$null
                 if (($units -join ' ') -match 'ollama\.service') { $hasService = $true }
             }
             if ($hasService) {
-                $sudoOk = [bool](Find-Command 'sudo')
+                $sudoOk = [bool](Find-CommandPath 'sudo')
                 if ($sudoOk -and $Yes) {
                     # Non-interactive run: never hang on a sudo password prompt.
                     & sudo -n true 2>$null
@@ -546,13 +550,13 @@ function Configure-OllamaModelStore {
             }
             if ($env:OLLAMA_MODELS) {
                 & pkill -x ollama 2>$null   # restart any user-level server with the new store
-                Persist-UnixEnvLine -Name 'OLLAMA_MODELS' -Value $Dirs.Models
+                Save-UnixEnvLine -Name 'OLLAMA_MODELS' -Value $Dirs.Models
             }
         }
         else {
             # --- macOS path (prepared) ---
             & launchctl setenv OLLAMA_MODELS $Dirs.Models 2>$null | Out-Host
-            Persist-UnixEnvLine -Name 'OLLAMA_MODELS' -Value $Dirs.Models
+            Save-UnixEnvLine -Name 'OLLAMA_MODELS' -Value $Dirs.Models
             & pkill -x Ollama 2>$null
             & pkill -x ollama 2>$null
         }
@@ -576,7 +580,7 @@ function Configure-OllamaModelStore {
     return $endpoint
 }
 
-function Ensure-Model {
+function Install-Model {
     param([string]$OllamaCmd)
     Write-Step "Pulling model $($script:Tier.Tag) and creating alias '$ModelAlias' (num_ctx=$($script:Tier.Ctx))"
     $have = ''
@@ -602,8 +606,8 @@ function Ensure-Model {
 # =============================================================================
 #  3) Formatter toolchain (use installed, fetch missing)
 # =============================================================================
-function Ensure-Gofumpt {
-    $existing = Find-Command 'gofumpt'
+function Install-Gofumpt {
+    $existing = Find-CommandPath 'gofumpt'
     if ($existing) { Write-Ok "gofumpt (system): $existing"; return $existing }
     $dest = Join-Path $Dirs.ToolsBin "gofumpt$($script:Exe)"
     if (Test-Path $dest) { Write-Ok "gofumpt (cached): $dest"; return $dest }
@@ -621,8 +625,8 @@ function Ensure-Gofumpt {
     return $dest
 }
 
-function Ensure-Rustfmt {
-    $existing = Find-Command 'rustfmt'
+function Install-Rustfmt {
+    $existing = Find-CommandPath 'rustfmt'
     if ($existing) { Write-Ok "rustfmt (system): $existing"; return $existing }
     $dest = Join-Path $Dirs.ToolsBin "rustfmt$($script:Exe)"
     if (Test-Path $dest) { Write-Ok "rustfmt (cached): $dest"; return $dest }
@@ -657,10 +661,10 @@ function Ensure-Rustfmt {
     return $dest
 }
 
-function Ensure-NodePortable {
-    $node = Find-Command 'node'
-    $npm = Find-Command 'npm'
-    $npx = Find-Command 'npx'
+function Install-NodePortable {
+    $node = Find-CommandPath 'node'
+    $npm = Find-CommandPath 'npm'
+    $npx = Find-CommandPath 'npx'
     if ($node -and $npm -and $npx) {
         if ($script:OS -eq 'windows') {
             # Get-Command resolves npm/npx to their .ps1 shims, which rebuild the
@@ -703,7 +707,7 @@ function Ensure-NodePortable {
     return [pscustomobject]@{ Node = $node; Npm = $npm; Npx = $npx }
 }
 
-function Ensure-Prettier {
+function Install-Prettier {
     param($NodeInfo)
     $cli = Join-Path $Dirs.Prettier 'node_modules\prettier\bin\prettier.cjs'
     if ($script:OS -ne 'windows') { $cli = Join-Path $Dirs.Prettier 'node_modules/prettier/bin/prettier.cjs' }
@@ -717,7 +721,7 @@ function Ensure-Prettier {
     return $null
 }
 
-function Ensure-PSScriptAnalyzer {
+function Install-PSScriptAnalyzer {
     $available = Get-Module -Name PSScriptAnalyzer -ListAvailable -ErrorAction SilentlyContinue
     if ($available) {
         Write-Ok "PSScriptAnalyzer (system): v$(($available | Select-Object -First 1).Version)"
@@ -739,27 +743,27 @@ function Ensure-PSScriptAnalyzer {
     }
 }
 
-function Ensure-Tools {
+function Install-Tool {
     Write-Step 'Ensuring formatter toolchain (use installed, fetch missing)'
     $manifest = [ordered]@{}
     $manifest.generatedBy = 'local.code.ai.ps1'
     $manifest.generatedAt = (Get-Date -Format 'o')
     $manifest.pwsh = (Get-Command pwsh).Source
 
-    try { $manifest.gofumpt = Ensure-Gofumpt } catch { Write-Wrn "gofumpt: $($_.Exception.Message)"; $manifest.gofumpt = $null }
-    try { $manifest.rustfmt = Ensure-Rustfmt } catch { Write-Wrn "rustfmt: $($_.Exception.Message)"; $manifest.rustfmt = $null }
+    try { $manifest.gofumpt = Install-Gofumpt } catch { Write-Wrn "gofumpt: $($_.Exception.Message)"; $manifest.gofumpt = $null }
+    try { $manifest.rustfmt = Install-Rustfmt } catch { Write-Wrn "rustfmt: $($_.Exception.Message)"; $manifest.rustfmt = $null }
 
     $script:NodeInfo = $null
-    try { $script:NodeInfo = Ensure-NodePortable } catch { Write-Wrn "node: $($_.Exception.Message)" }
+    try { $script:NodeInfo = Install-NodePortable } catch { Write-Wrn "node: $($_.Exception.Message)" }
     if ($script:NodeInfo) {
         $manifest.node = $script:NodeInfo.Node
-        try { $manifest.prettierCli = Ensure-Prettier -NodeInfo $script:NodeInfo } catch { Write-Wrn "prettier: $($_.Exception.Message)"; $manifest.prettierCli = $null }
+        try { $manifest.prettierCli = Install-Prettier -NodeInfo $script:NodeInfo } catch { Write-Wrn "prettier: $($_.Exception.Message)"; $manifest.prettierCli = $null }
     }
     else {
         $manifest.node = $null; $manifest.prettierCli = $null
     }
 
-    try { $manifest.psModulesPath = Ensure-PSScriptAnalyzer } catch { Write-Wrn "PSScriptAnalyzer: $($_.Exception.Message)"; $manifest.psModulesPath = $null }
+    try { $manifest.psModulesPath = Install-PSScriptAnalyzer } catch { Write-Wrn "PSScriptAnalyzer: $($_.Exception.Message)"; $manifest.psModulesPath = $null }
 
     $manifestPath = Join-Path $Dirs.Tools 'paths.json'
     $manifest | ConvertTo-Json | Set-Content -Path $manifestPath -Encoding utf8
@@ -773,7 +777,7 @@ function Ensure-Tools {
 # =============================================================================
 function Copy-ExtensionSource {
     Write-Step 'Copying extension source'
-    $sourceDir = Join-Path $PSScriptRoot 'extension' 'local-code-ai'
+    $sourceDir = Join-Path -Path $PSScriptRoot -ChildPath 'extension' -AdditionalChildPath 'local-code-ai'
     if (-not (Test-Path (Join-Path $sourceDir 'package.json'))) {
         throw "Extension source not found at $sourceDir - it ships alongside this script; restore the 'extension' folder and re-run."
     }
@@ -786,7 +790,7 @@ function Copy-ExtensionSource {
 }
 
 function Find-VSCodeCli {
-    $code = Find-Command 'code'
+    $code = Find-CommandPath 'code'
     if ($code) { return $code }
 
     $commonPaths = @(
@@ -807,7 +811,7 @@ function Find-VSCodeCli {
 
 function Build-And-InstallExtension {
     Write-Step 'Building and installing extension'
-    if (-not $script:NodeInfo) { $script:NodeInfo = Ensure-NodePortable }   # -SkipTools runs land here
+    if (-not $script:NodeInfo) { $script:NodeInfo = Install-NodePortable }   # -SkipTools runs land here
     $vsixPath = Join-Path $Dirs.Extension 'local-code-ai.vsix'
     if (Test-Path $vsixPath) { Remove-Item $vsixPath }
 
@@ -840,17 +844,17 @@ function Build-And-InstallExtension {
 # =============================================================================
 #  Environment persistence
 # =============================================================================
-function Get-UnixProfileFiles {
+function Get-UnixProfileFile {
     # zsh is the macOS default shell and does not read ~/.profile.
     $files = @((Join-Path $HOME '.profile'))
     if ($script:OS -eq 'macos') { $files += (Join-Path $HOME '.zprofile') }
     return $files
 }
 
-function Persist-UnixEnvLine {
+function Save-UnixEnvLine {
     param([string]$Name, [string]$Value)
     $line = "export $Name=`"$Value`""
-    foreach ($profileFile in Get-UnixProfileFiles) {
+    foreach ($profileFile in Get-UnixProfileFile) {
         $existing = ''
         if (Test-Path $profileFile) { $existing = Get-Content $profileFile -Raw }
         if ($existing -notmatch [regex]::Escape("$Name=")) {
@@ -860,10 +864,10 @@ function Persist-UnixEnvLine {
     }
 }
 
-function Persist-UnixPathEntry {
+function Save-UnixPathEntry {
     param([string]$Dir)
     $line = 'export PATH="' + $Dir + ':$PATH"'
-    foreach ($profileFile in Get-UnixProfileFiles) {
+    foreach ($profileFile in Get-UnixProfileFile) {
         $existing = ''
         if (Test-Path $profileFile) { $existing = Get-Content $profileFile -Raw }
         if ($existing -notmatch [regex]::Escape($Dir)) {
@@ -873,12 +877,12 @@ function Persist-UnixPathEntry {
     }
 }
 
-function Persist-HomeVar {
+function Save-HomeVar {
     if ($script:OS -eq 'windows') {
         [Environment]::SetEnvironmentVariable('LOCALCODEAI_HOME', $Root, 'User')
     }
     else {
-        Persist-UnixEnvLine -Name 'LOCALCODEAI_HOME' -Value $Root
+        Save-UnixEnvLine -Name 'LOCALCODEAI_HOME' -Value $Root
     }
     $env:LOCALCODEAI_HOME = $Root
 }
@@ -895,13 +899,13 @@ if ($script:OS -ne 'windows') {
 
 foreach ($d in $Dirs.Values) { New-Item -ItemType Directory -Force -Path $d | Out-Null }
 
-Test-Prerequisites
-Persist-HomeVar
+Test-Prerequisite
+Save-HomeVar
 
-$ollamaCmd = Ensure-Ollama
-$endpoint = Configure-OllamaModelStore -OllamaCmd $ollamaCmd
-if (-not $SkipModel) { Ensure-Model -OllamaCmd $ollamaCmd } else { Write-Step 'Skipping model phase (-SkipModel)' }
-if (-not $SkipTools) { Ensure-Tools } else { Write-Step 'Skipping tools phase (-SkipTools)' }
+$ollamaCmd = Install-Ollama
+$endpoint = Initialize-OllamaModelStore -OllamaCmd $ollamaCmd
+if (-not $SkipModel) { Install-Model -OllamaCmd $ollamaCmd } else { Write-Step 'Skipping model phase (-SkipModel)' }
+if (-not $SkipTools) { Install-Tool } else { Write-Step 'Skipping tools phase (-SkipTools)' }
 if (-not $SkipExtension) {
     Copy-ExtensionSource
     Build-And-InstallExtension

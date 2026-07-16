@@ -1,5 +1,7 @@
 # Copyright (c) 2025-2026 by Alisson Sol.
 # GUID: 42ddeaf7-95b7-4e02-8748-02d4728b1ed1
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
 param (
     [Parameter(Mandatory = $true)]
     [string]$FolderPath

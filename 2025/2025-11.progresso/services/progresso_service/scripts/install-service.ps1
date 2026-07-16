@@ -1,5 +1,7 @@
 <# Copyright (c) 2025-2026 by Alisson Sol. #>
 # GUID: 423fc71e-7cc5-4416-b38b-1b3f3e49e504
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
 param(
     [string]$ExePath = "$(Resolve-Path "..\target\release\progresso_service.exe")",
     [string]$ServiceName = "ProgressoService",

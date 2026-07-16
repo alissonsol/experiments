@@ -11,6 +11,10 @@
 # "unsupported operation: 'serialize_seq'".
 #>
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+param()
+
 try {
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 } catch {
@@ -18,7 +22,7 @@ try {
 }
 
 # Check if the project has been built
-function Check-Build {
+function Test-Build {
     param(
         [string]$ServicesDir,
         [string]$ExePath,
@@ -67,7 +71,7 @@ function Check-Build {
 }
 
 # Check for runtime dependencies (VC++ Redistributable)
-function Check-Dependencies {
+function Test-Dependency {
     Write-Host "Checking runtime dependencies..." -ForegroundColor Cyan
 
     # Check if vcruntime140.dll is available
@@ -113,10 +117,10 @@ $exePath = Join-Path $servicesDir 'progresso_service.exe'
 # ============================================================================
 
 # First check if the project is built
-Check-Build -ServicesDir $servicesDir -ExePath $exePath -ScriptDir $scriptDir
+Test-Build -ServicesDir $servicesDir -ExePath $exePath -ScriptDir $scriptDir
 
 # Then check runtime dependencies
-Check-Dependencies
+Test-Dependency
 
 # ============================================================================
 # Setup ordem.target.xml

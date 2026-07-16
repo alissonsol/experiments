@@ -14,10 +14,23 @@ $script:Trace = ($env:NEWTEXT_TRACE -eq '1')
 # Override via $env:NEWTEXT_VLINE_PCT (default: 10).
 $script:VLinePercent = if ($env:NEWTEXT_VLINE_PCT) { [int]$env:NEWTEXT_VLINE_PCT } else { 10 }
 
-function Enable-NewTextTrace  { $script:Trace = $true  }
-function Disable-NewTextTrace { $script:Trace = $false }
+function Enable-NewTextTrace {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '',
+        Justification = 'Private one-line trace toggle; not exported by the module manifest.')]
+    param()
+    $script:Trace = $true
+}
+
+function Disable-NewTextTrace {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '',
+        Justification = 'Private one-line trace toggle; not exported by the module manifest.')]
+    param()
+    $script:Trace = $false
+}
 
 function Write-Trace {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+        Justification = 'Trace output is opt-in diagnostic console output enabled via NEWTEXT_TRACE; it must not enter the pipeline because Get-NewTextContent returns its OCR text as output.')]
     param([string]$Message, [System.Diagnostics.Stopwatch]$Stopwatch)
     if ($script:Trace) {
         $elapsed = if ($Stopwatch) { " [{0:N0}ms]" -f $Stopwatch.Elapsed.TotalMilliseconds } else { '' }

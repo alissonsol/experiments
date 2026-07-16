@@ -17,6 +17,8 @@
     .\Remove-JunkFiles.ps1 -Path "D:\Projects"
 #>
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]

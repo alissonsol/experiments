@@ -130,7 +130,7 @@ function Start-SimpleWebServer {
                             $response.StatusDescription = "Internal Server Error"
                         }
                         catch {
-                            # Response may already be partially sent
+                            Write-Debug "Could not set the 500 status code; the response was already partially sent."
                         }
                     }
                     finally {

@@ -1,6 +1,10 @@
 #!/usr/bin/env pwsh
 # Copyright (c) 2025-2026 by Alisson Sol.
 # GUID: 42dbbbad-6ff1-4f4b-a542-a0eb7c3b8865
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+param()
+
 $ErrorActionPreference = 'Stop'
 
 # Navigate to project root and save previous location

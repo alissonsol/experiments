@@ -34,6 +34,10 @@
   # Windows PowerShell (if pwsh isn't installed):
   powershell -ExecutionPolicy Bypass -File .\run-lab.ps1
 #>
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseUsingScopeModifierInNewRunspaces', '',
+    Justification = 'False positive: the Start-Job script block declares $u, $win and $mac in its own param() and receives them through -ArgumentList, which is correct; a $using: prefix would be wrong here.')]
 [CmdletBinding()]
 param(
   [int]$Port = 3000,

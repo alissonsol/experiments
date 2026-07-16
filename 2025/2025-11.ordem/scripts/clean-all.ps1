@@ -1,6 +1,12 @@
 #!/usr/bin/env pwsh
 # GUID: 42ba68aa-e464-458d-b612-6720245cb72d
 # Copyright (c) 2025-2026 by Alisson Sol.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '',
+    Justification = 'Remove-IfExists: "Exists" is a condition suffix, not a plural noun.')]
+param()
+
 $ErrorActionPreference = 'Stop'
 
 # Navigate to project root and save previous location
@@ -24,11 +30,16 @@ if ($confirm -ne 'YES') {
     exit 0
 }
 
-function Remove-IfExists($path) {
-    if (Test-Path $path) {
-        Write-Host "Removing: $path"
-        try { Remove-Item -LiteralPath $path -Recurse -Force -ErrorAction Stop } catch {
-            Write-Warning ("Failed to remove {0}: {1}" -f $path, $_)
+function Remove-IfExists {
+    [CmdletBinding(SupportsShouldProcess)]
+    param([Parameter(Mandatory, Position = 0)][string]$Path)
+
+    if (Test-Path $Path) {
+        if ($PSCmdlet.ShouldProcess($Path, 'Remove')) {
+            Write-Host "Removing: $Path"
+            try { Remove-Item -LiteralPath $Path -Recurse -Force -ErrorAction Stop } catch {
+                Write-Warning ("Failed to remove {0}: {1}" -f $Path, $_)
+            }
         }
     }
 }

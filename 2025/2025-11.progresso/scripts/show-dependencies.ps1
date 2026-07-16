@@ -1,5 +1,9 @@
 # Copyright (c) 2025-2026 by Alisson Sol.
 # GUID: 421ce9f9-5dbb-46eb-b9bd-24842c6c9b56
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+param()
+
 Write-Host '========================================'  -ForegroundColor Cyan
 Write-Host 'progresso Project - Installed Dependencies' -ForegroundColor Cyan
 Write-Host '========================================'  -ForegroundColor Cyan

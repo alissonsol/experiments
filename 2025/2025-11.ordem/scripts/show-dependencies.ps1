@@ -1,5 +1,9 @@
 # Copyright (c) 2025-2026 by Alisson Sol.
 # GUID: 42bc2ebf-6ce8-44db-9fb4-cdadf5bdb42b
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+param()
+
 Write-Host '========================================'  -ForegroundColor Cyan
 Write-Host 'ordem Project - Installed Dependencies' -ForegroundColor Cyan
 Write-Host '========================================'  -ForegroundColor Cyan

@@ -3,6 +3,14 @@
 # PowerShell module for checking project dependencies
 # Copyright (c) 2025-2026 by Alisson Sol.
 
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSProvideCommentHelp', '',
+    Justification = 'Private helpers in a build-support module; each is a few lines and self-describing.')]
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '',
+    Justification = 'Test-AllDependencies deliberately validates the complete dependency set and is an exported name used by sibling build scripts.')]
+param()
+
 function Get-CommandPath {
     param([string]$Command)
 
@@ -11,7 +19,9 @@ function Get-CommandPath {
         if ($cmd) {
             return $cmd.Path
         }
-    } catch {}
+    } catch {
+        Write-Debug "Get-Command failed for '$Command'; treating it as not installed."
+    }
 
     return $null
 }
@@ -76,7 +86,7 @@ function Test-MSVCInstalled {
                 return $true
             }
         } catch {
-            # vswhere failed
+            Write-Debug "vswhere failed or returned unparsable JSON; reporting MSVC Build Tools as not found."
         }
     }
 

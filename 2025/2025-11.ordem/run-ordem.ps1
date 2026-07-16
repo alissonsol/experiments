@@ -2,6 +2,10 @@
 <#
   Copyright (c) 2025-2026 by Alisson Sol.
 #>
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+param()
+
 $ErrorActionPreference = 'Stop'
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -17,7 +21,6 @@ if ($PSVersionTable.Platform -and $PSVersionTable.Platform -ne 'Win32NT') {
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $backendDir = Join-Path $scriptDir "dist\backend"
-$uiDir = Join-Path $scriptDir "ui"
 $distUiDir = Join-Path $scriptDir "dist\ui"
 
 # Bind address (matches services/retrieve/src/main.rs)
@@ -35,7 +38,7 @@ function Open-Browser($url) {
 }
 
 # Check if the project has been built
-function Check-Build {
+function Test-Build {
     param(
         [string]$BackendDir,
         [string]$DistUiDir,
@@ -89,7 +92,7 @@ function Check-Build {
 }
 
 # Check for runtime dependencies (VC++ Redistributable)
-function Check-Dependencies {
+function Test-Dependency {
     Write-Host "Checking runtime dependencies..." -ForegroundColor Cyan
 
     # Check if vcruntime140.dll is available
@@ -132,10 +135,10 @@ function Check-Dependencies {
 # ============================================================================
 
 # First check if the project is built
-Check-Build -BackendDir $backendDir -DistUiDir $distUiDir -ScriptDir $scriptDir
+Test-Build -BackendDir $backendDir -DistUiDir $distUiDir -ScriptDir $scriptDir
 
 # Then check runtime dependencies
-Check-Dependencies
+Test-Dependency
 
 # ============================================================================
 # Start the application

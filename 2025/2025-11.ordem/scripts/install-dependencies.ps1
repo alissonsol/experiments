@@ -1,5 +1,9 @@
 # Copyright (c) 2025-2026 by Alisson Sol.
 # GUID: 42d59d51-8cf0-4463-abc7-090ead4fc60b
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive console tool: colored status output is intentional. On PowerShell 7 Write-Host writes to the information stream and stays redirectable, and Write-Output would corrupt helper function return values.')]
+param()
+
 # Check if running on Windows
 if (-not $IsWindows -and (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
     Write-Host "ERROR: This script is Windows-specific and can only run on Windows." -ForegroundColor Red
@@ -52,7 +56,7 @@ Write-Host "Running as Administrator" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-function Refresh-Path {
+function Sync-Path {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 }
 
@@ -64,7 +68,9 @@ function Get-CommandPath {
         if ($cmd) {
             return $cmd.Path
         }
-    } catch {}
+    } catch {
+        Write-Debug "Get-Command failed for '$Command'; treating it as not installed."
+    }
 
     return $null
 }
@@ -101,23 +107,23 @@ function Install-WithWinget {
 
     Write-Host "-> Installing $Name..." -ForegroundColor Cyan
 
-    $args = @("install", "--id", $WingetId, "--accept-package-agreements", "--accept-source-agreements")
+    $wingetArgs = @("install", "--id", $WingetId, "--accept-package-agreements", "--accept-source-agreements")
 
     if ($Silent) {
-        $args += "--silent"
+        $wingetArgs += "--silent"
     }
 
     if ($Version) {
-        $args += @("--version", $Version, "--force")
+        $wingetArgs += @("--version", $Version, "--force")
     }
 
     try {
-        Write-Host "  Running: winget $($args -join ' ')" -ForegroundColor Gray
+        Write-Host "  Running: winget $($wingetArgs -join ' ')" -ForegroundColor Gray
 
         if ($Silent) {
-            $output = & winget $args 2>&1 | Out-String
+            $output = & winget $wingetArgs 2>&1 | Out-String
         } else {
-            & winget $args
+            & winget $wingetArgs
             $output = ""
         }
 
@@ -141,7 +147,7 @@ function Install-WithWinget {
         }
 
         # Refresh PATH after installation
-        Refresh-Path
+        Sync-Path
 
         # Verify installation
         Start-Sleep -Seconds 2
@@ -324,7 +330,7 @@ if (Test-Path $vswhere) {
             }
         }
     } catch {
-        # vswhere failed, continue to installation
+        Write-Debug "vswhere probe failed; leaving Build Tools as not detected and continuing to installation."
     }
 }
 
