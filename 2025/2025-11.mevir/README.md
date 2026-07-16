@@ -1,5 +1,7 @@
 # MEVIR - Chrome Extension for Page Analysis
 
+Copyright (c) 2025-2026 by Alisson Sol.
+
 A Chrome extension written in TypeScript that analyzes web page content and provides risk scoring.
 
 ## Features

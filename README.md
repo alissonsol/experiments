@@ -1,11 +1,13 @@
 # experiments
 
+Copyright (c) 2021-2026 by Alisson Sol.
+
 The random experiments by Alisson Sol
 
 ## 2026
 
-- 2026-07 - Early release: example of VS Code extenstion for [Local Code AI](2026/2026-07.local.code.ai/) assistant
-- 2026-07 - A cross-framework woflow [lab](2026/2026-07.workflow/), with an encapsulation layer
+- 2026-07 - Early release: example of VS Code extension for [Local Code AI](2026/2026-07.local.code.ai/) assistant
+- 2026-07 - A cross-framework workflow [lab](2026/2026-07.workflow/), with an encapsulation layer
 - 2026-03 - Scripts to perform [OCR](2026/2026-03.screen-ocr/) in image sequence (PowerShell + C# + Tesseract)
 - 2026-02 - Scripts to quickly setup [Amazon Linux](2026/2026-02.amazon.linux/windows.hyper-v/) running in Windows Hyper-V + bonus OpenClaw setup
 - 2026-02 - Scripts to quickly setup [Ubuntu Desktop](2026/2026-02.ubuntu.desktop/macos.utm/) running in macOS UTM (ARM64) + bonus OpenClaw setup

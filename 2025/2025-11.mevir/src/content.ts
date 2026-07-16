@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 import { LinkInfo, PageContent } from './types';
 
 const MAX_TEXT_SIZE = 1024 * 1024; // 1 megabyte
@@ -41,7 +42,6 @@ function extractPageText(): { text: string; isTextCut: boolean } {
     return clone.innerText || clone.textContent || '';
   };
 
-  // Main document text
   text = extractText(document);
 
   // Try to extract text from iframes (same-origin only)
@@ -91,7 +91,6 @@ function extractLinks(): LinkInfo[] {
     });
   };
 
-  // Process main document
   processLinks(document);
 
   // Try to process iframes (same-origin only)
@@ -135,7 +134,6 @@ function createPageContent(): PageContent {
 function init() {
   const pageContent = createPageContent();
   
-  // Send page content to background script
   chrome.runtime.sendMessage({
     type: 'PAGE_CONTENT',
     data: pageContent

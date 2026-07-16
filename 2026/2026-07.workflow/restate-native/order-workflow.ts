@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // NATIVE RESTATE IMPLEMENTATION
 // Order fulfillment: reserve inventory -> charge -> wait for

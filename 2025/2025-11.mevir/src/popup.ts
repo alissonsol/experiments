@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 import { DEFAULT_RISK_CONFIG, PageAnalysis } from './types';
 
 /**
@@ -99,7 +100,6 @@ function escapeHtml(text: string): string {
 async function init(): Promise<void> {
   renderLoading();
 
-  // Request analysis from background script
   chrome.runtime.sendMessage({ type: 'GET_ANALYSIS' }, (response) => {
     if (chrome.runtime.lastError) {
       console.error('Error getting analysis:', chrome.runtime.lastError);
@@ -115,6 +115,5 @@ async function init(): Promise<void> {
   });
 }
 
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
 

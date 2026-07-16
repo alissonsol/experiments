@@ -2,8 +2,8 @@
 
 This guide consolidates all troubleshooting information for the Progresso Windows service. If you encounter issues, start here for solutions and diagnostics.
 
-Source: [gibhub.com/alissonsol](https://github.com/alissonsol)  
-Copyright (c) 2025, Alisson Sol - All rights reserved.
+Source: [github.com/alissonsol](https://github.com/alissonsol)  
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 
 ## Table of Contents
 

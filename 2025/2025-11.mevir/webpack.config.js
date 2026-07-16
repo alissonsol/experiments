@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');

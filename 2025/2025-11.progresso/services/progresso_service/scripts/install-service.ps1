@@ -1,4 +1,5 @@
-<# Copyright (c) 2025 - Alisson Sol #>
+<# Copyright (c) 2025-2026 by Alisson Sol. #>
+# GUID: 423fc71e-7cc5-4416-b38b-1b3f3e49e504
 param(
     [string]$ExePath = "$(Resolve-Path "..\target\release\progresso_service.exe")",
     [string]$ServiceName = "ProgressoService",
@@ -36,7 +37,7 @@ if (-not (Test-Path $ExePath)) {
 
 $nssm = Find-Nssm
 if ($nssm) {
-    Write-Host "Found nssm at $nssm — using NSSM to create service."
+    Write-Host "Found nssm at $nssm - using NSSM to create service."
     & $nssm install $ServiceName $ExePath | Out-Null
     & $nssm set $ServiceName DisplayName $DisplayName | Out-Null
     & $nssm set $ServiceName Description $Description | Out-Null
@@ -45,7 +46,7 @@ if ($nssm) {
     & $nssm start $ServiceName
     Write-Host "Service installed (nssm)."
 } else {
-    Write-Host "nssm not found — falling back to sc.exe."
+    Write-Host "nssm not found - falling back to sc.exe."
     $binPath = '"' + (Resolve-Path $ExePath).Path + '"'
     # sc requires a space after the '=' for some args
     sc.exe create $ServiceName binPath= $binPath DisplayName= "$DisplayName" start= auto | Out-Null
@@ -55,5 +56,4 @@ if ($nssm) {
     Write-Host "Service installed (sc create)."
 }
 
-# Return to previous location
 Pop-Location

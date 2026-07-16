@@ -1,5 +1,7 @@
 # Durable Workflows: Restate vs. Temporal, and a Portable Abstraction
 
+Copyright (c) 2026 by Alisson Sol.
+
 One order-fulfillment workflow (reserve inventory → charge payment → wait for a
 shipment signal with a 3-day timeout → email the customer, with saga-style
 compensation on terminal failure), implemented three ways.

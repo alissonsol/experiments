@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // SERVER — HTTP + SSE, zero framework, zero required npm deps
 //

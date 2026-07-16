@@ -1,4 +1,5 @@
-﻿# Copyright (c) 2025 - Alisson Sol
+# Copyright (c) 2025-2026 by Alisson Sol.
+# GUID: 421ce9f9-5dbb-46eb-b9bd-24842c6c9b56
 Write-Host '========================================'  -ForegroundColor Cyan
 Write-Host 'progresso Project - Installed Dependencies' -ForegroundColor Cyan
 Write-Host '========================================'  -ForegroundColor Cyan

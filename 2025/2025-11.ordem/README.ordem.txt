@@ -1,9 +1,9 @@
-﻿# Ordem
+# Ordem
 
 Windows service ordering and startup mode management tool with a web-based interface.
 
 Source: [github.com/alissonsol](https://github.com/alissonsol)
-Copyright (c) 2025, Alisson Sol - All rights reserved.
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 
 ## Quick Start
 

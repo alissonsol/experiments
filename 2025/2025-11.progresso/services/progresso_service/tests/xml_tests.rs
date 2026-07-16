@@ -1,4 +1,4 @@
-// Copyright (c) 2025 - Alisson Sol
+// Copyright (c) 2025-2026 by Alisson Sol.
 //
 // XML Parsing and Serialization Tests
 //

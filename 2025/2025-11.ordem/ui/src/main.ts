@@ -1,4 +1,4 @@
-// Copyright (c) 2025 - Alisson Sol
+// Copyright (c) 2025-2026 by Alisson Sol.
 //
 /**
  * Represents a Windows service with its configuration and state.
@@ -37,7 +37,7 @@ function startLoader() {
   if (!loaderEl || !loaderTextEl) return;
   loaderRunning = true;
 
-  const DURATION = 5000; // Seconds to reach the border
+  const DURATION = 5000; // Milliseconds to reach the border
   const ROTATIONS = 6; // number of spiral turns
   let startTime: number | null = null;
 
@@ -78,7 +78,6 @@ function startLoader() {
     loaderRaf = requestAnimationFrame(step);
   }
 
-  // Start the spiral animation
   loaderTextEl.style.willChange = 'transform';
   loaderRaf = requestAnimationFrame(step);
   window.addEventListener('resize', onLoaderResize);

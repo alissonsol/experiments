@@ -1,4 +1,5 @@
-# Copyright (c) 2023 Alisson Sol
+# Copyright (c) 2023-2026 by Alisson Sol.
+# GUID: 428df2d0-9db7-4c17-a824-79bd093794ed
 # This script is designed for PowerShell Core (PowerShell 6 or later).
 # To run, navigate to the script's directory and execute:
 # .\WebServer.ps1
@@ -55,7 +56,6 @@ function Start-SimpleWebServer {
 
     Process {
         if ($PSCmdlet.ShouldProcess("Start web server on port $Port serving from $ContentPath")) {
-            # Check if the content path exists.
             if (-not (Test-Path -Path $ContentPath -PathType Container)) {
                 Write-Error "Content folder not found at '$ContentPath'."
                 return
@@ -69,13 +69,11 @@ function Start-SimpleWebServer {
             Write-Output "Press Ctrl+C to stop the server."
 
             try {
-                # Create a new HTTP Listener.
                 $httpListener = New-Object System.Net.HttpListener
                 $httpListener.Prefixes.Add($uriPrefix)
                 $httpListener.Start()
 
                 while ($true) {
-                    # Get the incoming request.
                     $context = $httpListener.GetContext()
                     $request = $context.Request
                     $response = $context.Response
@@ -103,7 +101,6 @@ function Start-SimpleWebServer {
                             # Read the file and write it to the response stream.
                             $fileBytes = [System.IO.File]::ReadAllBytes($filePath)
 
-                            # Set the correct MIME type for the file using our custom function.
                             $mimeType = Get-MimeType -FilePath $filePath
                             $response.ContentType = $mimeType
 
@@ -192,7 +189,6 @@ function Test-Admin {
     }
 }
 
-# Get the script's directory.
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 $contentFolder = Join-Path -Path $scriptDir -ChildPath "content"
 

@@ -1,9 +1,9 @@
-﻿# Progresso
+# Progresso
 
 A Windows service for monitoring and tracking the progress of Windows services based on target configurations.
 
 Source: [github.com/alissonsol](https://github.com/alissonsol)
-Copyright (c) 2025, Alisson Sol - All rights reserved.
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 
 ## Quick Start
 

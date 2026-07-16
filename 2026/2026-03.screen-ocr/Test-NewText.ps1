@@ -1,6 +1,7 @@
 # Test-NewText.ps1
 # VERSION: 0.1
 # GUID: 42c2c1d0-e4f5-6789-abcd-ef0123456789
+# Copyright (c) 2026 by Alisson Sol.
 # Tests the Get-NewTextContent function by comparing two consecutive screenshots.
 
 $ErrorActionPreference = 'Stop'
@@ -9,7 +10,6 @@ $InformationPreference = 'Continue'  # Show Write-Information messages
 
 $scriptDir = $PSScriptRoot
 
-# Import the module
 Import-Module (Join-Path $scriptDir 'Get-NewText') -Force
 
 # Define input paths
@@ -22,7 +22,6 @@ Write-Information "Current screen:  $currentScreenPath"
 Write-Information "Previous screen: $previousScreenPath"
 Write-Information ''
 
-# Run the function
 $ocrText = Get-NewTextContent -CurrentScreenPath $currentScreenPath -PreviousScreenPath $previousScreenPath
 
 # Display results

@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 /**
  * Script to generate PNG icons from SVG for Chrome extension
  * Run with: node scripts/generate-icons.js

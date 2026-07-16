@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(window.location.search);
     const menu = params.get('menu') || 'default';
@@ -5,7 +6,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     const menuFileName = "./menu." + lang + "/" + menu + ".txt";
 
     try {
-        // Fetch the data file
         const response = await fetch(menuFileName);
         let data;
         if (response.ok) {
@@ -20,7 +20,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         const lines = data.split('\n').filter(line => line.trim() !== '');
 
-        // Hide loading indicator
         document.getElementById('loading-indicator').style.display = 'none';
 
         if (lines.length < 4) {
@@ -120,7 +119,6 @@ document.addEventListener("DOMContentLoaded", async () => {
                             visibleDesc.style.display = expanded ? 'none' : 'block';
                         });
 
-                        // Append link, button and visible description inside the wrapper
                         itemWrapper.appendChild(link);
                         itemWrapper.appendChild(infoBtn);
                         itemWrapper.appendChild(visibleDesc);

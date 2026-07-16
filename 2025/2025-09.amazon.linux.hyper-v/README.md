@@ -10,7 +10,7 @@ This is an update of a previous effort that used [Amazon WorkSpaces](https://git
 
 <mark>SHORTCUT: The steps below (1.a) have been automated in the PowerShell script [`amazon.linux.hyper-v.download.ps1`](./amazon.linux.hyper-v.download.ps1).</mark>
 
-Ready? Proceed to the download [site](https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2-download.html). Click the link to the [cnd.amazonlinux.com](https://cdn.amazonlinux.com/al2023/os-images/latest/), and get to the `hyperv` subfolder. There will be large `vhdx.zip` file, which is the one to download. A hint here: you can see by the long file name that this image is being constantly updated. I usually keep the ZIP file copied nearby. Then, I unzip the content, while copying to `$env:ProgramData\Microsoft\Windows\Virtual Hard Disks`. Used to be `$env:Public\Documents\Hyper-V\Virtual hard disks`, but why would Microsoft keep locations stable when those updating Markdown files need a job?!
+Ready? Proceed to the download [site](https://docs.aws.amazon.com/linux/al2023/ug/outside-ec2-download.html). Click the link to the [cdn.amazonlinux.com](https://cdn.amazonlinux.com/al2023/os-images/latest/), and get to the `hyperv` subfolder. There will be a large `vhdx.zip` file, which is the one to download. A hint here: you can see by the long file name that this image is being constantly updated. I usually keep the ZIP file copied nearby. Then, I unzip the content, while copying to `$env:ProgramData\Microsoft\Windows\Virtual Hard Disks`. Used to be `$env:Public\Documents\Hyper-V\Virtual hard disks`, but why would Microsoft keep locations stable when those updating Markdown files need a job?!
 
 ### 1.b) Creating the `seed.iso` file
 
@@ -20,7 +20,7 @@ After any metadata changes, you need to recreate the file `seed.iso`, with the v
 
 The automation-friendly solution is to [Download and install the Windows ADK](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install), using the command line tool `oscdimg`, which has clear command line [parameters](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/oscdimg-command-line-options) (Irony!).
 
-<mark>SHORTCUT: For `vmcreate.ps1` to automate the `seed.iso` creation your need to [Download and install the Windows ADK](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install) and double-check the path to `oscdimg` in line 19 of [`vmcreate-common.psm1`](./vmcreate-common.psm1)</mark>
+<mark>SHORTCUT: For `vmcreate.ps1` to automate the `seed.iso` creation you need to [Download and install the Windows ADK](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install) and double-check the path to `oscdimg` in line 19 of [`vmcreate-common.psm1`](./vmcreate-common.psm1)</mark>
 
 Another option, which now means you shouldn't use `vmcreate.ps1` (or adapt it) is to use CD creation software like [AnyBurn](https://anyburn.com/). You then just add the files `meta-data` and `user-data` with the configurations of your choice, and don't forget the volume label (see picture).
 
@@ -30,13 +30,13 @@ Another option, which now means you shouldn't use `vmcreate.ps1` (or adapt it) i
 
 <mark>SHORTCUT: If you are considering creating multiple VMs, jump to section 3.a now.</mark>
 
-It may be a good ideal to browse through the remaining of section 1 and through section 2 to see how many steps the script to create multiple VMs will save. Yet, do not create a single VM and later execute the scripts to create multiple VMs: the baseline Virtual Hard Disk may be changed already at that point. If changing approaches, consider downloading it again, using the script from step 1.a.
+It may be a good idea to browse through the remainder of section 1 and through section 2 to see how many steps the script to create multiple VMs will save. Yet, do not create a single VM and later execute the scripts to create multiple VMs: the baseline Virtual Hard Disk may be changed already at that point. If changing approaches, consider downloading it again, using the script from step 1.a.
 
-A possible reason not to go and use the script to create multiple VMs, even if creating a single one: it will creata a copy of the large baseline baseline Virtual Hard Disk file, what doesn't happen if following the manual or automated steps in the path to section 3.
+A possible reason not to go and use the script to create multiple VMs, even if creating a single one: it will create a copy of the large baseline Virtual Hard Disk file, which doesn't happen if following the manual or automated steps in the path to section 3.
 
-<marK>SHORTCUT: The steps below (1.b) have been automated in the PowerShell script [`amazon.linux.hyper-v.create.ps1`](./amazon.linux.hyper-v.create.ps1).</mark>
+<mark>SHORTCUT: The steps below (1.b) have been automated in the PowerShell script [`amazon.linux.hyper-v.create.ps1`](./amazon.linux.hyper-v.create.ps1).</mark>
 
-Next, I go to the `Hyper-V Manager` and selecting the local server, righ-click and select the menu `New` -> `Virtual Machine...`:
+Next, I go to the `Hyper-V Manager` and selecting the local server, right-click and select the menu `New` -> `Virtual Machine...`:
 - Under `Specify Name and Location`, enter whatever name you prefer (suggested: `AmazonLinux`), and leave the default location.
 - Under `Specify Generation`, select `Generation 2`
 - Under `Assign Memory`, select the `Startup Memory` (at least 8192, with 16384 or more recommended). Unselect `Use Dynamic Memory for this virtual machine.`
@@ -94,7 +94,7 @@ sudo shutdown now
 
 ### 2.b) Install the JDK
 
-The Java toolk to be used in the [Amazon Corretto](https://docs.aws.amazon.com/corretto/)
+The Java toolkit to be used is the [Amazon Corretto](https://docs.aws.amazon.com/corretto/)
 
 ```
 sudo dnf install -y java-21-amazon-corretto-devel
@@ -171,7 +171,7 @@ You should now be able to start Visual Studio Code (`code`).
 One VM is good. Many VMs: far better.
 
 This is how to quickly create VMs with specific configuration. First, the steps that needed to be executed just one time per host machine.
-- In order to automate the process of creating the `seed.iso` files, download an install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install).
+- In order to automate the process of creating the `seed.iso` files, download and install the latest [Windows Assessment and Deployment Kit (Windows ADK)](https://learn.microsoft.com/en-us/windows-hardware/get-started/adk-install).
 - Confirm that the path to the executable `oscdimg.exe` is correct at the top of the `vmcreate-common.psm1` PowerShell module.
 - The PowerShell script `amazon.linux.hyper-v.download.ps1` needs to be executed at least once per host machine.
 
@@ -184,7 +184,7 @@ Now, for each VM to be created.
 - Login and change the password.
   - At this point, if there is any update since the Amazon Linux image was last downloaded, you will be asked to execute the command `/usr/bin/dnf check-release-update`. Proceed as per the instructions to upgrade the operating system binaries before proceeding.
 - Navigate to the root folder (`cd /`) and execute `sudo bash amazon.linux.tools.bash`.
-  - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.tools.bash` to the root of the target VM. After execution the Bash script, the Graphical User Interface and the tools from section 2 are installed.
+  - The section `runcmd` in the `user-data` file already downloaded the file `amazon.linux.tools.bash` to the root of the target VM. After executing the Bash script, the Graphical User Interface and the tools from section 2 are installed.
 - Execute `sudo reboot now` and the VM reboots already in the GUI mode with the tools.
 
 <mark>CHECKPOINT: This is a great time to create a checkpoint `VM Configured` for each VM.</mark>
@@ -218,7 +218,7 @@ This assumes that the user has already executed the "tools" installation, and so
 
 ### 3.c) Install Docker
   
-Allow work with containers. Thi is a hack of the instructions for the [CentOS](https://docs.docker.com/engine/install/centos/#set-up-the-repository). It works around the `$releasever` for the Amazon Linux being different. Also need to pre-install the depenencies (`iptables` and `container-selinux`).
+Allow work with containers. This is a hack of the instructions for the [CentOS](https://docs.docker.com/engine/install/centos/#set-up-the-repository). It works around the `$releasever` for the Amazon Linux being different. Also need to pre-install the dependencies (`iptables` and `container-selinux`).
 
 Basic commands are:
 ```
@@ -230,7 +230,7 @@ sudo systemctl enable --now docker
 sudo docker --version
 ```
 
-Some cleanup now. First, will remote that docker repo. Otherwise, due to the release version number difference between Amazon Linux and CentOS, you get warning messages when running `dnf` about a not found docker repository (even when not needed). In order to avoid having to run docker with `sudo` all the time, add the current user to the `docker` group. Then, to test, run the `Hello World` application.
+Some cleanup now. First, will remove that docker repo. Otherwise, due to the release version number difference between Amazon Linux and CentOS, you get warning messages when running `dnf` about a not found docker repository (even when not needed). In order to avoid having to run docker with `sudo` all the time, add the current user to the `docker` group. Then, to test, run the `Hello World` application.
 
 ```
 sudo rm /etc/yum.repos.d/docker-ce.repo

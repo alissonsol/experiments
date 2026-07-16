@@ -1,5 +1,7 @@
-﻿# Get-NewText.psm1
+# Get-NewText.psm1
 # VERSION: 0.4
+# GUID: 426894a7-8f9c-44c8-94ea-633b11281675
+# Copyright (c) 2026 by Alisson Sol.
 # Pure C# image processing (no System.Drawing, ImageMagick, or Tesseract dependencies).
 # Requires PowerShell 7+ (.NET 10+).
 

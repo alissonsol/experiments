@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // SIMULATION — the shared durable replay executor
 //

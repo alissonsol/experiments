@@ -1,5 +1,6 @@
-﻿#!/usr/bin/env pwsh
-# Copyright (c) 2025 - Alisson Sol
+#!/usr/bin/env pwsh
+# GUID: 429eccde-4474-49a4-93c2-9bca24a5fb68
+# Copyright (c) 2025-2026 by Alisson Sol.
 $ErrorActionPreference = 'Stop'
 
 # Navigate to project root and save previous location
@@ -12,7 +13,6 @@ Write-Host "Progresso Distribution Packager" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Import dependency checking module
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 # Check dependencies before creating distribution
@@ -46,7 +46,7 @@ if (Test-Path $backendExe) {
     }
 }
 
-Write-Host "  ✓ No running processes detected" -ForegroundColor Green
+Write-Host "  [OK] No running processes detected" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
@@ -66,7 +66,7 @@ if (Test-Path $buildScript) {
     exit 1
 }
 
-Write-Host "  ✓ Build completed successfully" -ForegroundColor Green
+Write-Host "  [OK] Build completed successfully" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
@@ -107,7 +107,7 @@ if (Test-Path $sourceUiDir) {
     }
 }
 
-Write-Host "  ✓ Copied backend and UI files" -ForegroundColor Green
+Write-Host "  [OK] Copied backend and UI files" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
@@ -119,7 +119,7 @@ $sourceLauncher = Join-Path $repoRoot "run-progresso.ps1"
 if (Test-Path $sourceLauncher) {
     $launcherPath = Join-Path $packageDir "run-progresso.ps1"
     Copy-Item -Path $sourceLauncher -Destination $launcherPath -Force
-    Write-Host "  ✓ Copied run-progresso.ps1" -ForegroundColor Green
+    Write-Host "  [OK] Copied run-progresso.ps1" -ForegroundColor Green
 } else {
     Write-Host "  - No run-progresso.ps1 found; skipping" -ForegroundColor Yellow
 }
@@ -140,7 +140,7 @@ if (-not (Test-Path $sourceReadme)) {
 $readmePath = Join-Path $packageDir "README.progresso.txt"
 Copy-Item -Path $sourceReadme -Destination $readmePath -Force
 
-Write-Host "  ✓ Copied README.progresso.txt" -ForegroundColor Green
+Write-Host "  [OK] Copied README.progresso.txt" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
@@ -150,10 +150,9 @@ Write-Host "[5/5] Creating ZIP archive..." -ForegroundColor Yellow
 
 Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
 
-Write-Host "  ✓ Created: $zipName" -ForegroundColor Green
+Write-Host "  [OK] Created: $zipName" -ForegroundColor Green
 Write-Host ""
 
-# Clean up package directory
 Remove-Item $packageDir -Recurse -Force
 
 Write-Host "========================================" -ForegroundColor Cyan
@@ -165,5 +164,4 @@ Write-Host "  Size:    $([math]::Round((Get-Item $zipPath).Length / 1MB, 2)) MB"
 Write-Host "  Path:    $zipPath" -ForegroundColor White
 Write-Host ""
 
-# Return to previous location
 Pop-Location

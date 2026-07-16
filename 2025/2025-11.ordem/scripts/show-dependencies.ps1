@@ -1,4 +1,5 @@
-﻿# Copyright (c) 2025 - Alisson Sol
+# Copyright (c) 2025-2026 by Alisson Sol.
+# GUID: 42bc2ebf-6ce8-44db-9fb4-cdadf5bdb42b
 Write-Host '========================================'  -ForegroundColor Cyan
 Write-Host 'ordem Project - Installed Dependencies' -ForegroundColor Cyan
 Write-Host '========================================'  -ForegroundColor Cyan

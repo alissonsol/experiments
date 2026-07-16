@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // NATIVE TEMPORAL IMPLEMENTATION — activities.ts
 // In Temporal, side effects MUST live in "activities": plain

@@ -1,5 +1,7 @@
 # screen-ocr
 
+Copyright (c) 2026 by Alisson Sol.
+
 PowerShell module that extracts newly appeared text from sequential screen captures using pixel-level diffing and Tesseract OCR.
 
 ## How it works

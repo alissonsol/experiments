@@ -54,7 +54,7 @@ This is how to quickly create VMs with specific configuration. First, the steps 
 <mark>CHECKPOINT: This is a great time to create a checkpoint `VM Configured` for each VM.</mark>
 
 - If lost track, all you did so far was to configure the data files, execute two PowerShell scripts, change a password, execute a Bash script, and reboot. You are now in a GUI and can start a browser or VS Code.
-  - Technically, you can add the line to run `bash amazon.linux.openclaw.bash` to the `user-data` file. That usually ends-up creating a confusing first login that is still under the command line interface, instead of the GUI, when the password needs to be changed. It is a personal preference to do that, which technically removes one step in the process (execute a Bash script).
+  - Technically, you can add the line to run `bash amazon.linux.openclaw.bash` to the `user-data` file. That usually ends up creating a confusing first login that is still under the command line interface, instead of the GUI, when the password needs to be changed. It is a personal preference to do that, which technically removes one step in the process (execute a Bash script).
 
 Test VM connectivity.
 - Open a terminal and get the IP for each VM: `ifconfig` or `ifconfig eth0`.

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // SERVER — reference metadata for the UI
 //

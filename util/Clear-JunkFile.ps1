@@ -1,4 +1,6 @@
 #Requires -RunAsAdministrator
+# Copyright (c) 2026 by Alisson Sol.
+# GUID: 423dbcfa-907b-46f4-933b-7ad1ef45905f
 <#
 .SYNOPSIS
     Scans a folder tree and removes common junk/system files (Thumbs.db, .DS_Store, etc.).
@@ -22,7 +24,7 @@ param(
 )
 
 # ============================================================================
-# CONFIGURABLE LIST — add or remove filenames as needed
+# CONFIGURABLE LIST - add or remove filenames as needed
 # ============================================================================
 $JunkFileNames = @(
     "Thumbs.db"
@@ -43,7 +45,7 @@ $ErrorActionPreference = "Stop"
 try {
     $ResolvedPath = (Resolve-Path -Path $Path -ErrorAction Stop).Path
 } catch {
-    Write-Host "`n  ERROR: Path not found — '$Path'" -ForegroundColor Red
+    Write-Host "`n  ERROR: Path not found - '$Path'" -ForegroundColor Red
     exit 1
 }
 
@@ -79,27 +81,27 @@ $TotalCount = $FoundFiles.Count
 $TotalSize  = ($FoundFiles | Measure-Object -Property Length -Sum).Sum
 
 Write-Host ""
-Write-Host "  ┌─────────────────────────────────────────────┐" -ForegroundColor DarkGray
-Write-Host "  │  Scan Results                                │" -ForegroundColor DarkGray
-Write-Host "  ├──────────────────────────┬──────────┬────────┤" -ForegroundColor DarkGray
-Write-Host ("  │ {0,-24} │ {1,-8} │ {2,-6} │" -f "Filename", "Count", "Size") -ForegroundColor DarkGray
-Write-Host "  ├──────────────────────────┼──────────┼────────┤" -ForegroundColor DarkGray
+Write-Host "  +---------------------------------------------+" -ForegroundColor DarkGray
+Write-Host "  |  Scan Results                                |" -ForegroundColor DarkGray
+Write-Host "  +--------------------------+----------+--------+" -ForegroundColor DarkGray
+Write-Host ("  | {0,-24} | {1,-8} | {2,-6} |" -f "Filename", "Count", "Size") -ForegroundColor DarkGray
+Write-Host "  +--------------------------+----------+--------+" -ForegroundColor DarkGray
 
 foreach ($Group in $GroupedSummary) {
     $GroupSize = ($Group.Group | Measure-Object -Property Length -Sum).Sum
     $SizeStr = if ($GroupSize -ge 1MB) { "{0:N1} MB" -f ($GroupSize / 1MB) }
                elseif ($GroupSize -ge 1KB) { "{0:N1} KB" -f ($GroupSize / 1KB) }
                else { "$GroupSize B" }
-    Write-Host ("  │ {0,-24} │ {1,8} │ {2,6} │" -f $Group.Name, $Group.Count, $SizeStr) -ForegroundColor White
+    Write-Host ("  | {0,-24} | {1,8} | {2,6} |" -f $Group.Name, $Group.Count, $SizeStr) -ForegroundColor White
 }
 
 $TotalSizeStr = if ($TotalSize -ge 1MB) { "{0:N1} MB" -f ($TotalSize / 1MB) }
                 elseif ($TotalSize -ge 1KB) { "{0:N1} KB" -f ($TotalSize / 1KB) }
                 else { "$TotalSize B" }
 
-Write-Host "  ├──────────────────────────┼──────────┼────────┤" -ForegroundColor DarkGray
-Write-Host ("  │ {0,-24} │ {1,8} │ {2,6} │" -f "TOTAL", $TotalCount, $TotalSizeStr) -ForegroundColor Cyan
-Write-Host "  └──────────────────────────┴──────────┴────────┘" -ForegroundColor DarkGray
+Write-Host "  +--------------------------+----------+--------+" -ForegroundColor DarkGray
+Write-Host ("  | {0,-24} | {1,8} | {2,6} |" -f "TOTAL", $TotalCount, $TotalSizeStr) -ForegroundColor Cyan
+Write-Host "  +--------------------------+----------+--------+" -ForegroundColor DarkGray
 Write-Host ""
 
 # --- Optional: list every file path ---
@@ -113,7 +115,7 @@ if ($ShowList -match '^[Yy]') {
 }
 
 # --- Confirmation gate ---
-Write-Host "  This action is irreversible — files are permanently deleted." -ForegroundColor Red
+Write-Host "  This action is irreversible - files are permanently deleted." -ForegroundColor Red
 $Confirm = Read-Host "  Delete all $TotalCount files? Type YES to confirm"
 
 if ($Confirm -cne "YES") {
@@ -137,15 +139,15 @@ foreach ($File in $FoundFiles) {
         Write-Host "    Deleted: $($File.FullName)" -ForegroundColor DarkGreen
     } catch {
         $Failed++
-        Write-Host "    FAILED : $($File.FullName) — $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "    FAILED : $($File.FullName) - $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
 # --- Final report ---
 Write-Host ""
-Write-Host "  ────────────────────────────" -ForegroundColor DarkGray
+Write-Host "  ----------------------------" -ForegroundColor DarkGray
 Write-Host "  Deleted : $Deleted" -ForegroundColor Green
 if ($Failed -gt 0) {
     Write-Host "  Failed  : $Failed" -ForegroundColor Red
 }
-Write-Host "  ────────────────────────────`n" -ForegroundColor DarkGray
+Write-Host "  ----------------------------`n" -ForegroundColor DarkGray

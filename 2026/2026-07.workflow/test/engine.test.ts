@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // Engine smoke test — validates the durable-execution mechanics
 // end-to-end across both simulated engines. Run: npm test
 import { createScenario, applyCommand, snapshotScenario } from "../server/scenarios.js";

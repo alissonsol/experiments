@@ -1,4 +1,5 @@
-<# Copyright (c) 2025 - Alisson Sol #>
+<# Copyright (c) 2025-2026 by Alisson Sol. #>
+# GUID: 42f948eb-e200-47c7-bd6b-3697cf0a1aa2
 param(
     [string]$ServiceName = "ProgressoService"
 )
@@ -25,16 +26,15 @@ function Find-Nssm {
 
 $nssm = Find-Nssm
 if ($nssm) {
-    Write-Host "Found nssm at $nssm — stopping and removing via nssm."
+    Write-Host "Found nssm at $nssm - stopping and removing via nssm."
     & $nssm stop $ServiceName | Out-Null
     & $nssm remove $ServiceName confirm | Out-Null
     Write-Host "Service removed (nssm)."
 } else {
-    Write-Host "nssm not found — using sc.exe to stop and delete."
+    Write-Host "nssm not found - using sc.exe to stop and delete."
     sc.exe stop $ServiceName | Out-Null
     sc.exe delete $ServiceName | Out-Null
     Write-Host "Service removed (sc delete)."
 }
 
-# Return to previous location
 Pop-Location

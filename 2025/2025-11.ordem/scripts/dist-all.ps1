@@ -1,5 +1,6 @@
-﻿#!/usr/bin/env pwsh
-# Copyright (c) 2025 - Alisson Sol
+#!/usr/bin/env pwsh
+# GUID: 424756f8-eac5-4959-bae8-3bbb84c1677d
+# Copyright (c) 2025-2026 by Alisson Sol.
 $ErrorActionPreference = 'Stop'
 
 # Navigate to project root and save previous location
@@ -12,7 +13,6 @@ Write-Host "Ordem Distribution Packager" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Import dependency checking module
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 # Check dependencies before creating distribution
@@ -47,7 +47,7 @@ if (Test-Path $backendExe) {
     }
 }
 
-Write-Host "  ✓ No running processes detected" -ForegroundColor Green
+Write-Host "  [OK] No running processes detected" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
@@ -67,7 +67,7 @@ if (Test-Path $buildScript) {
     exit 1
 }
 
-Write-Host "  ✓ Build completed successfully" -ForegroundColor Green
+Write-Host "  [OK] Build completed successfully" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
@@ -100,8 +100,8 @@ Copy-Item -Path (Join-Path $sourceUiDir "bundle.js") -Destination $packageUiDir 
 Copy-Item -Path (Join-Path $sourceUiDir "index.html") -Destination $packageUiDir -Force
 Copy-Item -Path (Join-Path $sourceUiDir "styles.css") -Destination $packageUiDir -Force
 
-Write-Host "  ✓ Copied backend executable" -ForegroundColor Green
-Write-Host "  ✓ Copied UI files (bundle.js, index.html, styles.css)" -ForegroundColor Green
+Write-Host "  [OK] Copied backend executable" -ForegroundColor Green
+Write-Host "  [OK] Copied UI files (bundle.js, index.html, styles.css)" -ForegroundColor Green
 
 # ============================================================================
 # Step 3: Copy run-ordem.ps1 launcher script
@@ -117,7 +117,7 @@ if (-not (Test-Path $sourceLauncher)) {
 $launcherPath = Join-Path $packageDir "run-ordem.ps1"
 Copy-Item -Path $sourceLauncher -Destination $launcherPath -Force
 
-Write-Host "  ✓ Copied run-ordem.ps1" -ForegroundColor Green
+Write-Host "  [OK] Copied run-ordem.ps1" -ForegroundColor Green
 
 # ============================================================================
 # Step 4: Copy README for distribution
@@ -131,7 +131,7 @@ if (-not (Test-Path $sourceReadme)) {
 $readmePath = Join-Path $packageDir "README.ordem.txt"
 Copy-Item -Path $sourceReadme -Destination $readmePath -Force
 
-Write-Host "  ✓ Copied README.ordem.txt" -ForegroundColor Green
+Write-Host "  [OK] Copied README.ordem.txt" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
@@ -141,10 +141,9 @@ Write-Host "[4/4] Creating ZIP archive..." -ForegroundColor Yellow
 
 Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
 
-Write-Host "  ✓ Created: $zipName" -ForegroundColor Green
+Write-Host "  [OK] Created: $zipName" -ForegroundColor Green
 Write-Host ""
 
-# Clean up package directory
 Remove-Item $packageDir -Recurse -Force
 
 # ============================================================================
@@ -164,6 +163,5 @@ Write-Host "  2. Extract the ZIP file" -ForegroundColor White
 Write-Host "  3. Run: .\run-ordem.ps1" -ForegroundColor White
 Write-Host ""
 
-# Return to previous location
 Pop-Location
 

@@ -1,5 +1,4 @@
 [package]
-# Copyright (c) 2025 - Alisson Sol
 name = "progresso_service"
 version = "0.1.0"
 edition = "2021"

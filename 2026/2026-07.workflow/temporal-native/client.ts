@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // NATIVE TEMPORAL IMPLEMENTATION — client.ts
 // Starting, signaling, and querying require the Temporal SDK

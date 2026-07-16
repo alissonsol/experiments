@@ -1,9 +1,9 @@
-﻿# Ordem
+# Ordem
 
 Windows service ordering and startup mode management tool with a web-based interface.
 
-Source: [gibhub.com/alissonsol](https://github.com/alissonsol)  
-Copyright (c) 2025, Alisson Sol - All rights reserved.
+Source: [github.com/alissonsol](https://github.com/alissonsol)  
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 
 ## Features
 
@@ -161,7 +161,7 @@ For comprehensive troubleshooting, startup diagnostics, and advanced solutions, 
 
 [The MIT License (MIT)](https://opensource.org/license/mit)
 
-Copyright 2025 Alisson Sol
+Copyright 2025-2026 Alisson Sol
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 

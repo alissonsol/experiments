@@ -1,9 +1,9 @@
 <#PSScriptInfo
 .VERSION 0.1
-.GUID 42c0ffee-a0de-4e1f-a2b3-c4d5e6f7a8b9
+.GUID 42c1e1d6-1710-476d-8b49-03b2ab6c9af3
 .AUTHOR Alisson Sol
 .COMPANYNAME None
-.COPYRIGHT (c) 2026 Alisson Sol et al.
+.COPYRIGHT (c) 2026 by Alisson Sol et al.
 .TAGS
 .LICENSEURI http://www.yuruna.com
 .PROJECTURI http://www.yuruna.com

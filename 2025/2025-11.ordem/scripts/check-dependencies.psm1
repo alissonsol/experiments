@@ -1,6 +1,7 @@
-﻿# Check-Dependencies.psm1
+# Check-Dependencies.psm1
+# GUID: 4271fa49-ef1b-4d2d-b427-c094f0a82329
 # PowerShell module for checking project dependencies
-# Copyright (c) 2025 - Alisson Sol
+# Copyright (c) 2025-2026 by Alisson Sol.
 
 function Get-CommandPath {
     param([string]$Command)
@@ -23,16 +24,16 @@ function Test-RustInstalled {
         if (-not $Quiet) {
             try {
                 $version = & rustc --version 2>&1 | Select-Object -First 1
-                Write-Host "  ✓ Rust: $version" -ForegroundColor Green
+                Write-Host "  [OK] Rust: $version" -ForegroundColor Green
             } catch {
-                Write-Host "  ✓ Rust: Found at $rustcPath" -ForegroundColor Green
+                Write-Host "  [OK] Rust: Found at $rustcPath" -ForegroundColor Green
             }
         }
         return $true
     }
 
     if (-not $Quiet) {
-        Write-Host "  ✗ Rust (rustc) not found" -ForegroundColor Red
+        Write-Host "  [X] Rust (rustc) not found" -ForegroundColor Red
     }
     return $false
 }
@@ -45,16 +46,16 @@ function Test-CargoInstalled {
         if (-not $Quiet) {
             try {
                 $version = & cargo --version 2>&1 | Select-Object -First 1
-                Write-Host "  ✓ Cargo: $version" -ForegroundColor Green
+                Write-Host "  [OK] Cargo: $version" -ForegroundColor Green
             } catch {
-                Write-Host "  ✓ Cargo: Found at $cargoPath" -ForegroundColor Green
+                Write-Host "  [OK] Cargo: Found at $cargoPath" -ForegroundColor Green
             }
         }
         return $true
     }
 
     if (-not $Quiet) {
-        Write-Host "  ✗ Cargo not found" -ForegroundColor Red
+        Write-Host "  [X] Cargo not found" -ForegroundColor Red
     }
     return $false
 }
@@ -70,7 +71,7 @@ function Test-MSVCInstalled {
             if ($vsInstances -and $vsInstances.Length -gt 0) {
                 if (-not $Quiet) {
                     $version = $vsInstances[0].installationVersion
-                    Write-Host "  ✓ MSVC Build Tools: Version $version" -ForegroundColor Green
+                    Write-Host "  [OK] MSVC Build Tools: Version $version" -ForegroundColor Green
                 }
                 return $true
             }
@@ -80,7 +81,7 @@ function Test-MSVCInstalled {
     }
 
     if (-not $Quiet) {
-        Write-Host "  ✗ MSVC Build Tools not found" -ForegroundColor Red
+        Write-Host "  [X] MSVC Build Tools not found" -ForegroundColor Red
     }
     return $false
 }
@@ -93,16 +94,16 @@ function Test-BazelInstalled {
         if (-not $Quiet) {
             try {
                 $version = & bazel --version 2>&1 | Select-Object -First 1
-                Write-Host "  ✓ Bazel: $version" -ForegroundColor Green
+                Write-Host "  [OK] Bazel: $version" -ForegroundColor Green
             } catch {
-                Write-Host "  ✓ Bazel: Found at $bazelPath" -ForegroundColor Green
+                Write-Host "  [OK] Bazel: Found at $bazelPath" -ForegroundColor Green
             }
         }
         return $true
     }
 
     if (-not $Quiet) {
-        Write-Host "  ✗ Bazel not found" -ForegroundColor Red
+        Write-Host "  [X] Bazel not found" -ForegroundColor Red
     }
     return $false
 }
@@ -115,16 +116,16 @@ function Test-NodeInstalled {
         if (-not $Quiet) {
             try {
                 $version = & node --version 2>&1 | Select-Object -First 1
-                Write-Host "  ✓ Node.js: $version" -ForegroundColor Green
+                Write-Host "  [OK] Node.js: $version" -ForegroundColor Green
             } catch {
-                Write-Host "  ✓ Node.js: Found at $nodePath" -ForegroundColor Green
+                Write-Host "  [OK] Node.js: Found at $nodePath" -ForegroundColor Green
             }
         }
         return $true
     }
 
     if (-not $Quiet) {
-        Write-Host "  ✗ Node.js not found" -ForegroundColor Red
+        Write-Host "  [X] Node.js not found" -ForegroundColor Red
     }
     return $false
 }
@@ -137,16 +138,16 @@ function Test-NpmInstalled {
         if (-not $Quiet) {
             try {
                 $version = & npm --version 2>&1 | Select-Object -First 1
-                Write-Host "  ✓ npm: v$version" -ForegroundColor Green
+                Write-Host "  [OK] npm: v$version" -ForegroundColor Green
             } catch {
-                Write-Host "  ✓ npm: Found at $npmPath" -ForegroundColor Green
+                Write-Host "  [OK] npm: Found at $npmPath" -ForegroundColor Green
             }
         }
         return $true
     }
 
     if (-not $Quiet) {
-        Write-Host "  ✗ npm not found" -ForegroundColor Red
+        Write-Host "  [X] npm not found" -ForegroundColor Red
     }
     return $false
 }
@@ -178,7 +179,7 @@ function Initialize-MSVCEnvironment {
     # Check if link.exe is already in PATH (environment already initialized)
     if (Get-Command link.exe -ErrorAction SilentlyContinue) {
         if (-not $Quiet) {
-            Write-Host "  ✓ MSVC environment already initialized (link.exe found in PATH)" -ForegroundColor Green
+            Write-Host "  [OK] MSVC environment already initialized (link.exe found in PATH)" -ForegroundColor Green
         }
         return $true
     }
@@ -193,7 +194,7 @@ function Initialize-MSVCEnvironment {
 
     if (-not (Test-Path $vswhere)) {
         if (-not $Quiet) {
-            Write-Host "  ✗ vswhere.exe not found - Visual Studio may not be installed" -ForegroundColor Red
+            Write-Host "  [X] vswhere.exe not found - Visual Studio may not be installed" -ForegroundColor Red
             Write-Host ""
             Write-Host "To fix this issue:" -ForegroundColor Yellow
             Write-Host "  1. Install Visual Studio Build Tools or Visual Studio" -ForegroundColor White
@@ -210,7 +211,7 @@ function Initialize-MSVCEnvironment {
 
         if (-not $vsPath) {
             if (-not $Quiet) {
-                Write-Host "  ✗ Visual Studio installation with C++ tools not found" -ForegroundColor Red
+                Write-Host "  [X] Visual Studio installation with C++ tools not found" -ForegroundColor Red
                 Write-Host ""
                 Write-Host "To fix this issue:" -ForegroundColor Yellow
                 Write-Host "  1. Install Visual Studio Build Tools or Visual Studio" -ForegroundColor White
@@ -226,7 +227,7 @@ function Initialize-MSVCEnvironment {
 
         if (-not (Test-Path $vsDevCmd)) {
             if (-not $Quiet) {
-                Write-Host "  ✗ VsDevCmd.bat not found at: $vsDevCmd" -ForegroundColor Red
+                Write-Host "  [X] VsDevCmd.bat not found at: $vsDevCmd" -ForegroundColor Red
             }
             return $false
         }
@@ -259,14 +260,14 @@ function Initialize-MSVCEnvironment {
         # Verify that link.exe is now available
         if (Get-Command link.exe -ErrorAction SilentlyContinue) {
             if (-not $Quiet) {
-                Write-Host "  ✓ MSVC environment initialized successfully" -ForegroundColor Green
+                Write-Host "  [OK] MSVC environment initialized successfully" -ForegroundColor Green
                 $linkPath = (Get-Command link.exe).Path
-                Write-Host "  ✓ link.exe found at: $linkPath" -ForegroundColor Green
+                Write-Host "  [OK] link.exe found at: $linkPath" -ForegroundColor Green
             }
             return $true
         } else {
             if (-not $Quiet) {
-                Write-Host "  ✗ MSVC environment setup completed but link.exe still not found" -ForegroundColor Red
+                Write-Host "  [X] MSVC environment setup completed but link.exe still not found" -ForegroundColor Red
                 Write-Host ""
                 Write-Host "This may indicate an incomplete Visual Studio installation." -ForegroundColor Yellow
                 Write-Host "Try reinstalling with the 'Desktop development with C++' workload." -ForegroundColor Yellow
@@ -277,7 +278,7 @@ function Initialize-MSVCEnvironment {
 
     } catch {
         if (-not $Quiet) {
-            Write-Host "  ✗ Error initializing MSVC environment: $_" -ForegroundColor Red
+            Write-Host "  [X] Error initializing MSVC environment: $_" -ForegroundColor Red
         }
         return $false
     }

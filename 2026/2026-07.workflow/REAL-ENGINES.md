@@ -1,5 +1,7 @@
 # Running on the REAL engines (optional)
 
+Copyright (c) 2026 by Alisson Sol.
+
 The lab's live side-by-side view is a **faithful simulation** — always on, needs
 nothing installed, and models the durability mechanics both products share.
 

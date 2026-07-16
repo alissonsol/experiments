@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 /**
  * Model API Facade
  * 
@@ -78,7 +79,6 @@ export async function ExecutePrompt(
   params: ExecutePromptParams,
   autoInit: boolean = false
 ): Promise<ExecutePromptResult> {
-  // Check if model is ready
   if (!isModelReady()) {
     if (autoInit) {
       try {
@@ -97,7 +97,6 @@ export async function ExecutePrompt(
     }
   }
 
-  // Execute the prompt via the offscreen document
   return executePromptViaOffscreen(params.prompt);
 }
 

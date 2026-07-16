@@ -1,4 +1,6 @@
 #!/usr/bin/env pwsh
+# Copyright (c) 2026 by Alisson Sol.
+# GUID: 42904e29-74d4-42f6-9e7b-b12455edf08e
 <#
 .SYNOPSIS
   Run the Durable Workflows Lab in a single command on macOS or Windows.
@@ -7,7 +9,7 @@
   One command to launch the lab:
     1. verifies Node.js is installed,
     2. runs `npm install` on the first run,
-    3. starts the local server (Node + tsx — no Docker, no external services),
+    3. starts the local server (Node + tsx - no Docker, no external services),
     4. opens the lab in your default browser.
 
   Cross-platform: works in PowerShell 7+ (pwsh) on macOS / Windows / Linux, and
@@ -49,7 +51,7 @@ function Write-Bad($m)  { Write-Host "  x $m" -ForegroundColor Red }
 
 # OS detection that works in BOTH Windows PowerShell 5.1 and PowerShell 7+.
 # ($env:OS is 'Windows_NT' on all Windows; $IsMacOS only exists in 7+, and
-#  macOS never ships 5.1 — so these two checks are sufficient.)
+#  macOS never ships 5.1 - so these two checks are sufficient.)
 $onWindows = ($env:OS -eq 'Windows_NT')
 $onMac     = (-not $onWindows) -and ($IsMacOS -eq $true)
 

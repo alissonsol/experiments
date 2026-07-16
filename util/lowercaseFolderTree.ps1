@@ -1,9 +1,10 @@
+# Copyright (c) 2025-2026 by Alisson Sol.
+# GUID: 42ddeaf7-95b7-4e02-8748-02d4728b1ed1
 param (
     [Parameter(Mandatory = $true)]
     [string]$FolderPath
 )
 
-# Check if the folder exists
 if (-Not (Test-Path -Path $FolderPath -PathType Container)) {
     Write-Output "The folder '$FolderPath' does not exist." -ForegroundColor Red
     exit 1

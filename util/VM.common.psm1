@@ -3,7 +3,7 @@
 .GUID 42c0ffee-a0de-4e1f-a2b3-c4d5e6f7a8b9
 .AUTHOR Alisson Sol
 .COMPANYNAME None
-.COPYRIGHT (c) 2026 Alisson Sol et al.
+.COPYRIGHT (c) 2026 by Alisson Sol et al.
 .TAGS
 .LICENSEURI http://www.yuruna.com
 .PROJECTURI http://www.yuruna.com
@@ -26,7 +26,6 @@ function CreateIso {
         [string]$VolumeId = "cidata"
     )
 
-    # Resolve current working directory
     $cwd = (Get-Location).ProviderPath
 
     # Make SourceDir absolute if relative

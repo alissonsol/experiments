@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // REAL TEMPORAL (portable path) — worker
 //

@@ -117,10 +117,8 @@ def main():
     """Main function to run the script."""
     print("Scanning repository for files and links...")
 
-    # Get the current working directory
     script_dir = os.getcwd()
 
-    # Scan the repository
     data = scan_repository(script_dir)
 
     # Write to JSON file

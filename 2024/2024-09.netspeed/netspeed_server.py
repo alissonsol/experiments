@@ -1,3 +1,4 @@
+# Copyright (c) 2024-2026 by Alisson Sol.
 import socket
 import time
 from datetime import datetime

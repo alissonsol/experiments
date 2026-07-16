@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // PORTABLE ABSTRACTION — order-workflow.ts
 // The business logic, written ONCE against DurableContext.

@@ -1,4 +1,5 @@
-﻿# Copyright (c) 2025 - Alisson Sol
+# Copyright (c) 2025-2026 by Alisson Sol.
+# GUID: 425aa04e-9cd2-4332-aa80-007ae3b3cf57
 # Check if running on Windows
 if (-not $IsWindows -and (Get-Variable -Name IsWindows -ErrorAction SilentlyContinue)) {
     Write-Host "ERROR: This script is Windows-specific and can only run on Windows." -ForegroundColor Red
@@ -77,11 +78,11 @@ function Test-ToolInstalled {
     if ($path) {
         try {
             $version = & $Command --version 2>&1 | Select-Object -First 1
-            Write-Host "✓ $Name found at: $path" -ForegroundColor Green
+            Write-Host "[OK] $Name found at: $path" -ForegroundColor Green
             Write-Host "  Version: $version" -ForegroundColor Gray
             return $true
         } catch {
-            Write-Host "⚠ $Name found at $path but failed version check" -ForegroundColor Yellow
+            Write-Host "[!] $Name found at $path but failed version check" -ForegroundColor Yellow
             return $false
         }
     }
@@ -97,7 +98,7 @@ function Install-WithWinget {
         [bool]$Silent = $true
     )
 
-    Write-Host "→ Installing $Name..." -ForegroundColor Cyan
+    Write-Host "-> Installing $Name..." -ForegroundColor Cyan
 
     $args = @("install", "--id", $WingetId, "--accept-package-agreements", "--accept-source-agreements")
 
@@ -123,7 +124,7 @@ function Install-WithWinget {
 
         if ($exitCode -ne 0 -and $output -notlike "*already installed*") {
             Write-Host ""
-            Write-Host "  ✗ Installation failed with exit code: $exitCode" -ForegroundColor Red
+            Write-Host "  [X] Installation failed with exit code: $exitCode" -ForegroundColor Red
             if ($output) {
                 Write-Host "  Output:" -ForegroundColor Gray
                 Write-Host "  $output" -ForegroundColor Gray
@@ -147,14 +148,14 @@ function Install-WithWinget {
 
         if ($path) {
             $version = & $VerifyCommand --version 2>&1 | Select-Object -First 1
-            Write-Host "  ✓ $Name installed successfully" -ForegroundColor Green
+            Write-Host "  [OK] $Name installed successfully" -ForegroundColor Green
             Write-Host "  Location: $path" -ForegroundColor Gray
             Write-Host "  Version: $version" -ForegroundColor Gray
             Write-Host ""
             return $true
         } else {
             Write-Host ""
-            Write-Host "  ⚠ Installation completed but '$VerifyCommand' not found in PATH" -ForegroundColor Yellow
+            Write-Host "  [!] Installation completed but '$VerifyCommand' not found in PATH" -ForegroundColor Yellow
             Write-Host ""
             Write-Host "  Troubleshooting steps:" -ForegroundColor Yellow
             Write-Host "  1. Close and reopen your terminal" -ForegroundColor White
@@ -167,7 +168,7 @@ function Install-WithWinget {
 
     } catch {
         Write-Host ""
-        Write-Host "  ✗ Installation error: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  [X] Installation error: $($_.Exception.Message)" -ForegroundColor Red
         Write-Host ""
         Write-Host "  Troubleshooting steps:" -ForegroundColor Yellow
         Write-Host "  1. Ensure winget is installed and updated" -ForegroundColor White
@@ -178,7 +179,6 @@ function Install-WithWinget {
     }
 }
 
-# Track results
 $results = @{}
 
 # ============================================================================
@@ -194,7 +194,7 @@ if (Test-ToolInstalled -Command "rustc" -Name "Rust") {
     # Also check rustup
     if (Get-CommandPath "rustup") {
         $rustupPath = (Get-Command rustup).Path
-        Write-Host "✓ rustup found at: $rustupPath" -ForegroundColor Green
+        Write-Host "[OK] rustup found at: $rustupPath" -ForegroundColor Green
     }
 
     Write-Host ""
@@ -218,62 +218,62 @@ Write-Host ""
 if (Get-CommandPath "rustup") {
     try {
         # First, ensure the default host is set to MSVC to prevent GNU installation
-        Write-Host "→ Setting default host to MSVC..." -ForegroundColor Yellow
+        Write-Host "-> Setting default host to MSVC..." -ForegroundColor Yellow
         & rustup set default-host x86_64-pc-windows-msvc
 
         # Remove any existing GNU toolchain if present
-        Write-Host "→ Checking for and removing any GNU toolchain..." -ForegroundColor Yellow
+        Write-Host "-> Checking for and removing any GNU toolchain..." -ForegroundColor Yellow
         $gnuInstalled = & rustup toolchain list | Select-String "gnu"
         if ($gnuInstalled) {
             Write-Host "  Found GNU toolchain, removing..." -ForegroundColor Gray
             & rustup toolchain uninstall stable-x86_64-pc-windows-gnu 2>&1 | Out-Null
-            Write-Host "  ✓ GNU toolchain removed" -ForegroundColor Green
+            Write-Host "  [OK] GNU toolchain removed" -ForegroundColor Green
         } else {
             Write-Host "  No GNU toolchain found (good)" -ForegroundColor Gray
         }
 
         # Install MSVC toolchain
-        Write-Host "→ Installing MSVC toolchain (x86_64-pc-windows-msvc)..." -ForegroundColor Yellow
+        Write-Host "-> Installing MSVC toolchain (x86_64-pc-windows-msvc)..." -ForegroundColor Yellow
         & rustup toolchain install stable-x86_64-pc-windows-msvc --no-self-update
 
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "  ✓ MSVC toolchain installed successfully" -ForegroundColor Green
+            Write-Host "  [OK] MSVC toolchain installed successfully" -ForegroundColor Green
 
-            Write-Host "→ Setting MSVC as default toolchain..." -ForegroundColor Yellow
+            Write-Host "-> Setting MSVC as default toolchain..." -ForegroundColor Yellow
             & rustup default stable-x86_64-pc-windows-msvc
 
-            Write-Host "→ Adding rustfmt and clippy components..." -ForegroundColor Yellow
+            Write-Host "-> Adding rustfmt and clippy components..." -ForegroundColor Yellow
             & rustup component add rustfmt clippy
 
             if ($LASTEXITCODE -eq 0) {
-                Write-Host "  ✓ All components installed successfully" -ForegroundColor Green
+                Write-Host "  [OK] All components installed successfully" -ForegroundColor Green
 
                 # Verify configuration
-                Write-Host "→ Verifying toolchain configuration..." -ForegroundColor Yellow
+                Write-Host "-> Verifying toolchain configuration..." -ForegroundColor Yellow
                 $defaultToolchain = & rustup default 2>&1 | Out-String
                 if ($defaultToolchain -match "msvc") {
-                    Write-Host "  ✓ Default toolchain: $($defaultToolchain.Trim())" -ForegroundColor Green
+                    Write-Host "  [OK] Default toolchain: $($defaultToolchain.Trim())" -ForegroundColor Green
                     $results.RustComponents = $true
                 } else {
-                    Write-Host "  ⚠ Warning: Default toolchain may not be MSVC" -ForegroundColor Yellow
+                    Write-Host "  [!] Warning: Default toolchain may not be MSVC" -ForegroundColor Yellow
                     Write-Host "  Current: $($defaultToolchain.Trim())" -ForegroundColor Gray
                     $results.RustComponents = $false
                 }
             } else {
-                Write-Host "  ✗ Component installation failed" -ForegroundColor Red
+                Write-Host "  [X] Component installation failed" -ForegroundColor Red
                 Write-Host "  Run manually: rustup component add rustfmt clippy" -ForegroundColor Yellow
                 $results.RustComponents = $false
             }
         } else {
-            Write-Host "  ✗ MSVC toolchain installation failed" -ForegroundColor Red
+            Write-Host "  [X] MSVC toolchain installation failed" -ForegroundColor Red
             $results.RustComponents = $false
         }
     } catch {
-        Write-Host "  ✗ Error: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  [X] Error: $($_.Exception.Message)" -ForegroundColor Red
         $results.RustComponents = $false
     }
 } else {
-    Write-Host "✗ rustup not found - cannot configure toolchain" -ForegroundColor Red
+    Write-Host "[X] rustup not found - cannot configure toolchain" -ForegroundColor Red
     Write-Host "  This is unusual - Rust should include rustup" -ForegroundColor Yellow
     Write-Host "  Try reinstalling Rust or restart your terminal" -ForegroundColor Yellow
     $results.RustComponents = $false
@@ -301,7 +301,7 @@ if (Test-Path $vswhere) {
         $vsInstances = & $vswhere -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json | ConvertFrom-Json
         if ($vsInstances -and $vsInstances.Length -gt 0) {
             $buildToolsInstalled = $true
-            Write-Host "✓ Visual C++ Build Tools found" -ForegroundColor Green
+            Write-Host "[OK] Visual C++ Build Tools found" -ForegroundColor Green
             foreach ($instance in $vsInstances) {
                 Write-Host "  Version: $($instance.installationVersion)" -ForegroundColor Gray
                 Write-Host "  Path: $($instance.installationPath)" -ForegroundColor Gray
@@ -312,13 +312,13 @@ if (Test-Path $vswhere) {
                     $linkExe = Get-ChildItem -Path $vcToolsPath -Filter "link.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
                     if ($linkExe) {
                         $linkExeFound = $true
-                        Write-Host "  ✓ link.exe found at: $($linkExe.FullName)" -ForegroundColor Green
+                        Write-Host "  [OK] link.exe found at: $($linkExe.FullName)" -ForegroundColor Green
                     }
                 }
             }
 
             if (-not $linkExeFound) {
-                Write-Host "  ⚠ WARNING: Build Tools found but link.exe not detected" -ForegroundColor Yellow
+                Write-Host "  [!] WARNING: Build Tools found but link.exe not detected" -ForegroundColor Yellow
                 Write-Host "  You may need to reinstall with the C++ workload selected" -ForegroundColor Yellow
             }
         }
@@ -343,15 +343,15 @@ if ($buildToolsInstalled -and $linkExeFound) {
     $installerUrl = "https://aka.ms/vs/17/release/vs_buildtools.exe"
     $installerPath = Join-Path $env:TEMP "vs_buildtools.exe"
 
-    Write-Host "→ Downloading Visual Studio Build Tools installer..." -ForegroundColor Cyan
+    Write-Host "-> Downloading Visual Studio Build Tools installer..." -ForegroundColor Cyan
     try {
         # Download the installer
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         $webClient = New-Object System.Net.WebClient
         $webClient.DownloadFile($installerUrl, $installerPath)
-        Write-Host "  ✓ Downloaded to: $installerPath" -ForegroundColor Green
+        Write-Host "  [OK] Downloaded to: $installerPath" -ForegroundColor Green
 
-        Write-Host "→ Installing Visual C++ Build Tools (this may take several minutes)..." -ForegroundColor Cyan
+        Write-Host "-> Installing Visual C++ Build Tools (this may take several minutes)..." -ForegroundColor Cyan
         Write-Host "  Components: Desktop development with C++, MSVC tools, Windows SDK" -ForegroundColor Gray
         Write-Host ""
 
@@ -379,9 +379,9 @@ if ($buildToolsInstalled -and $linkExeFound) {
         if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
             # 0 = success, 3010 = success but reboot required
             if ($process.ExitCode -eq 3010) {
-                Write-Host "  ✓ Installation completed (reboot recommended)" -ForegroundColor Green
+                Write-Host "  [OK] Installation completed (reboot recommended)" -ForegroundColor Green
             } else {
-                Write-Host "  ✓ Installation completed successfully" -ForegroundColor Green
+                Write-Host "  [OK] Installation completed successfully" -ForegroundColor Green
             }
 
             # Verify installation by checking for vswhere and link.exe
@@ -390,13 +390,13 @@ if ($buildToolsInstalled -and $linkExeFound) {
             if (Test-Path $vswhereCheck) {
                 $vsInstances = & $vswhereCheck -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json 2>$null | ConvertFrom-Json
                 if ($vsInstances -and $vsInstances.Length -gt 0) {
-                    Write-Host "  ✓ vswhere confirms VC++ tools installed" -ForegroundColor Green
+                    Write-Host "  [OK] vswhere confirms VC++ tools installed" -ForegroundColor Green
                     foreach ($instance in $vsInstances) {
                         $vcToolsPath = Join-Path $instance.installationPath "VC\Tools\MSVC"
                         if (Test-Path $vcToolsPath) {
                             $linkExeCheck = Get-ChildItem -Path $vcToolsPath -Filter "link.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
                             if ($linkExeCheck) {
-                                Write-Host "  ✓ link.exe found at: $($linkExeCheck.FullName)" -ForegroundColor Green
+                                Write-Host "  [OK] link.exe found at: $($linkExeCheck.FullName)" -ForegroundColor Green
                                 $results.BuildTools = $true
                             }
                         }
@@ -405,12 +405,12 @@ if ($buildToolsInstalled -and $linkExeFound) {
             }
 
             if (-not $results.BuildTools) {
-                Write-Host "  ⚠ Installation completed but verification pending" -ForegroundColor Yellow
+                Write-Host "  [!] Installation completed but verification pending" -ForegroundColor Yellow
                 Write-Host "  You may need to restart your terminal for changes to take effect." -ForegroundColor Yellow
                 $results.BuildTools = $true  # Assume success since installer completed
             }
         } else {
-            Write-Host "  ✗ Installation failed with exit code: $($process.ExitCode)" -ForegroundColor Red
+            Write-Host "  [X] Installation failed with exit code: $($process.ExitCode)" -ForegroundColor Red
             Write-Host ""
             Write-Host "  Common exit codes:" -ForegroundColor Yellow
             Write-Host "    -1: General error" -ForegroundColor Gray
@@ -430,7 +430,7 @@ if ($buildToolsInstalled -and $linkExeFound) {
         }
 
     } catch {
-        Write-Host "  ✗ Error during installation: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  [X] Error during installation: $($_.Exception.Message)" -ForegroundColor Red
         Write-Host ""
         Write-Host "  Try manual installation:" -ForegroundColor Yellow
         Write-Host "  1. Download: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022" -ForegroundColor White
@@ -482,9 +482,9 @@ $allSuccess = $true
 
 foreach ($key in $results.Keys) {
     if ($results[$key]) {
-        Write-Host "✓ $key" -ForegroundColor Green
+        Write-Host "[OK] $key" -ForegroundColor Green
     } else {
-        Write-Host "✗ $key" -ForegroundColor Red
+        Write-Host "[X] $key" -ForegroundColor Red
         $allSuccess = $false
     }
 }
@@ -529,5 +529,4 @@ Write-Host "New PowerShell window opened at project root with dependency informa
 Write-Host "You can now close this administrator window." -ForegroundColor Yellow
 Write-Host ""
 
-# Return to previous location
 Pop-Location

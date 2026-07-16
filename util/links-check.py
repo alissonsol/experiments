@@ -524,7 +524,6 @@ def check_links(json_file, repo_root='.', csv_file=None, max_workers=32, timeout
 
 def main():
     """Main function to run the script."""
-    # Record start time
     start_time = time.time()
 
     # Parse command-line arguments
@@ -567,7 +566,6 @@ Examples:
     print(f"Checking links from links-list.json...")
     print(f"Configuration: {args.workers} parallel workers, {args.timeout}s timeout\n")
 
-    # Get the current working directory
     script_dir = os.getcwd()
 
     # Paths

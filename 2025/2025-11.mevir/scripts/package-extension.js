@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// Copyright (c) 2025-2026 by Alisson Sol.
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');

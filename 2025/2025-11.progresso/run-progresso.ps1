@@ -1,5 +1,6 @@
-﻿<#
-  Copyright (c) 2025 - Alisson Sol
+# GUID: 42207792-29ab-4152-aef0-74e89adb1bd7
+<#
+  Copyright (c) 2025-2026 by Alisson Sol.
 # Runs the Progresso service executable in console mode after ensuring
 # `dist\backend\ordem.target.xml` exists. If missing, attempts to copy
 # it from `%LOCALAPPDATA%\Ordem\ordem.target.xml`.
@@ -98,7 +99,7 @@ function Check-Dependencies {
         Write-Error "Cannot continue without VC++ Redistributable."
         exit 1
     } else {
-        Write-Host "✓ Microsoft Visual C++ Redistributable found" -ForegroundColor Green
+        Write-Host "[OK] Microsoft Visual C++ Redistributable found" -ForegroundColor Green
     }
 
     Write-Host ""

@@ -1,4 +1,5 @@
-# Copyright (c) 2025 - Alisson Sol
+# Copyright (c) 2025-2026 by Alisson Sol.
+# GUID: 42b34079-e696-4e6a-9c2e-39e67774ad3c
 # Test script to demonstrate the ordem service diagnostics
 # This script will stop any running instance and test the new diagnostics
 
@@ -22,5 +23,4 @@ Write-Host ""
 
 & "services\retrieve\target\x86_64-pc-windows-msvc\release\ordem_service.exe"
 
-# Return to previous location
 Pop-Location

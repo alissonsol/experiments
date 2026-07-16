@@ -1,5 +1,6 @@
-﻿<#
-  Copyright (c) 2025 - Alisson Sol
+# GUID: 42916b51-96ec-4744-b19d-63bb6d560484
+<#
+  Copyright (c) 2025-2026 by Alisson Sol.
 #>
 $ErrorActionPreference = 'Stop'
 
@@ -120,7 +121,7 @@ function Check-Dependencies {
         Write-Error "Cannot continue without VC++ Redistributable."
         exit 1
     } else {
-        Write-Host "✓ Microsoft Visual C++ Redistributable found" -ForegroundColor Green
+        Write-Host "[OK] Microsoft Visual C++ Redistributable found" -ForegroundColor Green
     }
 
     Write-Host ""
@@ -140,7 +141,6 @@ Check-Dependencies
 # Start the application
 # ============================================================================
 
-# Find the backend executable
 $backendExe = Get-ChildItem -Path $backendDir -Filter "*.exe" -File -ErrorAction SilentlyContinue | Select-Object -First 1
 
 if (-not $backendExe) {

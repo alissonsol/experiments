@@ -1,3 +1,5 @@
+# Copyright (c) 2026 by Alisson Sol.
+# GUID: 423e8a02-fdaf-4b81-87af-31bc554a9174
 # 1. Get all PIDs currently using the NVIDIA GPU
 $gpuProcesses = nvidia-smi --query-compute-apps=pid --format=csv,noheader
 

@@ -1,5 +1,6 @@
-﻿#!/usr/bin/env pwsh
-# Copyright (c) 2025 - Alisson Sol
+#!/usr/bin/env pwsh
+# GUID: 42ba68aa-e464-458d-b612-6720245cb72d
+# Copyright (c) 2025-2026 by Alisson Sol.
 $ErrorActionPreference = 'Stop'
 
 # Navigate to project root and save previous location
@@ -7,7 +8,6 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path -Parent $scriptDir
 Push-Location $projectRoot
 
-# Import dependency checking module
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 Write-Host "This script will remove the top-level dist/ folder and optional Bazel outputs."
@@ -35,7 +35,6 @@ function Remove-IfExists($path) {
 
 $repoRoot = $projectRoot
 
-# Remove top-level dist folder
 Remove-IfExists (Join-Path $repoRoot "dist")
 
 # Also remove legacy ui/node_modules and services/retrieve/target if present
@@ -75,5 +74,4 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 
 Write-Host "Clean finished."
 
-# Return to previous location
 Pop-Location

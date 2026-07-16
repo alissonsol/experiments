@@ -1,5 +1,7 @@
 # Menu Server
 
+Copyright (c) 2025-2026 by Alisson Sol.
+
 A simple menu server
 
 ## WebServer
@@ -14,4 +16,4 @@ Start by running `WebServer.ps1` from an administrator PowerShell prompt.
 
 Page `index.html` serves menus from the folder (surprise!) `menus`.
 
-Except with the `lang` parameter is passed. In that case, it seeks for menus in the folder `menus.[lang]`.
+Except when the `lang` parameter is passed. In that case, it seeks for menus in the folder `menus.[lang]`.

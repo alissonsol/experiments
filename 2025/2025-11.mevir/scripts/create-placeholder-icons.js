@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 /**
  * Creates minimal placeholder PNG icons for Chrome extension
  * These are simple colored squares - replace with proper icons for production

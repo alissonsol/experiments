@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // PORTABLE ABSTRACTION — adapters/temporal.ts
 // Maps DurableContext onto Temporal primitives:

@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 import { ExecutePrompt, isModelReady } from './models';
 import { MoralDimension, PageAnalysis, PageContent } from './types';
 
@@ -50,7 +51,6 @@ export async function DoAnalysis(pageContent: PageContent): Promise<PageAnalysis
 
     // Process all moral dimensions in parallel for better performance
     const promises = morals.map(async (moral) => {
-      // Concatenate prompt with page text
       const fullPrompt = `${moral.Prompt}\n${pageContent.Text}`;
 
       try {

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // NATIVE TEMPORAL IMPLEMENTATION — worker.ts
 // Temporal separates "where code runs" (workers, this file) from

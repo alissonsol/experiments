@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 /**
  * EmbeddingGemma Model Provider
  * 
@@ -238,7 +239,6 @@ export class GemmaProvider implements ModelProvider {
         normalize: true
       });
 
-      // Convert embeddings to array
       const embeddings = Array.from(output.data);
 
       // For the MEVIR use case, we return the embeddings as a JSON string

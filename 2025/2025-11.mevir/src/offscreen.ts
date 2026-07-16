@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 /**
  * Offscreen Document Script for ML Model Execution
  * 
@@ -111,7 +112,6 @@ async function initializeModel(): Promise<{ success: boolean; error?: string }> 
     modelState = 'loading';
     console.log('[Offscreen] Loading model:', MODEL_ID);
 
-    // Create the feature extraction pipeline
     modelPipeline = await pipeline('feature-extraction', MODEL_ID, {
       quantized: USE_QUANTIZED,
       progress_callback: (progress: { status: string; progress?: number; file?: string }) => {
@@ -158,7 +158,6 @@ async function executePrompt(prompt: string): Promise<{
       normalize: true
     });
 
-    // Convert embeddings to array
     const embeddings = Array.from(output.data as Float32Array);
 
     const response = JSON.stringify({

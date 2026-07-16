@@ -1,3 +1,4 @@
+// Copyright (c) 2026 by Alisson Sol.
 // ============================================================
 // NATIVE TEMPORAL IMPLEMENTATION — workflows.ts
 // This file runs inside Temporal's deterministic V8 sandbox.

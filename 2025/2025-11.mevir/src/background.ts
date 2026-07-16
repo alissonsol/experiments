@@ -1,3 +1,4 @@
+// Copyright (c) 2025-2026 by Alisson Sol.
 import { DoAnalysis } from './api';
 import {
   getModelState,
@@ -92,13 +93,10 @@ async function updateBadge(tabId: number, riskScore: number): Promise<void> {
  */
 async function handlePageContent(tabId: number, pageContent: PageContent): Promise<void> {
   try {
-    // Call the DoAnalysis API
     const analysis = await DoAnalysis(pageContent);
     
-    // Store the analysis for this tab
     tabAnalysis.set(tabId, analysis);
     
-    // Update the badge with risk score
     await updateBadge(tabId, analysis.RiskScore);
   } catch (error) {
     console.error('Error analyzing page:', error);

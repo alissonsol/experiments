@@ -1,0 +1,7 @@
+# Scripts and cloud-init files consumed on Linux must keep LF endings on every checkout
+*.sh        text eol=lf
+*.bash      text eol=lf
+updateAll   text eol=lf
+user-data   text eol=lf
+meta-data   text eol=lf
+Dockerfile  text eol=lf

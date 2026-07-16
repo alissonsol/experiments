@@ -2,7 +2,7 @@
 Porkbun API domain report generator.
 Fetches domain information and generates a CSV report.
 
-Copyright (c) 2025 Alisson Sol. All rights reserved.
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 """
 
 import requests

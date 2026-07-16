@@ -1,5 +1,6 @@
-﻿#!/usr/bin/env pwsh
-# Copyright (c) 2025 - Alisson Sol
+#!/usr/bin/env pwsh
+# Copyright (c) 2025-2026 by Alisson Sol.
+# GUID: 42dbbbad-6ff1-4f4b-a542-a0eb7c3b8865
 $ErrorActionPreference = 'Stop'
 
 # Navigate to project root and save previous location
@@ -9,7 +10,6 @@ Push-Location $projectRoot
 
 Write-Host "Building Ordem backend and UI into top-level dist/"
 
-# Import dependency checking module
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 # Check dependencies before building
@@ -46,17 +46,17 @@ if (Test-Path "ui/package.json") {
                 if (Get-Command npm -ErrorAction SilentlyContinue) {
                     npm install --omit=dev --yes
                 } else {
-                    Write-Warning "npm not found — skipping node_modules install into dist/ui"
+                    Write-Warning "npm not found - skipping node_modules install into dist/ui"
                 }
             } finally { Pop-Location }
 
             Write-Host "UI built into $uiDist"
         } else {
-            Write-Warning "npm not found in PATH — please install Node.js to build the UI. Skipping UI build."
+            Write-Warning "npm not found in PATH - please install Node.js to build the UI. Skipping UI build."
         }
     } finally { Pop-Location }
 } else {
-    Write-Warning "ui/package.json not found — skipping UI build"
+    Write-Warning "ui/package.json not found - skipping UI build"
 }
 
 # Build Rust backend and copy binary into dist/backend
@@ -113,15 +113,14 @@ if (Test-Path "services/retrieve/Cargo.toml") {
                     Write-Warning "Could not find built backend binary at $srcExe"
                 }
             } else {
-                Write-Warning "cargo not found in PATH — please install Rust (rustup) to build the backend. Skipping backend build."
+                Write-Warning "cargo not found in PATH - please install Rust (rustup) to build the backend. Skipping backend build."
             }
         } finally { Pop-Location }
     }
 } else {
-    Write-Warning "services/retrieve/Cargo.toml not found — skipping backend build"
+    Write-Warning "services/retrieve/Cargo.toml not found - skipping backend build"
 }
 
 Write-Host "Build-all finished. Artifacts are under $dist"
 
-# Return to previous location
 Pop-Location

@@ -1,6 +1,8 @@
 # Application allow list enforcement
 
-Complimentary mermaid diagrams to the blog post [Application allow list enforcement](https://alissonsol.blogspot.com/2025/10/application-allow-list-enforcement.html). If the diagrams are shown as text due to the GitHub plug-in not working for your machine, please copy and paste the diagram to sites like [Mermaid.Live](https://mermaid.live/).
+Copyright (c) 2025-2026 by Alisson Sol.
+
+Complementary mermaid diagrams to the blog post [Application allow list enforcement](https://alissonsol.blogspot.com/2025/10/application-allow-list-enforcement.html). If the diagrams are shown as text due to the GitHub plug-in not working for your machine, please copy and paste the diagram to sites like [Mermaid.Live](https://mermaid.live/).
 
 ## High-level workflow for allow list maintenance
 

@@ -1,5 +1,6 @@
-﻿#!/usr/bin/env pwsh
-# Copyright (c) 2025 - Alisson Sol
+#!/usr/bin/env pwsh
+# Copyright (c) 2025-2026 by Alisson Sol.
+# GUID: 42b61aea-ac3d-473b-be1a-31ef32fd58b4
 $ErrorActionPreference = 'Stop'
 
 # Navigate to project root and save previous location
@@ -12,7 +13,6 @@ Write-Host "Progresso: Build All" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Import dependency checking module
 Import-Module (Join-Path $scriptDir "check-dependencies.psm1") -Force
 
 # Check dependencies before building
@@ -77,7 +77,7 @@ try {
     Pop-Location
 }
 
-Write-Host "  ✓ Cargo build completed" -ForegroundColor Green
+Write-Host "  [OK] Cargo build completed" -ForegroundColor Green
 Write-Host ""
 
 Write-Host "[2/2] Collecting build outputs..." -ForegroundColor Yellow
@@ -96,7 +96,7 @@ if (-not (Test-Path $cargoTarget)) {
 }
 if (Test-Path $cargoTarget) {
     Copy-Item -Path $cargoTarget -Destination $backendDist -Force
-    Write-Host "  ✓ Copied progresso_service.exe to dist/backend" -ForegroundColor Green
+    Write-Host "  [OK] Copied progresso_service.exe to dist/backend" -ForegroundColor Green
 } else {
     Write-Warning "No progresso_service.exe found at expected location: $cargoTarget"
 }
@@ -104,5 +104,4 @@ if (Test-Path $cargoTarget) {
 Write-Host ""
 Write-Host "Build finished." -ForegroundColor Cyan
 
-# Return to previous location
 Pop-Location

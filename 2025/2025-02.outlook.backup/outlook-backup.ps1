@@ -1,3 +1,4 @@
+# GUID: 42ce5f9e-11be-4e8a-970b-d252aa9c4471
 <#
 .SYNOPSIS
     Backs up Outlook data and email folder to a timestamped ZIP archive.
@@ -8,7 +9,7 @@
 
 .NOTES
     Author: Alisson Sol
-    Copyright: (c) 2020-2025
+    Copyright: (c) 2020-2026 by Alisson Sol.
     Version: 2.0
     Disclaimer: No guarantees provided
 #>
