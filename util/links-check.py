@@ -3,7 +3,7 @@
 Script to check all links from links-list.json and identify dead or invalid links.
 Outputs results to links-dead.csv
 
-Copyright (c) 2025 Alisson Sol. All rights reserved.
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 """
 
 import os

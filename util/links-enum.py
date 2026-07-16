@@ -3,7 +3,7 @@
 Script to enumerate all files in the repository and extract links from HTML files.
 Outputs results to links-list.json
 
-Copyright (c) 2025 Alisson Sol. All rights reserved.
+Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 """
 
 import os

@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) 2025-2026 by Alisson Sol.
 
 # Install the GUI
 dnf update -y

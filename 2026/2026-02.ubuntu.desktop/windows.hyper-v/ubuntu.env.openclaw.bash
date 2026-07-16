@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) 2026 by Alisson Sol.
 
 # Determine the real user (even when running with sudo)
 REAL_USER="${SUDO_USER:-$USER}"

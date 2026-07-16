@@ -1,4 +1,5 @@
 #!/bin/bash
+# Copyright (c) 2025-2026 by Alisson Sol.
 
 # Install Docker
 dnf -y install dnf-plugins-core iptables container-selinux
