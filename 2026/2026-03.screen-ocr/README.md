@@ -2,23 +2,22 @@
 
 Copyright (c) 2026 by Alisson Sol.
 
-PowerShell module that extracts newly appeared text from sequential screen captures using pixel-level diffing and Tesseract OCR.
+PowerShell module that extracts newly appeared text from sequential screen captures using pixel-level diffing and the operating system's built-in OCR engine.
 
 ## How it works
 
 1. Compares two screenshots (current vs. previous) pixel-by-pixel to find changed regions
 2. Crops the current image to the bounding box of changed rows
-3. Runs Tesseract OCR on the cropped delta image to extract only the new text
+3. Runs OCR on the cropped delta image to extract only the new text
 
-On Windows, pixel processing uses compiled C# for performance. On macOS/Linux, ImageMagick handles the image diffing and cropping.
+Pixel processing uses C# compiled at module load (no System.Drawing, ImageMagick, or Tesseract dependencies). OCR uses Windows.Media.Ocr (WinRT, the same engine as Snipping Tool) on Windows and the Apple Vision framework (via `swift`) on macOS. Linux is not supported.
 
 When no previous screenshot is provided, the entire current image is treated as new content.
 
 ## Requirements
 
-- PowerShell 7+
-- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) installed and available in PATH
-- On macOS/Linux: [ImageMagick](https://imagemagick.org/) (`brew install imagemagick`)
+- PowerShell 7+ (.NET 10+)
+- Windows (WinRT OCR) or macOS (Apple Vision, requires the `swift` toolchain)
 
 ## Usage
 
@@ -38,7 +37,7 @@ Get-NewTextContent -CurrentScreenPath '.\screenshots\0001.png'
 .\Test-NewText.ps1
 ```
 
-Compares screenshot `0003.png` (current) against `0002.png` (previous) and prints the OCR result. Debug artifacts (processed images, OCR output) are saved to `$env:TEMP\NewText\`.
+Compares screenshot `0008.png` (current) against `0007.png` (previous) and prints the OCR result. Debug artifacts (processed images, OCR output) are saved to `$env:TEMP\NewText\`.
 
 ## Structure
 

@@ -29,9 +29,9 @@ $zipName = "ordem-dist-$timestamp.zip"
 $zipPath = Join-Path $repoRoot $zipName
 
 # ============================================================================
-# Step 0: Check if backend is running
+# Step 1: Check if backend is running
 # ============================================================================
-Write-Host "[0/4] Checking for running processes..." -ForegroundColor Yellow
+Write-Host "[1/6] Checking for running processes..." -ForegroundColor Yellow
 
 $backendExe = Join-Path $distDir "backend\ordem_service.exe"
 if (Test-Path $backendExe) {
@@ -51,9 +51,9 @@ Write-Host "  [OK] No running processes detected" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
-# Step 1: Ensure everything is built
+# Step 2: Ensure everything is built
 # ============================================================================
-Write-Host "[1/4] Building application..." -ForegroundColor Yellow
+Write-Host "[2/6] Building application..." -ForegroundColor Yellow
 
 $buildScript = Join-Path $repoRoot "scripts\build-all.ps1"
 if (Test-Path $buildScript) {
@@ -71,9 +71,9 @@ Write-Host "  [OK] Build completed successfully" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
-# Step 2: Create package directory structure
+# Step 3: Create package directory structure
 # ============================================================================
-Write-Host "[2/4] Creating package directory..." -ForegroundColor Yellow
+Write-Host "[3/6] Creating package directory..." -ForegroundColor Yellow
 
 if (Test-Path $packageDir) {
     Remove-Item $packageDir -Recurse -Force
@@ -104,9 +104,9 @@ Write-Host "  [OK] Copied backend executable" -ForegroundColor Green
 Write-Host "  [OK] Copied UI files (bundle.js, index.html, styles.css)" -ForegroundColor Green
 
 # ============================================================================
-# Step 3: Copy run-ordem.ps1 launcher script
+# Step 4: Copy run-ordem.ps1 launcher script
 # ============================================================================
-Write-Host "[3/4] Copying launcher script..." -ForegroundColor Yellow
+Write-Host "[4/6] Copying launcher script..." -ForegroundColor Yellow
 
 $sourceLauncher = Join-Path $repoRoot "run-ordem.ps1"
 if (-not (Test-Path $sourceLauncher)) {
@@ -120,8 +120,10 @@ Copy-Item -Path $sourceLauncher -Destination $launcherPath -Force
 Write-Host "  [OK] Copied run-ordem.ps1" -ForegroundColor Green
 
 # ============================================================================
-# Step 4: Copy README for distribution
+# Step 5: Copy README for distribution
 # ============================================================================
+Write-Host "[5/6] Copying README..." -ForegroundColor Yellow
+
 $sourceReadme = Join-Path $repoRoot "README.ordem.txt"
 if (-not (Test-Path $sourceReadme)) {
     Write-Error "README file not found at: $sourceReadme"
@@ -135,9 +137,9 @@ Write-Host "  [OK] Copied README.ordem.txt" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
-# Step 5: Create ZIP archive
+# Step 6: Create ZIP archive
 # ============================================================================
-Write-Host "[4/4] Creating ZIP archive..." -ForegroundColor Yellow
+Write-Host "[6/6] Creating ZIP archive..." -ForegroundColor Yellow
 
 Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
 

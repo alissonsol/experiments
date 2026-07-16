@@ -100,12 +100,12 @@ if (!(Test-Path -Path $vhdxFile)) {
 }
 
 $seedIsoFile = Join-Path $localVhdxPath "$vmName/seed.iso"
-$souceSeedIsoFile = Join-Path $PSScriptRoot "seed.iso"
+$sourceSeedIsoFile = Join-Path $PSScriptRoot "seed.iso"
 if (!(Test-Path -Path $seedIsoFile)) {
-	Copy-Item -Path $souceSeedIsoFile -Destination $seedIsoFile -Force
-	Write-Output "Copied '$souceSeedIsoFile' -> '$seedIsoFile'."
+	Copy-Item -Path $sourceSeedIsoFile -Destination $seedIsoFile -Force
+	Write-Output "Copied '$sourceSeedIsoFile' -> '$seedIsoFile'."
 	if (!(Test-Path -Path $seedIsoFile)) {
-		Write-Output "Failed to copy '$souceSeedIsoFile' -> '$seedIsoFile'."
+		Write-Output "Failed to copy '$sourceSeedIsoFile' -> '$seedIsoFile'."
 		exit 1
 	}
 }

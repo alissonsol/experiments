@@ -23,7 +23,7 @@ Copyright (c) 2025-2026 by Alisson Sol. All rights reserved.
 ```
 
 This will automatically install:
-- **Node.js** v23.5.0 (for building the TypeScript frontend)
+- **Node.js** v25.2.1 (for building the TypeScript frontend)
 - **Rust** v1.84.0 (for building the backend API)
 - **Bazel** (optional build system)
 
@@ -140,7 +140,7 @@ This script uses `winget` and requires:
 
 If you prefer manual installation:
 
-- **Node.js** v23.5.0+ (via [nodejs.org](https://nodejs.org/) or [rustup](https://rustup.rs/))
+- **Node.js** v25.2.1+ (via [nodejs.org](https://nodejs.org/))
 - **Rust** v1.84.0+ (via [rustup.rs](https://rustup.rs/))
 - **Bazel** (optional, via [bazel.build](https://bazel.build/))
 - **Windows OS** (required for WMI service access)

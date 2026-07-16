@@ -532,7 +532,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s                    # Use default settings (8 workers, 30s timeout)
+  %(prog)s                    # Use default settings (32 workers, 30s timeout)
   %(prog)s -w 32              # Use 32 parallel workers
   %(prog)s -t 15              # Use 15 second timeout
   %(prog)s -w 4 -t 20         # Use 4 workers with 20 second timeout
@@ -543,7 +543,7 @@ Examples:
         type=int,
         default=32,
         metavar='N',
-        help='maximum number of parallel workers for checking external links (default: 8)'
+        help='maximum number of parallel workers for checking external links (default: 32)'
     )
     parser.add_argument(
         '-t', '--timeout',

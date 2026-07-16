@@ -6,7 +6,7 @@ param (
 )
 
 if (-Not (Test-Path -Path $FolderPath -PathType Container)) {
-    Write-Output "The folder '$FolderPath' does not exist." -ForegroundColor Red
+    Write-Host "The folder '$FolderPath' does not exist." -ForegroundColor Red
     exit 1
 }
 
@@ -24,7 +24,7 @@ Get-ChildItem -Path $FolderPath -Directory -Recurse | Sort-Object -Property Full
             Rename-Item -Path $tempPath -NewName $lowercasePath
             Write-Output "Renamed: $originalPath -> $lowercasePath"
         } catch {
-            Write-Output "Failed to rename: $originalPath" -ForegroundColor Red
+            Write-Host "Failed to rename: $originalPath" -ForegroundColor Red
             exit 1
         }
     } else {

@@ -31,7 +31,7 @@ $zipPath = Join-Path $repoRoot $zipName
 # ============================================================================
 # Step 1: Check if backend is running
 # ============================================================================
-Write-Host "[1/5] Checking for running processes..." -ForegroundColor Yellow
+Write-Host "[1/6] Checking for running processes..." -ForegroundColor Yellow
 
 $backendExe = Join-Path $distDir "backend\progresso_service.exe"
 if (Test-Path $backendExe) {
@@ -52,7 +52,7 @@ Write-Host ""
 # ============================================================================
 # Step 2: Ensure everything is built
 # ============================================================================
-Write-Host "[2/5] Building application..." -ForegroundColor Yellow
+Write-Host "[2/6] Building application..." -ForegroundColor Yellow
 
 $buildScript = Join-Path $repoRoot "scripts\build-all.ps1"
 if (Test-Path $buildScript) {
@@ -72,7 +72,7 @@ Write-Host ""
 # ============================================================================
 # Step 3: Create package directory structure
 # ============================================================================
-Write-Host "[3/5] Creating package directory..." -ForegroundColor Yellow
+Write-Host "[3/6] Creating package directory..." -ForegroundColor Yellow
 
 if (Test-Path $packageDir) {
     Remove-Item $packageDir -Recurse -Force
@@ -113,7 +113,7 @@ Write-Host ""
 # ============================================================================
 # Step 4: Copy launcher script if present
 # ============================================================================
-Write-Host "[4/5] Copying launcher script..." -ForegroundColor Yellow
+Write-Host "[4/6] Copying launcher script..." -ForegroundColor Yellow
 
 $sourceLauncher = Join-Path $repoRoot "run-progresso.ps1"
 if (Test-Path $sourceLauncher) {
@@ -127,9 +127,9 @@ if (Test-Path $sourceLauncher) {
 Write-Host ""
 
 # ============================================================================
-# Step 4: Copy README for distribution
+# Step 5: Copy README for distribution
 # ============================================================================
-Write-Host "[4/5] Copying README..." -ForegroundColor Yellow
+Write-Host "[5/6] Copying README..." -ForegroundColor Yellow
 
 $sourceReadme = Join-Path $repoRoot "README.progresso.txt"
 if (-not (Test-Path $sourceReadme)) {
@@ -144,9 +144,9 @@ Write-Host "  [OK] Copied README.progresso.txt" -ForegroundColor Green
 Write-Host ""
 
 # ============================================================================
-# Step 5: Create ZIP archive
+# Step 6: Create ZIP archive
 # ============================================================================
-Write-Host "[5/5] Creating ZIP archive..." -ForegroundColor Yellow
+Write-Host "[6/6] Creating ZIP archive..." -ForegroundColor Yellow
 
 Compress-Archive -Path "$packageDir\*" -DestinationPath $zipPath -Force
 
