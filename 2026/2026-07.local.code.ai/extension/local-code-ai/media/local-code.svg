@@ -1,0 +1,21 @@
+<!-- LICENSEURI https://yuruna.link/license -->
+<!-- Copyright (c) 2019-2026 by Alisson Sol et al. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+  <metadata>
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <rdf:Description rdf:about="">
+        <dc:title>Local Code AI icon</dc:title>
+        <dc:creator>Alisson Sol</dc:creator>
+        <dc:rights>Copyright (c) 2019-2026 by Alisson Sol et al.</dc:rights>
+        <dc:license>https://yuruna.link/license</dc:license>
+      </rdf:Description>
+    </rdf:RDF>
+  </metadata>
+  <!-- house -->
+  <path d="M1 15l5-4.5L11 15"/>
+  <path d="M2.5 13.7v7.8h7v-7.8"/>
+  <path d="M5 21.5v-3h2v3"/>
+  <!-- talk bubble coming from the house -->
+  <path d="M22.2 7.8a5 5 0 0 1-.54 2.28 5.1 5.1 0 0 1-4.56 2.82 5 5 0 0 1-2.28-.54L11.4 13.5l1.14-3.42a5 5 0 0 1-.54-2.28 5.1 5.1 0 0 1 2.82-4.56 5 5 0 0 1 2.28-.54h.3a5.09 5.09 0 0 1 4.8 4.8v.3z"/>
+  <path d="M14.2 6.9h.01M17.1 6.9h.01M20 6.9h.01"/>
+</svg>

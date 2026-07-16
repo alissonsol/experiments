@@ -1,0 +1,17 @@
+Sample prompts for the Local Code AI chat
+
+==== Explain
+
+Explain what the current project does
+
+==== Find problems
+
+List the most likely bugs in the active file and explain each one briefly
+
+==== Clean up
+
+Find typos in the comments across this project and suggest corrections
+
+==== Diagnostics
+
+Summarize the current errors and warnings and suggest fixes

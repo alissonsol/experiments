@@ -1,0 +1,185 @@
+{
+  "name": "local-code-ai",
+  "displayName": "Local Code AI",
+  "description": "Chat with a local Ollama model, plus refactor and format Go, PowerShell, Rust and JavaScript using local formatters. Auto-applies and saves (no git commits).",
+  "version": "0.3.1",
+  "publisher": "localcodeai",
+  "author": "Alisson Sol et al.",
+  "license": "SEE LICENSE IN LICENSE",
+  "homepage": "https://yuruna.com",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Formatters", "Programming Languages", "Other"],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "localCodeAI.openChat",
+        "title": "Open Chat",
+        "category": "Local Code AI"
+      },
+      {
+        "command": "localCodeAI.openChatInEditor",
+        "title": "Open Chat in Editor Tab",
+        "category": "Local Code AI",
+        "icon": "$(link-external)"
+      },
+      {
+        "command": "localCodeAI.openChatInSidebar",
+        "title": "Open Chat in Side Bar",
+        "category": "Local Code AI"
+      },
+      {
+        "command": "localCodeAI.refactorCurrentFile",
+        "title": "Refactor & Format Current File",
+        "category": "Local Code AI"
+      },
+      {
+        "command": "localCodeAI.refactorWorkspace",
+        "title": "Refactor & Format Workspace",
+        "category": "Local Code AI"
+      },
+      {
+        "command": "localCodeAI.checkSetup",
+        "title": "Check Setup (Ollama + tools)",
+        "category": "Local Code AI"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "localCodeAI",
+          "title": "Local Code AI",
+          "icon": "media/local-code.svg"
+        }
+      ]
+    },
+    "views": {
+      "localCodeAI": [
+        {
+          "type": "webview",
+          "id": "localCodeAI.chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "localCodeAI.openChatInEditor",
+          "when": "view == localCodeAI.chatView",
+          "group": "navigation@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "localCodeAI.openChatInEditor"
+        },
+        {
+          "command": "localCodeAI.openChatInSidebar"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "localCodeAI.refactorCurrentFile",
+          "when": "resourceExtname =~ /\\.(go|rs|ps1|psm1|psd1|js|mjs|cjs|jsx)$/",
+          "group": "1_modification@9"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Local Code AI",
+      "properties": {
+        "localCodeAI.endpoint": {
+          "type": "string",
+          "default": "http://127.0.0.1:11434",
+          "description": "Base URL of the local Ollama server."
+        },
+        "localCodeAI.model": {
+          "type": "string",
+          "default": "localcoder",
+          "description": "Ollama model (or alias) used for chat and the refactoring pass."
+        },
+        "localCodeAI.chatSystemPrompt": {
+          "type": "string",
+          "default": "You are a helpful coding assistant running fully locally inside VS Code. You can see the user's open project and can read its files with the tools you are given: call list_files, read_file, search_text, get_diagnostics or get_active_editor instead of asking the user to paste code. Be concise. Put code in markdown fences.",
+          "description": "System prompt for the chat. The live workspace snapshot is appended to it automatically."
+        },
+        "localCodeAI.chatOpenIn": {
+          "type": "string",
+          "enum": ["editor", "sidebar"],
+          "default": "editor",
+          "description": "Where 'Local Code AI: Open Chat' opens the chat: as an editor tab (movable to any group) or in the activity-bar side bar."
+        },
+        "localCodeAI.chatTools": {
+          "type": "boolean",
+          "default": true,
+          "description": "Let the chat model call read-only tools (list_files, read_file, search_text, get_diagnostics, get_active_editor) against the open workspace. Requires a tool-capable model; it is disabled automatically if the model rejects tools."
+        },
+        "localCodeAI.chatMaxToolRounds": {
+          "type": "number",
+          "default": 8,
+          "description": "Maximum tool call rounds the chat model may take before it must answer."
+        },
+        "localCodeAI.chatContextFileLimit": {
+          "type": "number",
+          "default": 400,
+          "description": "Maximum file paths listed in the workspace snapshot sent with each chat message."
+        },
+        "localCodeAI.chatMaxReadKB": {
+          "type": "number",
+          "default": 64,
+          "description": "Maximum size of any single file the chat reads or attaches, in KB."
+        },
+        "localCodeAI.maxFilesBeforeWarning": {
+          "type": "number",
+          "default": 50,
+          "description": "Show a confirmation warning before a workspace run that would touch more than this many files. Set high to effectively disable."
+        },
+        "localCodeAI.llmPass": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run the LLM refactor/comment-cleanup pass after deterministic formatting. Turn off for formatter-only runs."
+        },
+        "localCodeAI.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Sampling temperature for the LLM pass. Keep low for conservative refactors."
+        },
+        "localCodeAI.timeoutSeconds": {
+          "type": "number",
+          "default": 300,
+          "description": "Per-file timeout for the LLM request."
+        },
+        "localCodeAI.maxFileKB": {
+          "type": "number",
+          "default": 128,
+          "description": "Files larger than this get the formatter pass only (skipping the LLM pass to avoid context overflow)."
+        },
+        "localCodeAI.toolsRoot": {
+          "type": "string",
+          "default": "",
+          "description": "Root folder created by local.code.ai.ps1 (contains tools/paths.json). Empty = use LOCALCODEAI_HOME env var or the platform default."
+        },
+        "localCodeAI.excludeGlobs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [
+            "**/node_modules/**",
+            "**/.git/**",
+            "**/vendor/**",
+            "**/target/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/out/**",
+            "**/bin/**",
+            "**/obj/**",
+            "**/.venv/**",
+            "**/*.min.js"
+          ],
+          "description": "Glob patterns excluded from workspace runs."
+        }
+      }
+    }
+  }
+}
