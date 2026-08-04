@@ -29,11 +29,12 @@
                                   the amdgpu render node, render/video group
                                   membership, a Vulkan loader and free disk space.
       2. Engine ................. downloads the prebuilt llama.cpp Vulkan build and
-                                  the llama-swap release binary into .\bin. Re-runs
-                                  upgrade them when a newer release exists. It then
-                                  asks llama.cpp which GPUs it can see and stops if
-                                  the answer is none, because CPU-only inference on
-                                  these models is not worth a 145 GiB download.
+                                  the llama-swap release binary into .\bin, once.
+                                  Re-runs keep the working engine unless
+                                  -UpdateEngine is given. It then asks llama.cpp
+                                  which GPUs it can see and stops if the answer is
+                                  none, because CPU-only inference on these models
+                                  is not worth a 145 GiB download.
       3. Models ................. downloads the five models from
                                   docs\ryzen-ai-halo-review-server.md into .\models
                                   (about 145 GiB in total). Downloads resume, and a
@@ -83,6 +84,11 @@
     Add the current user to the 'render' and 'video' groups (needs sudo) and exit.
     Group membership only takes effect at login, so log out and back in afterwards.
 
+.PARAMETER UpdateEngine
+    Upgrade llama.cpp and llama-swap to the newest downloadable release. Without
+    it they are installed once and then left alone, because llama.cpp publishes a
+    build roughly every 45 minutes.
+
 .PARAMETER Yes
     Non-interactive: auto-accept all confirmation prompts.
 
@@ -118,6 +124,7 @@ param(
     [switch]$Stop,
     [switch]$Restart,
     [switch]$FixGroups,
+    [switch]$UpdateEngine,
     [switch]$Yes,
     [switch]$Force
 )
@@ -429,16 +436,53 @@ function Add-GpuGroupMembership {
 # =============================================================================
 #  2) Engine: llama.cpp (Vulkan) and llama-swap
 # =============================================================================
-function Get-GitHubRelease {
-    param([string]$Repo)
+# Returns the newest release that actually carries a matching asset, or $null.
+#
+# Walking back matters: llama.cpp cuts a release roughly every 45 minutes and
+# GitHub publishes the release record as soon as the tag exists, before the build
+# matrix has finished uploading. So 'latest' is regularly an empty shell for a
+# while, and asking only for 'latest' fails on a perfectly healthy repository.
+function Find-GitHubAsset {
+    param([string]$Repo, [string]$Pattern, [int]$MaxReleases = 10)
+    # Assign first, then wrap: Invoke-RestMethod hands back a JSON array as ONE
+    # object, so @(Invoke-RestMethod ...) yields a single element containing every
+    # release instead of one element per release.
+    $response = $null
     try {
-        return Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" `
+        $response = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases?per_page=$MaxReleases" `
             -Headers @{ 'User-Agent' = $script:UserAgent } -TimeoutSec 30
     }
     catch {
-        Write-Wrn "GitHub release lookup failed for ${Repo}: $($_.Exception.Message)"
-        return $null
+        Write-Wrn "GitHub release list failed for ${Repo}: $($_.Exception.Message)"
+        try {
+            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" `
+                -Headers @{ 'User-Agent' = $script:UserAgent } -TimeoutSec 30
+        }
+        catch {
+            Write-Wrn "GitHub release lookup failed for ${Repo}: $($_.Exception.Message)"
+            return $null
+        }
     }
+    $releases = @($response)
+
+    $skipped = @()
+    foreach ($release in $releases) {
+        $asset = $release.assets | Where-Object { $_.name -like $Pattern } | Select-Object -First 1
+        if ($asset) {
+            if ($skipped.Count -gt 0) {
+                Write-Inf "$($skipped -join ', ') has no matching asset yet (build still uploading); using $($release.tag_name)"
+            }
+            return [pscustomobject]@{
+                Tag  = $release.tag_name
+                Name = $asset.name
+                Url  = $asset.browser_download_url
+                Size = [int64]$asset.size
+            }
+        }
+        $skipped += $release.tag_name
+    }
+    Write-Wrn "no release of $Repo carries an asset matching '$Pattern'"
+    return $null
 }
 
 function Expand-TarGz {
@@ -455,54 +499,63 @@ function Install-Engine {
     $tools = Read-JsonFile $Paths.ToolsFile
 
     # --- llama.cpp, prebuilt Vulkan build for Ubuntu x64 -------------------------
-    $release = Get-GitHubRelease 'ggml-org/llama.cpp'
     $haveServer = Test-Path $Paths.ServerBin
-    if ($null -eq $release) {
-        if (-not $haveServer) { throw 'llama.cpp is missing and its release cannot be reached. Connect to the Internet and re-run.' }
-        Write-Wrn "offline: keeping llama.cpp $($tools.llamaCpp)"
+    if ($haveServer -and -not $UpdateEngine) {
+        # A working engine is never replaced silently: llama.cpp ships a build every
+        # 45 minutes, and swapping the inference engine under a shared server is an
+        # operational decision, not a side effect of re-running the script.
+        Write-Ok "llama.cpp $($tools.llamaCpp) (installed; -UpdateEngine to upgrade)"
     }
     else {
-        $asset = $release.assets | Where-Object { $_.name -like '*bin-ubuntu-vulkan-x64.tar.gz' } | Select-Object -First 1
-        if (-not $asset) { throw "no ubuntu-vulkan-x64 asset in llama.cpp release $($release.tag_name)" }
-        if ($haveServer -and $tools.llamaCpp -eq $release.tag_name) {
-            Write-Ok "llama.cpp $($release.tag_name) (up to date)"
+        $asset = Find-GitHubAsset -Repo 'ggml-org/llama.cpp' -Pattern '*bin-ubuntu-vulkan-x64.tar.gz'
+        if ($null -eq $asset) {
+            if (-not $haveServer) {
+                throw 'llama.cpp is missing and no release with a Linux Vulkan build could be reached. Connect to the Internet and re-run.'
+            }
+            Write-Wrn "keeping llama.cpp $($tools.llamaCpp): no newer build is downloadable right now"
+        }
+        elseif ($haveServer -and $tools.llamaCpp -eq $asset.Tag) {
+            Write-Ok "llama.cpp $($asset.Tag) (up to date)"
         }
         else {
-            Write-Inf "installing llama.cpp $($release.tag_name)"
-            $archive = Join-Path $Paths.Run $asset.name
-            Invoke-ResumableDownload -Url $asset.browser_download_url -Dest $archive -ExpectedSize ([int64]$asset.size) -Label $asset.name
+            Write-Inf "installing llama.cpp $($asset.Tag)"
+            $archive = Join-Path $Paths.Run $asset.Name
+            Invoke-ResumableDownload -Url $asset.Url -Dest $archive -ExpectedSize $asset.Size -Label $asset.Name
             if (Test-Path $Paths.Engine) { Remove-Item $Paths.Engine -Recurse -Force }
             Expand-TarGz -File $archive -Dest $Paths.Engine -StripComponents 1
             Remove-Item $archive -Force -ErrorAction SilentlyContinue
             & chmod +x $Paths.ServerBin
-            $tools.llamaCpp = $release.tag_name
-            Write-Ok "llama.cpp $($release.tag_name) -> $($Paths.Engine)"
+            $tools.llamaCpp = $asset.Tag
+            Write-Ok "llama.cpp $($asset.Tag) -> $($Paths.Engine)"
         }
     }
     if (-not (Test-Path $Paths.ServerBin)) { throw "llama-server not found at $($Paths.ServerBin)" }
 
     # --- llama-swap --------------------------------------------------------------
-    $release = Get-GitHubRelease 'mostlygeek/llama-swap'
     $haveSwap = Test-Path $Paths.SwapBin
-    if ($null -eq $release) {
-        if (-not $haveSwap) { throw 'llama-swap is missing and its release cannot be reached. Connect to the Internet and re-run.' }
-        Write-Wrn "offline: keeping llama-swap $($tools.llamaSwap)"
+    if ($haveSwap -and -not $UpdateEngine) {
+        Write-Ok "llama-swap $($tools.llamaSwap) (installed; -UpdateEngine to upgrade)"
     }
     else {
-        $asset = $release.assets | Where-Object { $_.name -like '*linux_amd64.tar.gz' } | Select-Object -First 1
-        if (-not $asset) { throw "no linux_amd64 asset in llama-swap release $($release.tag_name)" }
-        if ($haveSwap -and $tools.llamaSwap -eq $release.tag_name) {
-            Write-Ok "llama-swap $($release.tag_name) (up to date)"
+        $asset = Find-GitHubAsset -Repo 'mostlygeek/llama-swap' -Pattern '*linux_amd64.tar.gz'
+        if ($null -eq $asset) {
+            if (-not $haveSwap) {
+                throw 'llama-swap is missing and no release with a Linux build could be reached. Connect to the Internet and re-run.'
+            }
+            Write-Wrn "keeping llama-swap $($tools.llamaSwap): no newer build is downloadable right now"
+        }
+        elseif ($haveSwap -and $tools.llamaSwap -eq $asset.Tag) {
+            Write-Ok "llama-swap $($asset.Tag) (up to date)"
         }
         else {
-            Write-Inf "installing llama-swap $($release.tag_name)"
-            $archive = Join-Path $Paths.Run $asset.name
-            Invoke-ResumableDownload -Url $asset.browser_download_url -Dest $archive -ExpectedSize ([int64]$asset.size) -Label $asset.name
+            Write-Inf "installing llama-swap $($asset.Tag)"
+            $archive = Join-Path $Paths.Run $asset.Name
+            Invoke-ResumableDownload -Url $asset.Url -Dest $archive -ExpectedSize $asset.Size -Label $asset.Name
             Expand-TarGz -File $archive -Dest $Paths.Bin
             Remove-Item $archive -Force -ErrorAction SilentlyContinue
             & chmod +x $Paths.SwapBin
-            $tools.llamaSwap = $release.tag_name
-            Write-Ok "llama-swap $($release.tag_name) -> $($Paths.SwapBin)"
+            $tools.llamaSwap = $asset.Tag
+            Write-Ok "llama-swap $($asset.Tag) -> $($Paths.SwapBin)"
         }
     }
     if (-not (Test-Path $Paths.SwapBin)) { throw "llama-swap not found at $($Paths.SwapBin)" }

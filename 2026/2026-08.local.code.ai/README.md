@@ -70,10 +70,18 @@ particular one: swap the names in `$script:Catalog` (server) and
    advisory checks: memory, whether this user can actually *open*
    `/dev/dri/renderD*`, a Vulkan loader, free disk.
 2. **Engine** — downloads the prebuilt llama.cpp **Vulkan** build and the
-   llama-swap release binary into `.\bin`. Re-runs upgrade them when a newer
-   release exists. It then asks llama.cpp itself which GPUs it can see
-   (`llama-server --list-devices`) and **stops if the answer is none** — see
-   [No GPU?](#no-gpu) below.
+   llama-swap release binary into `.\bin`, **once**. Re-runs keep the engine that
+   works; pass `-UpdateEngine` to upgrade it deliberately. It then asks llama.cpp
+   itself which GPUs it can see (`llama-server --list-devices`) and **stops if the
+   answer is none** — see [No GPU?](#no-gpu) below.
+
+   llama.cpp publishes a build roughly every 45 minutes, and GitHub creates the
+   release record before the build matrix finishes uploading — so the newest tag
+   regularly has no binaries attached yet. The script walks back through recent
+   releases to the newest one that actually carries a Linux Vulkan asset, and if it
+   cannot reach any, it keeps the engine already installed rather than failing.
+   This also matches the design document's advice to treat engine upgrades as a
+   deliberate, benchmarked step rather than something that happens on every run.
 3. **Models** — downloads into `.\models`. Sizes and content hashes come from a
    HEAD against Hugging Face, so a file is re-fetched only when it actually
    changed upstream, and interrupted downloads resume.
@@ -89,7 +97,7 @@ logs why and serves whatever is already on disk.
 
 Lifecycle: `-Status`, `-Stop`, `-Restart`.
 Other switches: `-Port`, `-BindAddress`, `-ModelsPath`, `-NoDownload`, `-FixGroups`,
-`-Yes`, `-Force`.
+`-UpdateEngine`, `-Yes`, `-Force`.
 
 #### No GPU?
 
