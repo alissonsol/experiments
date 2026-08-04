@@ -67,11 +67,13 @@ particular one: swap the names in `$script:Catalog` (server) and
 ### local.code.server.ps1
 
 1. **Platform gate** — Linux x64 only; anywhere else it explains and exits. Then
-   advisory checks: memory, `/dev/dri/renderD*`, `render`/`video` group
-   membership, a Vulkan loader, free disk.
+   advisory checks: memory, whether this user can actually *open*
+   `/dev/dri/renderD*`, a Vulkan loader, free disk.
 2. **Engine** — downloads the prebuilt llama.cpp **Vulkan** build and the
    llama-swap release binary into `.\bin`. Re-runs upgrade them when a newer
-   release exists.
+   release exists. It then asks llama.cpp itself which GPUs it can see
+   (`llama-server --list-devices`) and **stops if the answer is none** — see
+   [No GPU?](#no-gpu) below.
 3. **Models** — downloads into `.\models`. Sizes and content hashes come from a
    HEAD against Hugging Face, so a file is re-fetched only when it actually
    changed upstream, and interrupted downloads resume.
@@ -86,7 +88,29 @@ healthy server running, and restarts it only when the configuration changed.
 logs why and serves whatever is already on disk.
 
 Lifecycle: `-Status`, `-Stop`, `-Restart`.
-Other switches: `-Port`, `-BindAddress`, `-ModelsPath`, `-NoDownload`, `-Yes`, `-Force`.
+Other switches: `-Port`, `-BindAddress`, `-ModelsPath`, `-NoDownload`, `-FixGroups`,
+`-Yes`, `-Force`.
+
+#### No GPU?
+
+The render node `/dev/dri/renderD128` is normally owned by the `render` group. A
+user outside that group cannot open it, so the Vulkan backend enumerates nothing
+and llama.cpp **silently falls back to the CPU** — roughly 2 tokens/s instead of
+40–55, which makes the 120B model unusable. That silence is the danger: the server
+starts, answers, and is simply useless.
+
+So the script asks llama.cpp directly and refuses to download 145 GiB for a CPU.
+To fix the usual cause:
+
+```powershell
+pwsh ./local.code.server.ps1 -FixGroups     # runs: sudo usermod -aG render,video <user>
+```
+
+Then **log out and back in** and re-run normally. The re-login is not optional:
+Linux reads a process's supplementary groups at login, so neither the script nor
+any child of the current shell can pick up the new group. (`sg render -c '...'`
+runs a single command with the new group if you cannot log out.) Override the stop
+with `-Force` if you really do want CPU-only inference.
 
 ### local.code.client.ps1
 

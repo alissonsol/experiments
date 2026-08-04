@@ -30,7 +30,10 @@
                                   membership, a Vulkan loader and free disk space.
       2. Engine ................. downloads the prebuilt llama.cpp Vulkan build and
                                   the llama-swap release binary into .\bin. Re-runs
-                                  upgrade them when a newer release exists.
+                                  upgrade them when a newer release exists. It then
+                                  asks llama.cpp which GPUs it can see and stops if
+                                  the answer is none, because CPU-only inference on
+                                  these models is not worth a 145 GiB download.
       3. Models ................. downloads the five models from
                                   docs\ryzen-ai-halo-review-server.md into .\models
                                   (about 145 GiB in total). Downloads resume, and a
@@ -76,6 +79,10 @@
 .PARAMETER Restart
     Stop a running server before starting it again.
 
+.PARAMETER FixGroups
+    Add the current user to the 'render' and 'video' groups (needs sudo) and exit.
+    Group membership only takes effect at login, so log out and back in afterwards.
+
 .PARAMETER Yes
     Non-interactive: auto-accept all confirmation prompts.
 
@@ -110,6 +117,7 @@ param(
     [switch]$Status,
     [switch]$Stop,
     [switch]$Restart,
+    [switch]$FixGroups,
     [switch]$Yes,
     [switch]$Force
 )
@@ -131,6 +139,10 @@ $ProgressPreference = 'SilentlyContinue'   # makes Invoke-WebRequest dramaticall
 $PSNativeCommandUseErrorActionPreference = $false
 
 $script:UserAgent = 'LocalCodeAI-Server'
+$script:CurrentUser = $env:USER
+if ([string]::IsNullOrWhiteSpace($script:CurrentUser)) {
+    try { $script:CurrentUser = ("$(& id -un)").Trim() } catch { $script:CurrentUser = '<user>' }
+}
 
 # =============================================================================
 #  Console helpers
@@ -362,14 +374,23 @@ function Test-Prerequisite {
     }
     else { Write-Ok "memory: $memoryGB GB" }
 
+    # What matters is whether this user can actually open the render node, not which
+    # groups are listed: a 0666 node or an ACL grants access without 'render', and
+    # being in 'render' does not help if the node is owned differently.
     $renderNodes = @(Get-ChildItem -Path '/dev/dri' -Filter 'renderD*' -ErrorAction SilentlyContinue)
-    if ($renderNodes.Count -eq 0) { Write-Wrn 'no /dev/dri/renderD* node: the GPU is not visible, inference would run on CPU' }
-    else { Write-Ok "render node: $($renderNodes[0].FullName)" }
-
-    $groups = ''
-    try { $groups = (& id -nG) -join ' ' } catch { Write-Debug "id -nG failed: $_" }
-    if ($groups -and (($groups -split '\s+') -notcontains 'render')) {
-        Write-Wrn "current user is not in the 'render' group: 'sudo usermod -aG render,video $env:USER', then re-login"
+    if ($renderNodes.Count -eq 0) {
+        Write-Wrn 'no /dev/dri/renderD* node: the GPU is not visible, inference would run on CPU'
+    }
+    else {
+        $node = $renderNodes[0].FullName
+        $quoted = ConvertTo-ShellArgument $node
+        & /bin/sh -c "test -r $quoted && test -w $quoted"
+        if ($LASTEXITCODE -eq 0) { Write-Ok "render node: $node (readable and writable)" }
+        else {
+            Write-Wrn "$node exists but this user cannot open it - llama.cpp would fall back to CPU"
+            Write-Inf "fix with:  sudo usermod -aG render,video $($script:CurrentUser)   (then log out and back in)"
+            Write-Inf 'or re-run this script with -FixGroups to do that for you'
+        }
     }
 
     $loaderPaths = @('/usr/lib/x86_64-linux-gnu/libvulkan.so.1', '/usr/lib/libvulkan.so.1', '/usr/lib64/libvulkan.so.1')
@@ -378,6 +399,31 @@ function Test-Prerequisite {
         Write-Wrn 'no Vulkan loader found: sudo apt install -y mesa-vulkan-drivers libvulkan1 vulkan-tools'
     }
     else { Write-Ok 'Vulkan loader present' }
+}
+
+# Adds the current user to the groups that own the render node. This needs root,
+# and Linux reads supplementary groups at login, so it cannot take effect in the
+# session that runs it - hence the exit with instructions rather than a retry.
+function Add-GpuGroupMembership {
+    Write-Step 'Adding the current user to render and video'
+    $sudo = Find-CommandPath 'sudo'
+    if (-not $sudo) {
+        Write-Bad 'sudo not found on this machine.'
+        Write-Inf "Ask an administrator to run:  usermod -aG render,video $($script:CurrentUser)"
+        exit 1
+    }
+    Write-Inf "running: sudo usermod -aG render,video $($script:CurrentUser)"
+    & $sudo usermod -aG render,video $script:CurrentUser
+    if ($LASTEXITCODE -ne 0) {
+        Write-Bad "usermod failed (exit $LASTEXITCODE)"
+        exit 1
+    }
+    Write-Ok "$($script:CurrentUser) added to render and video"
+    Write-Host ''
+    Write-Inf 'Group membership is only applied at login, so THIS session still does not'
+    Write-Inf 'have it. Log out and back in (or reboot), then re-run:'
+    Write-Host '    pwsh ./local.code.server.ps1' -ForegroundColor White
+    Write-Host ''
 }
 
 # =============================================================================
@@ -462,6 +508,45 @@ function Install-Engine {
     if (-not (Test-Path $Paths.SwapBin)) { throw "llama-swap not found at $($Paths.SwapBin)" }
 
     Write-JsonFile -Path $Paths.ToolsFile -Value $tools
+}
+
+# Ask llama.cpp itself which devices it can see. This is the only check that
+# settles the question: it exercises the real Vulkan loader, driver and node
+# permissions in one go. '--list-devices' lists non-CPU devices only, printing
+# '(none)' when there are none, and exits 0 either way.
+function Test-GpuDevice {
+    Write-Step 'GPU visible to llama.cpp'
+    $command = 'LD_LIBRARY_PATH=' + (ConvertTo-ShellArgument $Paths.Engine) + ' ' +
+    (ConvertTo-ShellArgument $Paths.ServerBin) + ' --list-devices 2>/dev/null'
+    $output = @()
+    try { $output = @(& /bin/sh -c $command) }
+    catch { Write-Wrn "could not run llama-server --list-devices: $($_.Exception.Message)" }
+
+    $devices = @()
+    $inList = $false
+    foreach ($line in $output) {
+        $text = "$line".Trim()
+        if ($text -match '^Available devices:') { $inList = $true; continue }
+        if (-not $inList -or $text -eq '' -or $text -eq '(none)') { continue }
+        $devices += $text
+    }
+
+    if ($devices.Count -gt 0) {
+        foreach ($device in $devices) { Write-Ok $device }
+        return
+    }
+
+    Write-Bad 'llama.cpp sees no GPU: every model would run on the CPU.'
+    Write-Inf 'On this hardware that is roughly 2 tokens/s instead of 40-55 - the 120B'
+    Write-Inf 'model would be unusable. Usual causes, in order of likelihood:'
+    Write-Inf "  1. this user cannot open /dev/dri/renderD* -> sudo usermod -aG render,video $($script:CurrentUser)"
+    Write-Inf '     (then log out and back in), or re-run this script with -FixGroups'
+    Write-Inf '  2. no Vulkan driver -> sudo apt install -y mesa-vulkan-drivers libvulkan1'
+    Write-Inf '  3. the GPU carve-out or GTT limit is wrong -> see docs/ryzen-ai-halo-review-server.md'
+    if (-not $Force -and -not (Confirm-Continue '    Continue anyway, serving on CPU?')) {
+        throw 'no GPU available (re-run with -Force to serve on CPU regardless)'
+    }
+    Write-Wrn 'continuing with CPU-only inference'
 }
 
 # =============================================================================
@@ -918,6 +1003,7 @@ New-Item -ItemType Directory -Force -Path $Paths.Run | Out-Null
 
 if ($Status) { Show-ServerStatus; exit 0 }
 if ($Stop) { Write-Step 'Stopping'; Stop-ServerProcess; exit 0 }
+if ($FixGroups) { Add-GpuGroupMembership; exit 0 }
 
 Write-Host ''
 Write-Host '+---------------------------------------------------------------+' -ForegroundColor Cyan
@@ -928,6 +1014,7 @@ Write-Inf "models: $($Paths.Models)"
 
 Test-Prerequisite
 Install-Engine
+Test-GpuDevice          # before the download: 145 GiB is a lot to fetch for a CPU
 $readyIds = Sync-Model
 $configChanged = Save-LlamaSwapConfig -ReadyIds $readyIds
 
