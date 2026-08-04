@@ -1,0 +1,16 @@
+# Downloaded model weights (about 145 GiB)
+models/
+
+# Downloaded engine binaries (llama.cpp, llama-swap)
+bin/
+
+# Generated configuration, logs, PID and download manifest
+run/
+
+# Logs and temp files
+*.log
+*.tmp
+*.part
+
+# Continue configuration written by local.code.client.ps1 -Scope workspace
+.continue/
