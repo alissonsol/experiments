@@ -43,8 +43,12 @@
       4. Configuration .......... generates .\run\llama-swap.yaml with the model
                                   roles, contexts and memory groups from the design
                                   document.
-      5. Serving ................ starts llama-swap detached in the background and
-                                  prints the URL to paste into local.code.client.ps1.
+      5. Serving ................ starts llama-swap detached in the background,
+                                  opens the port to the local subnet (ufw or
+                                  firewalld, via sudo), prints the URL to paste
+                                  into local.code.client.ps1, and then follows the
+                                  log so activity is visible. Ctrl+C stops the
+                                  following; the server keeps running.
 
     Idempotent: re-running updates the engine and any changed weights, leaves an
     already-healthy server running, and restarts it only when the configuration
@@ -89,6 +93,15 @@
     it they are installed once and then left alone, because llama.cpp publishes a
     build roughly every 45 minutes.
 
+.PARAMETER NoFirewall
+    Do not touch the firewall. By default the script opens the serving port to the
+    local subnet (ufw or firewalld, via sudo) so workstations can reach it.
+
+.PARAMETER NoFollow
+    Do not follow the log after setup. By default the script tails
+    run/llama-swap.log so activity is visible; Ctrl+C stops watching and leaves the
+    server running. Use this for scripted or unattended runs.
+
 .PARAMETER Yes
     Non-interactive: auto-accept all confirmation prompts.
 
@@ -125,6 +138,8 @@ param(
     [switch]$Restart,
     [switch]$FixGroups,
     [switch]$UpdateEngine,
+    [switch]$NoFirewall,
+    [switch]$NoFollow,
     [switch]$Yes,
     [switch]$Force
 )
@@ -1020,13 +1035,53 @@ function Start-ServerProcess {
     Write-Ok "listening on $listen"
 }
 
-function Get-LanAddress {
+# Masks a host address down to its network address, e.g. 192.168.7.50/24 -> 192.168.7.0/24.
+function Get-NetworkCidr {
+    param([string]$IpAddress, [int]$PrefixLength)
+    $bytes = [System.Net.IPAddress]::Parse($IpAddress).GetAddressBytes()
+    $remaining = $PrefixLength
+    for ($i = 0; $i -lt 4; $i++) {
+        if ($remaining -ge 8) { $remaining -= 8; continue }
+        if ($remaining -gt 0) {
+            $mask = ((0xFF -shl (8 - $remaining)) -band 0xFF)
+            $bytes[$i] = [byte]($bytes[$i] -band $mask)
+            $remaining = 0
+        }
+        else { $bytes[$i] = 0 }
+    }
+    return ('{0}.{1}.{2}.{3}/{4}' -f $bytes[0], $bytes[1], $bytes[2], $bytes[3], $PrefixLength)
+}
+
+# The real LAN interface, with its prefix length, so the firewall rule is scoped to
+# the actual subnet instead of the whole world.
+#
+# Container and VPN bridges (docker0, virbr0, ...) are also 'scope global', and
+# picking one would open the port to the wrong network and print a URL no
+# workstation can reach - so they are considered only if nothing else exists.
+$script:VirtualInterfacePattern = '^(lo|docker|br-|veth|virbr|vmnet|tun|tap|wg|zt|tailscale|cni|flannel|kube)'
+
+function Get-LanInterface {
     try {
         $lines = & ip -4 -o addr show scope global 2>$null
         if ($LASTEXITCODE -eq 0) {
-            foreach ($line in $lines) {
-                if ($line -match 'inet\s+(\d+\.\d+\.\d+\.\d+)') {
-                    if ($Matches[1] -ne '127.0.0.1') { return $Matches[1] }
+            foreach ($allowVirtual in @($false, $true)) {
+                foreach ($line in $lines) {
+                    if ($line -notmatch 'inet\s+(\d+\.\d+\.\d+\.\d+)/(\d+)') { continue }
+                    $address = $Matches[1]
+                    $prefix = [int]$Matches[2]
+                    if ($address -eq '127.0.0.1') { continue }
+                    $name = ''
+                    if ($line -match '^\s*\d+:\s+(\S+)') { $name = $Matches[1] }
+                    if (-not $allowVirtual -and $name -match $script:VirtualInterfacePattern) { continue }
+                    if ($allowVirtual -and $name -match $script:VirtualInterfacePattern) {
+                        Write-Wrn "only virtual interfaces found; using $name ($address/$prefix)"
+                    }
+                    return [pscustomobject]@{
+                        Address   = $address
+                        Prefix    = $prefix
+                        Interface = $name
+                        Cidr      = Get-NetworkCidr -IpAddress $address -PrefixLength $prefix
+                    }
                 }
             }
         }
@@ -1035,12 +1090,127 @@ function Get-LanAddress {
     try {
         foreach ($address in [System.Net.Dns]::GetHostAddresses([System.Net.Dns]::GetHostName())) {
             if ($address.AddressFamily -eq 'InterNetwork' -and $address.ToString() -ne '127.0.0.1') {
-                return $address.ToString()
+                return [pscustomobject]@{
+                    Address   = $address.ToString()
+                    Prefix    = 24
+                    Interface = ''
+                    Cidr      = Get-NetworkCidr -IpAddress $address.ToString() -PrefixLength 24
+                }
             }
         }
     }
     catch { Write-Debug "DNS lookup failed: $_" }
-    return '127.0.0.1'
+    return [pscustomobject]@{ Address = '127.0.0.1'; Prefix = 8; Interface = 'lo'; Cidr = '127.0.0.0/8' }
+}
+
+function Get-LanAddress { return (Get-LanInterface).Address }
+
+# Locates a firewall tool. These live in /usr/sbin, which is usually absent from a
+# non-root PATH, so the well-known locations are checked explicitly.
+function Find-FirewallTool {
+    param([string]$Name)
+    $found = Find-CommandPath $Name
+    if ($found) { return $found }
+    foreach ($candidate in @("/usr/sbin/$Name", "/sbin/$Name", "/usr/bin/$Name")) {
+        if (Test-Path $candidate) { return $candidate }
+    }
+    return $null
+}
+
+# Opens the serving port to the local subnet. Everything it runs is printed first,
+# because this changes the machine's exposure.
+function Open-FirewallPort {
+    param([int]$PortNumber, [string]$Cidr)
+    Write-Step 'Firewall'
+    Write-Inf "local subnet: $Cidr"
+
+    $isRoot = $false
+    try { $isRoot = (("$(& id -u)").Trim() -eq '0') } catch { Write-Debug "id -u failed: $_" }
+    $sudo = $null
+    if (-not $isRoot) {
+        $sudo = Find-CommandPath 'sudo'
+        if (-not $sudo) {
+            Write-Wrn 'sudo not found; cannot adjust the firewall'
+            Write-Inf "Run as root:  ufw allow from $Cidr to any port $PortNumber proto tcp"
+            return
+        }
+    }
+    # Builds an argument list that runs elevated only when it has to.
+    function Invoke-Privileged {
+        param([string]$Tool, [string[]]$Arguments)
+        if ($isRoot) { return (& $Tool @Arguments 2>&1) }
+        return (& $sudo $Tool @Arguments 2>&1)
+    }
+
+    $ufw = Find-FirewallTool 'ufw'
+    if ($ufw) {
+        $status = Invoke-Privileged -Tool $ufw -Arguments @('status')
+        $statusText = ($status | Out-String)
+        if ($LASTEXITCODE -ne 0) {
+            Write-Wrn "could not read ufw status (exit $LASTEXITCODE)"
+            Write-Inf "Run manually:  sudo ufw allow from $Cidr to any port $PortNumber proto tcp"
+            return
+        }
+        if ($statusText -match 'Status:\s*inactive') {
+            Write-Ok "ufw is inactive - port $PortNumber is already reachable, no rule needed"
+            return
+        }
+        # ufw prints the port in the first column and the source in the last one.
+        foreach ($line in ($statusText -split "`n")) {
+            if ($line -match "(^|\s)$PortNumber/tcp\s" -and $line -match [regex]::Escape($Cidr)) {
+                Write-Ok "ufw already allows $Cidr -> $PortNumber/tcp"
+                return
+            }
+        }
+        Write-Inf "running: sudo ufw allow from $Cidr to any port $PortNumber proto tcp"
+        $result = Invoke-Privileged -Tool $ufw -Arguments @('allow', 'from', $Cidr, 'to', 'any', 'port', "$PortNumber", 'proto', 'tcp')
+        if ($LASTEXITCODE -eq 0) { Write-Ok "ufw: $Cidr may reach $PortNumber/tcp" }
+        else {
+            Write-Wrn "ufw rule failed (exit $LASTEXITCODE): $($result | Out-String)"
+            Write-Inf "Run manually:  sudo ufw allow from $Cidr to any port $PortNumber proto tcp"
+        }
+        return
+    }
+
+    $firewallCmd = Find-FirewallTool 'firewall-cmd'
+    if ($firewallCmd) {
+        $state = Invoke-Privileged -Tool $firewallCmd -Arguments @('--state')
+        if (($state | Out-String) -notmatch 'running') {
+            Write-Ok "firewalld is not running - port $PortNumber is already reachable"
+            return
+        }
+        $rule = "rule family=`"ipv4`" source address=`"$Cidr`" port port=`"$PortNumber`" protocol=`"tcp`" accept"
+        Write-Inf "running: sudo firewall-cmd --permanent --add-rich-rule='$rule'"
+        $null = Invoke-Privileged -Tool $firewallCmd -Arguments @('--permanent', "--add-rich-rule=$rule")
+        if ($LASTEXITCODE -eq 0) {
+            $null = Invoke-Privileged -Tool $firewallCmd -Arguments @('--reload')
+            Write-Ok "firewalld: $Cidr may reach $PortNumber/tcp"
+        }
+        else {
+            Write-Wrn "firewalld rule failed (exit $LASTEXITCODE)"
+            Write-Inf "Run manually:  sudo firewall-cmd --permanent --add-rich-rule='$rule' && sudo firewall-cmd --reload"
+        }
+        return
+    }
+
+    Write-Ok "no ufw or firewalld found - assuming port $PortNumber is reachable"
+}
+
+# Tails the log in the foreground. The server is a detached process, so Ctrl+C
+# stops the watching, never the server.
+function Watch-ServerLog {
+    Write-Host ''
+    Write-Host '==> Live activity (Ctrl+C to stop watching - the server keeps running)' -ForegroundColor Cyan
+    Write-Inf "following $($Paths.Log)"
+    Write-Host ''
+    if (-not (Test-Path $Paths.Log)) { New-Item -ItemType File -Path $Paths.Log -Force | Out-Null }
+    try { Get-Content -Path $Paths.Log -Tail 20 -Wait }
+    finally {
+        Write-Host ''
+        Write-Inf 'stopped watching; the server is still running.'
+        Write-Inf "  status: pwsh ./local.code.server.ps1 -Status"
+        Write-Inf "  stop:   pwsh ./local.code.server.ps1 -Stop"
+    }
 }
 
 function Show-ServerStatus {
@@ -1111,8 +1281,15 @@ else {
     Start-ServerProcess
 }
 
-$address = Get-LanAddress
-$baseUrl = "http://${address}:${Port}"
+$lan = Get-LanInterface
+$baseUrl = "http://$($lan.Address):${Port}"
+
+if ($NoFirewall) { Write-Step 'Firewall'; Write-Inf '-NoFirewall: leaving the firewall untouched' }
+elseif ($BindAddress -eq '127.0.0.1' -or $BindAddress -eq 'localhost') {
+    Write-Step 'Firewall'
+    Write-Inf "bound to $BindAddress only, so no firewall rule is needed"
+}
+else { Open-FirewallPort -PortNumber $Port -Cidr $lan.Cidr }
 
 Write-Host ''
 Write-Host '+---------------------------------------------------------------+' -ForegroundColor Green
@@ -1127,4 +1304,10 @@ Write-Inf 'Configure a workstation with:'
 Write-Host "    pwsh ./local.code.client.ps1 -ServerUrl $baseUrl" -ForegroundColor White
 Write-Host ''
 Write-Inf 'Manage this server with:  -Status | -Stop | -Restart'
-Write-Host ''
+
+if ($NoFollow) {
+    Write-Host ''
+    Write-Inf "Watch activity with:  tail -f $($Paths.Log)"
+    Write-Host ''
+}
+else { Watch-ServerLog }

@@ -36,8 +36,9 @@ On each workstation:
 pwsh ./local.code.client.ps1 -ServerUrl http://192.168.1.50:8888
 ```
 
-Then reload the VS Code window, open the Continue side bar, and pick the
-**local-code-ai** assistant.
+Then reload the VS Code window and open the Continue side bar. In the **top right**,
+in the list of configurations, select **`local-code-ai.yaml`** instead of
+**Main Config**, then choose a model.
 
 ## The models
 
@@ -88,7 +89,22 @@ particular one: swap the names in `$script:Catalog` (server) and
 4. **Configuration** — generates `.\run\llama-swap.yaml` (model commands,
    contexts, TTLs, memory groups).
 5. **Serving** — starts llama-swap detached, waits for `/v1/models` to answer,
-   prints the URL.
+   **opens the port to the local subnet**, prints the URL, and then **follows the
+   log** so you can watch activity. Ctrl+C stops watching; the server keeps
+   running. `-NoFollow` skips the tail (use it for unattended runs).
+
+   The firewall rule is scoped to the subnet of your real LAN interface — Docker
+   and libvirt bridges are deliberately ignored, since opening the port to
+   `172.17.0.0/16` would help nobody. It runs, via sudo and after printing the
+   exact command:
+
+   ```bash
+   ufw allow from 192.168.7.0/24 to any port 8888 proto tcp
+   ```
+
+   firewalld is handled with an equivalent rich rule; if neither is installed, or
+   the firewall is inactive, it says so and changes nothing. `-NoFirewall` opts out
+   entirely.
 
 Idempotent: re-running updates the engine and any changed weights, leaves a
 healthy server running, and restarts it only when the configuration changed.
@@ -97,7 +113,7 @@ logs why and serves whatever is already on disk.
 
 Lifecycle: `-Status`, `-Stop`, `-Restart`.
 Other switches: `-Port`, `-BindAddress`, `-ModelsPath`, `-NoDownload`, `-FixGroups`,
-`-UpdateEngine`, `-Yes`, `-Force`.
+`-UpdateEngine`, `-NoFirewall`, `-NoFollow`, `-Yes`, `-Force`.
 
 #### No GPU?
 

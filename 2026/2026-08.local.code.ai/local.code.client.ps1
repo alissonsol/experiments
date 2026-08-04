@@ -477,5 +477,7 @@ Write-Host ''
 Write-Inf 'In VS Code:'
 Write-Inf "  1. Reload the window (Ctrl/Cmd+Shift+P -> 'Developer: Reload Window')."
 Write-Inf '  2. Open the Continue side bar.'
-Write-Inf "  3. Pick '$AssistantName' in the assistant selector, then choose a model."
+Write-Inf "  3. In the top right, in the list of configurations, select"
+Write-Inf "     `"$AssistantName.yaml`" instead of `"Main Config`"."
+Write-Inf '  4. Then choose a model in the model selector below the input box.'
 Write-Host ''
