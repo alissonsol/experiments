@@ -307,18 +307,40 @@ function Get-ServerModel {
 # =============================================================================
 # Role map for the models served by local.code.server.ps1. Entries whose model is
 # not offered by the server are skipped.
+#
+# Caps becomes Continue's 'capabilities' list. Declaring 'tool_use' is what makes
+# Agent mode able to edit files, and it is NOT optional here. Continue decides
+# tool support for provider 'openai' by string-matching the model id
+# (core/llm/toolSupport.ts): it accepts /^gpt-[4-9]/, /^o[1-9]/, 'codex', and the
+# substrings 'gpt-oss', 'exaone', 'gemma', and otherwise returns false. Our ids are
+# llama-swap aliases - 'interactive', 'deep-reviewer', 'second-opinion' - so every
+# one of them falls through to false, however capable the model behind it actually
+# is. Continue then silently downgrades Agent mode to a text-imitation protocol: it
+# stops sending a tools array and instead asks the model to type a TOOL_NAME: /
+# BEGIN_ARG fence as prose. Local models reproduce that fence unreliably, so the
+# edit is described and never written, which is exactly what we saw. An explicit
+# capabilities list short-circuits the name check and restores real tool calls -
+# verified against this server, which returns correct tool_calls both buffered and
+# streamed. Only chat models get it; FIM and embeddings have no tool surface.
 $script:ModelSpec = @(
     [pscustomobject]@{
         Id      = 'interactive'
         Title   = 'Local Fast (Qwen3-Coder 30B)'
         Roles   = @('chat', 'edit', 'apply')
+        Caps    = @('tool_use')
         Options = [ordered]@{ contextLength = 65536; maxTokens = 8192; temperature = 0.15 }
         Legacy  = $false
     }
     [pscustomobject]@{
         Id      = 'deep-reviewer'
         Title   = 'Local Deep review (gpt-oss-120b)'
-        Roles   = @('chat', 'edit')
+        # 'apply' as well as 'edit'. Continue resolves the writer as
+        # selectedModelByRole.apply ?? selectedModelByRole.chat, so without an apply
+        # role anywhere on the selected model the 120B reasoning model performs the
+        # merge itself - the slowest and least suitable model for a mechanical
+        # diff, and the reason the earlier attempt corrupted the file footer.
+        Roles   = @('chat', 'edit', 'apply')
+        Caps    = @('tool_use')
         Options = [ordered]@{ contextLength = 65536; maxTokens = 16384; temperature = 0.2 }
         Legacy  = $false
     }
@@ -326,6 +348,7 @@ $script:ModelSpec = @(
         Id      = 'second-opinion'
         Title   = 'Local Cross-check (GLM-4.5-Air)'
         Roles   = @('chat')
+        Caps    = @('tool_use')
         Options = [ordered]@{ contextLength = 65536 }
         Legacy  = $false
     }
@@ -333,6 +356,7 @@ $script:ModelSpec = @(
         Id      = 'code-fim'
         Title   = 'Local Autocomplete (Qwen2.5-Coder 3B)'
         Roles   = @('autocomplete')
+        Caps    = $null
         Options = $null
         Legacy  = $true          # FIM needs the raw completions endpoint, not chat
     }
@@ -340,6 +364,7 @@ $script:ModelSpec = @(
         Id      = 'code-embed'
         Title   = 'Local Embeddings (Qwen3-Embedding 0.6B)'
         Roles   = @('embed')
+        Caps    = $null
         Options = $null
         Legacy  = $false
     }
@@ -382,6 +407,7 @@ function Get-AssistantYaml {
         & $add ('    apiBase: ' + (ConvertTo-YamlScalar $apiBase))
         & $add ('    apiKey: ' + (ConvertTo-YamlScalar $ApiKey))
         & $add ('    roles: [' + ($spec.Roles -join ', ') + ']')
+        if ($spec.Caps) { & $add ('    capabilities: [' + ($spec.Caps -join ', ') + ']') }
         if ($spec.Legacy) { & $add '    useLegacyCompletionsEndpoint: true' }
         if ($spec.Options) {
             & $add '    defaultCompletionOptions:'

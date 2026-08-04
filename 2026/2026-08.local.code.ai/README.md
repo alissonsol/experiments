@@ -49,7 +49,7 @@ fast, one deep, one from a different training lineage for cross-checking
 | llama-swap id | Model | Size | Continue role |
 |---|---|---|---|
 | `interactive` | Qwen3-Coder-30B-A3B-Instruct UD-Q5_K_XL | 20 GiB | chat, edit, apply |
-| `deep-reviewer` | gpt-oss-120b MXFP4 (reasoning effort `high`) | 59 GiB | chat, edit |
+| `deep-reviewer` | gpt-oss-120b MXFP4 (reasoning effort `medium`) | 59 GiB | chat, edit, apply |
 | `second-opinion` | GLM-4.5-Air UD-Q4_K_XL | 63 GiB | chat |
 | `code-embed` | Qwen3-Embedding-0.6B Q8_0 | 0.6 GiB | embed (`@codebase`) |
 | `code-fim` | Qwen2.5-Coder-3B **base** Q6_K | 2.4 GiB | autocomplete |
@@ -188,14 +188,92 @@ run\         llama-swap.yaml, llama-swap.log, llama-swap.pid, models.json, tools
   --parallel 4` gives four concurrent users 64K each, not four users with 256K.
   The client writes a matching `contextLength: 65536`.
 - Requests beyond `--parallel` queue inside `llama-server` — they wait, they do
-  not fail.
-- The first request after an idle period can be slow: the model was evicted. Raise
-  `ttl` in `run/llama-swap.yaml` if that annoys you.
+  not fail. That guarantee stops at the process boundary: see the next bullet.
+- **A request that arrives while its model is not up gets a `502`, not a wait.**
+  llama-swap only queues behind a *running* upstream. If the model was evicted by
+  `ttl`, is mid-swap, or its `llama-server` died, the proxy answers `502 Bad
+  Gateway` — sometimes after tens of seconds, sometimes in under 2 ms — and
+  Continue surfaces that as a failed request rather than "loading". `ttl: 1800` on
+  the two heavyweights means half an hour of quiet is enough to arm this. Raise
+  `ttl` in `run/llama-swap.yaml` to widen the window; the retry always succeeds
+  once the model is back.
+- **`llama-server` upstreams do exit unexpectedly here.** A session driven hard
+  enough to force repeated heavy-group swaps logged 21 `upstream process exited
+  unexpectedly` events across `interactive` and `deep-reviewer`, plus one `group:
+  starting deep-reviewer failed: upstream command exited prematurely`. llama-swap
+  restarts the model on the next request, so the failure is self-healing and easy
+  to miss — the visible symptom is an occasional `502`. The likely cause is the
+  memory ceiling this configuration deliberately runs close to (~102 GB used of
+  the ~112 GiB the GPU can address, before KV growth on four 64K slots), so
+  overlapping loads have little room. Not reproduced under ordinary single-user
+  editing. `curl http://<server>:8888/logs` is the place to check — grep for
+  `exited unexpectedly`. If it shows up in normal use, lower `-c` or `--parallel`
+  on the heavyweights before suspecting anything else.
 - The server survives logout (it is started with `nohup`) but **not a reboot** —
   re-run the script, or wrap it in a systemd unit as shown in Section 9 of the
   design document.
 - Autocomplete uses the raw completions endpoint (`useLegacyCompletionsEndpoint:
   true`); an instruct-tuned model would be wrong for fill-in-the-middle.
+
+## Three things about Continue that cost an afternoon
+
+These are properties of the extension, not of this server. All three were verified
+against Continue **v2.0.0**; check them again before blaming the models.
+
+**`capabilities: [tool_use]` is mandatory, and its absence fails silently.**
+Continue decides whether a model can call tools by *string-matching the model id*.
+For `provider: openai` it accepts `/^gpt-[4-9]/`, `/^o[1-9]/`, `codex`, and the
+substrings `gpt-oss`, `exaone`, `gemma` — everything else returns false. Our ids
+are llama-swap aliases (`interactive`, `deep-reviewer`), so all of them failed the
+check no matter how capable the model behind them was. Continue does not warn. It
+stops sending a `tools` array and quietly downgrades Agent mode to a text
+imitation of tool calling, asking the model to type a `TOOL_NAME:` / `BEGIN_ARG`
+fence as prose. Local models reproduce that fence unreliably, so the model
+*describes* the edit and no file is ever written — Agent mode appears to work and
+silently does nothing. Declaring `capabilities` short-circuits the name check.
+The client script now writes it for every chat model.
+
+**The model that writes the file is not always the one you picked.** Continue
+resolves the writer as `selectedModelByRole.apply ?? selectedModelByRole.chat`. A
+model with no `apply` role anywhere performs its own merges — which meant picking
+the 120B reviewer made *it* do the mechanical diff, the slowest and least suitable
+model for the job. Every chat model here now carries `apply`.
+
+**Continue's lazy-apply prompt is Sonnet-only.** `lazyApplyPromptForModel` returns
+a real prompt when the model name contains `sonnet` and `undefined` otherwise, so
+every local model runs the apply path without the prompt written for it. Native
+tool calls avoid most of this, but a merge that corrupts a file — duplicated
+trailing lines, a lost final newline — is this, not the server. It is not
+reachable from configuration.
+
+## Measured on this box
+
+Numbers from the Strix Halo server over the LAN, for calibration. Throughput is
+what it is; the *effort* row is the one worth acting on.
+
+| | `interactive` (30B) | `deep-reviewer` (120B) |
+|---|---|---|
+| Warm round trip, trivial request | 0.06 s | — |
+| Prefill | 641 tok/s | 547 tok/s |
+| Decode | ~50 tok/s | ~47 tok/s |
+
+`reasoning_effort` on one identical prompt to `deep-reviewer`:
+
+| effort | wall clock | completion tokens |
+|---|---|---|
+| `low` | 7.0 s | 321 |
+| `medium` (the default here) | 5.8 s | 258 |
+| `high` | 20.3 s | 1003 |
+
+A real editor turn measured 23.3k prompt tokens in and 11.4k out: 43 s of prefill
+and 243 s of decode, about five minutes, of which **85% was hidden reasoning
+tokens nobody reads**. That is why `deep-reviewer` runs at `medium` rather than
+the design document's `high`. Ask for more per request when a review deserves it —
+`llama-server` honours `"chat_template_kwargs": {"reasoning_effort": "high"}` in
+the request body, which overrides the server default.
+
+Drive Agent mode from `interactive`. It answered the same tool-call test in 2.4 s
+against `deep-reviewer`'s 20.7 s, and the reasoning is wasted on mechanical edits.
 
 ---
 

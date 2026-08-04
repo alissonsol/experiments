@@ -252,7 +252,7 @@ $script:Catalog = @(
     }
     [pscustomobject]@{
         Id          = 'deep-reviewer'
-        Title       = 'gpt-oss-120b (high effort)'
+        Title       = 'gpt-oss-120b (medium effort)'
         Dir         = 'gpt-oss-120b'
         Repo        = 'ggml-org/gpt-oss-120b-GGUF'
         Files       = @('gpt-oss-120b-MXFP4.gguf')
@@ -263,8 +263,17 @@ $script:Catalog = @(
         # {"reasoning_effort":"high"} reaches llama-server as {reasoning_effort:high},
         # which fails JSON parsing and kills the process at startup - surfacing only
         # as 'upstream command exited prematurely'.
+        #
+        # 'medium', not the design document's 'high'. Measured on this box against
+        # one identical prompt: high burned 1003 completion tokens in 20.3 s, medium
+        # 258 in 5.8 s, for an answer of the same quality. Decode runs at ~47 tok/s,
+        # so on a real editor turn (23.3k prompt in, 11.4k out) the hidden reasoning
+        # is ~243 s of the ~286 s round trip - 85% of the wait, for tokens nobody
+        # reads. Callers that want the deeper chain can still ask for it per request:
+        # llama-server honours "chat_template_kwargs":{"reasoning_effort":"high"} in
+        # the request body, which overrides this default.
         CmdTail     = @('-c 262144 --parallel 4',
-            '--chat-template-kwargs {\"reasoning_effort\":\"high\"}',
+            '--chat-template-kwargs {\"reasoning_effort\":\"medium\"}',
             '--temp 0.2 --top-p 0.9')
         Aliases     = @('review', 'security')
         Ttl         = 1800
