@@ -243,8 +243,13 @@ $script:Catalog = @(
         Files       = @('gpt-oss-120b-MXFP4.gguf')
         ApproxBytes = 63387346208
         CmdHead     = '${bin} ${common}'
+        # The quotes MUST be backslash-escaped. llama-swap splits 'cmd' with a
+        # shell-style parser that strips bare quotes, so the design document's
+        # {"reasoning_effort":"high"} reaches llama-server as {reasoning_effort:high},
+        # which fails JSON parsing and kills the process at startup - surfacing only
+        # as 'upstream command exited prematurely'.
         CmdTail     = @('-c 262144 --parallel 4',
-            '--chat-template-kwargs {"reasoning_effort":"high"}',
+            '--chat-template-kwargs {\"reasoning_effort\":\"high\"}',
             '--temp 0.2 --top-p 0.9')
         Aliases     = @('review', 'security')
         Ttl         = 1800
@@ -372,6 +377,17 @@ function Get-TotalMemoryGB {
 # =============================================================================
 function Test-Prerequisite {
     Write-Step 'Checking the machine'
+
+    # llama-swap splits 'cmd' with a shell-style parser that strips quotes, so a
+    # path containing a space cannot be passed to llama-server at all - it would
+    # arrive as two arguments and the model would die with the unhelpful
+    # 'upstream command exited prematurely'.
+    foreach ($pathCheck in @(@{ Name = 'models path'; Value = $Paths.Models }, @{ Name = 'install folder'; Value = $Paths.Root })) {
+        if ($pathCheck.Value -match '\s') {
+            Write-Wrn "$($pathCheck.Name) contains a space: $($pathCheck.Value)"
+            Write-Inf 'llama-swap cannot quote it, so models will fail to start. Use a path without spaces.'
+        }
+    }
 
     $memoryGB = Get-TotalMemoryGB
     if ($memoryGB -le 0) { Write-Wrn 'could not read /proc/meminfo' }
